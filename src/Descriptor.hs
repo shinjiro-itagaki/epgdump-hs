@@ -1,15 +1,141 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Descriptor where
+module Descriptor (
+  Base(..),
+  HasName(..),
+  LangCode,
+  HasISO_639_LanguageCode(..),
+  HasText(..),
+  HasTitle(..),
+  ConditionalAccess(..),
+  Copyright(..),
+  NetworkName(..),
+  HasServiceID(..),
+  HasServiceType(..),
+  ServiceData(..),
+  ServiceList(..),
+  Stuffing(..),
+  SatelliteDeliverySystem(..),
+  BouquetName(..),
+  Service(..),
+  CountryCode,
+  CountryAvailability(..),
+  HasOriginalNetworkID(..),
+  TOS(..),
+  HasPrivateDataBytes(..),
+  Linkage(..),
+  NVOD_Reference(..),
+  HasReferenceServiceID(..),
+  TimeShiftedService(..),
+  ShortEvent(..),
+  ExtendedEventItem(..),
+  ExtendedEvent(..),
+  TimeShiftedEvent(..),
+  Component(..),
+  ElementaryCellField(elementary_cell_id),
+  MosaicItem(
+      logical_cell_id,
+      logical_cell_presentation_info,
+      elementary_cell_field_length,
+      elementary_cell_fields,
+      cell_linkage_info,
+      bouquet_id
+      ),
+  HasEventID(..),
+  Mosaic(..),
+  HasComponentTag(..),
+  HasComponent(..),
+  StreamIdentifier(..),
+  CAIdentifier(..),
+  ContentBody(..),
+  Content(..),
+  HasCountryCode(..),
+  ParentalRatingItem(rating),
+  ParentalRating(..),
+  HierarchicalTransmission(..),
+  HasUserDefined(..),
+  ComponentControl(..),
+  ComponentControlData,
+  DigitalCopyControl(..),
+  AreaCode,
+  EmergencyInformationItem (..),
+  EmergencyInformation(..),
+  HasDataComponentID(..),
+  DataComponent (..),
+--  SystemControl(..)
+  LocalTimeOffsetItem(..),
+  LocalTimeOffsetItemData,
+  LocalTimeOffset(..),
+  AudioComponent(..),
+  LinkServiceInfo,
+  LinkEventInfo,
+  HasModuleID(..),
+  HasContentID(..),
+  LinkModuleInfo,
+  LinkContentInfo,
+  LinkContentModuleInfo,
+  LinkErtNodeInfo(..),
+  LinkStoredContentInfo(..),
+  LinkDestination,
+  HyperLink(..),
+  TargetRegionSpec(..),
+  TargetRegionSpecData,
+  TargetRegion(..),
+  HasSelector(..),
+  DataContents(..),
+  VideoDecodeControl(..),
+  TerrestrialDeliverySystem(..),
+  PartialReception(..),
+  Series(..),
+  Event,
+  EventGroupData,
+  HasMaybePrivateDataBytes(..),
+  EventGroup(..),
+  SI_TableDescription(..),
+  SI_Parameter(..),
+  BroadcasterName(..),
+  CA_Unit(..),
+  ComponentGroupData(
+      component_group_id,
+      num_of_ca_unit,
+      ca_units,
+      total_bit_rate
+  ),
+  ComponentGroup(..),
+  SI_Prime_TS(..),
+  BoardInformation(..),
+  LDT_LinkDesc(description_id,description_type),
+  LDT_Link(..),
+  ConnectedTransmission(..),
+  TransmissionType(..),
+  TS_Information(..),
+  BroadcasterAffiliation(affiliation_id),
+  BroadcasterInfo(broadcaster_id),
+  BroadcasterCommon(..),
+  Broadcaster(
+      terrestrial_broadcaster_id,
+      number_of_affiliation_id_loop,
+      affiliation_ids,
+      terrestrial_sound_broadcaster_id,
+      number_of_sound_broadcast_affiliation_id_loop,
+      sound_broadcast_affiliation_ids
+      ),
+  ExtendedBroadcaster(..),
+  LogoTransmission(..),
+  ContentAvailability(..),
+  CarouselCompatibleComposite(..)
+  ) where
 
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 import qualified Data.ByteString as BS
 
-class Base a where
+class Descriptor a where
   descriptor_tag    :: a -> Word8
   descriptor_length :: a -> Word8
-  fromByteString    :: ByteString -> (a,ByteString)
+  
+class (Descriptor a) => Base a where
+  fromByteString :: ByteString -> (a,ByteString)
 
 class HasName a where
   name :: a -> String
@@ -121,7 +247,7 @@ data ExtendedEventItem = MkExtendedEventItem {
   item_length :: Word8,
   item_chars :: String
   }
-                         
+
 class (Base a, HasISO_639_LanguageCode a, HasTextAndLen a) => ExtendedEvent a where
   descriptor_number :: a -> Word8
   last_descriptor_number :: a -> Word8
@@ -170,20 +296,20 @@ data MosaicItem = MkMosaicItem {
 --  transport_stream_id :: Word16,
 --  service_id :: Word16,
   _mosaic_item_event_id :: Word16,
-  tosdata :: TOSData -- 非公開
+  _tosdata :: TOSData -- 非公開
   }
 
 class HasEventID a where
   event_id :: a -> Word16
 
 instance HasOriginalNetworkID MosaicItem where
-  original_network_id = original_network_id . tosdata
+  original_network_id = original_network_id . _tosdata
 
 instance TOS MosaicItem where
-  transport_stream_id = transport_stream_id . tosdata
+  transport_stream_id = transport_stream_id . _tosdata
   
 instance HasServiceID MosaicItem where  
-  service_id = service_id . tosdata
+  service_id = service_id . _tosdata
 
 instance HasEventID MosaicItem where
   event_id = _mosaic_item_event_id
@@ -294,7 +420,7 @@ class (Base a, HasDataComponentID a) => DataComponent a where
 --  data_component_id :: a -> Word16
   additional_data_component_info :: a -> [Word8]
   
-class Base a => SystemControl a where
+-- class Base a => SystemControl a where
 
 class HasCountryCode a => LocalTimeOffsetItem a where
 --  country_code               :: a -> CountryCode
@@ -725,9 +851,148 @@ class Base a => ContentAvailability a where
   retention_state :: a -> Word8
   encryption_mode :: a -> Bool
 -- reserved_future_use N  
+
+class (Descriptor a, HasText a) => Type a where
+
+data TypeData = MkTypeData {
+  _type_text :: String,
+  _type_descriptor_tag    :: Word8,
+  _type_descriptor_length :: Word8
+  }
+  
+instance Descriptor TypeData where
+  descriptor_tag = _type_descriptor_tag
+  descriptor_length = _type_descriptor_length
+
+instance HasText TypeData where
+  text = _type_text
+  
+class (Descriptor a, HasName a) => Name a where
+
+data NameData = MkNameData {
+  _name_name :: String,
+  _name_descriptor_tag    :: Word8,
+  _name_descriptor_length :: Word8
+  }
+
+instance HasName NameData where
+  name = _name_name
+
+instance Descriptor NameData where
+  descriptor_tag = _name_descriptor_tag
+  descriptor_length = _name_descriptor_length
+
+class (Descriptor a) => Expire a where
+  time_mode :: a -> Word8
+  mjd_jst_time :: a -> Maybe Word64
+--  reserved_future_use
+  passed_seconds :: a -> Maybe Word32
+
+data ExpireData = MkExpireData {
+  _expire_descriptor_tag    :: Word8,
+  _expire_descriptor_length :: Word8,
+  _expire_time_mode :: Word8,
+  _expire_mjd_jst_time :: Maybe Word64,
+  _expire_passed_seconds :: Maybe Word32
+  }
+
+instance Descriptor ExpireData where
+  descriptor_tag = _expire_descriptor_tag
+  descriptor_length = _expire_descriptor_length
+
+instance Expire ExpireData where
+  time_mode = _expire_time_mode
+  mjd_jst_time = _expire_mjd_jst_time
+  passed_seconds = _expire_passed_seconds
+
+class (Descriptor a) => ProviderPrivate a where
+  private_scope_type :: a -> Word8
+  scope_identifier :: a -> Word32
+  private_bytes :: a -> [Word8]
+
+data ProviderPrivateData = MkProviderPrivateData {
+  _pp_descriptor_tag    :: Word8,
+  _pp_descriptor_length :: Word8,
+  _pp_private_scope_type :: Word8,
+  _pp_scope_identifier :: Word32,
+  _pp_private_bytes :: [Word8]
+  }
+
+instance Descriptor ProviderPrivateData where
+  descriptor_tag = _pp_descriptor_tag
+  descriptor_length = _pp_descriptor_length
+
+instance ProviderPrivate ProviderPrivateData where
+  private_scope_type = _pp_private_scope_type
+  scope_identifier = _pp_scope_identifier
+  private_bytes = _pp_private_bytes
+
+class (Descriptor a) => StoreRoot a where
+  update_type :: a -> Bool
+-- reserved :: Word8
+  store_root_path :: a -> String
+
+data StoreRootData = MkStoreRootData {
+    _sr_descriptor_tag    :: Word8,
+    _sr_descriptor_length :: Word8,
+    _sr_update_type :: Bool,
+    _sr_store_root_path :: String
+    }
+
+instance Descriptor StoreRootData where
+  descriptor_tag = _sr_descriptor_tag
+  descriptor_length = _sr_descriptor_length
+
+instance StoreRoot StoreRootData where
+  update_type = _sr_update_type
+  store_root_path = _sr_store_root_path
+
+class (Descriptor a) => Subdirectory a where
+  subdirectory_path :: a -> String
+
+data SubdirectoryData = MkSubdirectoryData {
+  _sd_descriptor_tag    :: Word8,
+  _sd_descriptor_length :: Word8,
+  _subdirectory_path :: String
+  }
+
+instance Descriptor SubdirectoryData where
+  descriptor_tag = _sd_descriptor_tag
+  descriptor_length = _sd_descriptor_length
+
+instance Subdirectory SubdirectoryData where
+  subdirectory_path = _subdirectory_path
+  
+class (Descriptor a,HasText a, HasISO_639_LanguageCode a) => Title a where
+
+data TitleData = MkTitleData {
+  _title_descriptor_tag    :: Word8,
+  _title_descriptor_length :: Word8,
+  _title_text :: String,
+  _title_iso_639_language_code :: LangCode
+  }
+
+instance Descriptor TitleData where
+  descriptor_tag = _title_descriptor_tag
+  descriptor_length = _title_descriptor_length
+  
+instance HasText TitleData where
+  text = _title_text
+  
+instance HasISO_639_LanguageCode TitleData where
+  iso_639_language_code = _title_iso_639_language_code
+  
+data SubScriptor =
+    MkSubType         TypeData
+  | MkSubName         NameData
+  | MkSubExpire       ExpireData
+  | MkProviderPrivate ProviderPrivateData 
+  | MkStoreRoot       StoreRootData
+  | MkSubdirectory    SubdirectoryData
+  | MkTitle           TitleData
   
 class Base a => CarouselCompatibleComposite a where
-  -- sub_scriptor
+  sub_scriptors :: a -> [SubScriptor]
   
 class Base a => ConditionalPlayback a where
   
