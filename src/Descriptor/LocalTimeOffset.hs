@@ -1,10 +1,32 @@
-module Descriptor.LocalTimeOffset where
-import Descriptor.Common(Base,HasCountryCode(..),CountryCode)
+module Descriptor.LocalTimeOffset (
+  Class(..)
+  ,Data
+  ) where
+import Descriptor.Common(Base(..),HasCountryCode(..),CountryCode,Descriptor(..))
 -- import Descriptor(AreaCode)
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 
-class HasCountryCode a => LocalTimeOffsetItem a where
+class Base a => Class a where
+  items :: a -> [ItemData]
+
+data Data = MkData {
+  _descriptor_tag    :: Word8,
+  _descriptor_length :: Word8,
+  _items             :: [ItemData]
+  }
+
+instance Descriptor Data where
+  descriptor_tag    = _descriptor_tag
+  descriptor_length = _descriptor_length
+
+instance Base Data where
+  fromByteString bs = (Nothing, bs)
+
+instance Class Data where
+  items = _items
+
+class HasCountryCode a => Item a where
 --  country_code               :: a -> CountryCode
   country_region_id          :: a -> Word8
   reserved                   :: a -> Bool
@@ -13,10 +35,8 @@ class HasCountryCode a => LocalTimeOffsetItem a where
   time_of_change             :: a -> Word64
   next_time_offset           :: a -> Word16
   
-class Base a => LocalTimeOffset a where
-  items :: a -> [LocalTimeOffsetItemData]
 
-data LocalTimeOffsetItemData = MkLocalTimeOffsetItemData {
+data ItemData = MkItemData {
   _local_time_offest_item_data_country_code :: CountryCode,
   _country_region_id          :: Word8,
   _reserved                   :: Bool,
@@ -26,11 +46,10 @@ data LocalTimeOffsetItemData = MkLocalTimeOffsetItemData {
   _next_time_offset           :: Word16
   }
 
-  
-instance HasCountryCode LocalTimeOffsetItemData where
+instance HasCountryCode ItemData where
   country_code = _local_time_offest_item_data_country_code
   
-instance LocalTimeOffsetItem LocalTimeOffsetItemData where
+instance Item ItemData where
   country_region_id          = _country_region_id
   reserved                   = _reserved
   local_time_offset_polarity = _local_time_offset_polarity

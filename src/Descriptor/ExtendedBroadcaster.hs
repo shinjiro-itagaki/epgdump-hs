@@ -1,13 +1,37 @@
-module Descriptor.ExtendedBroadcaster where
-import Descriptor.Common(Base,HasMaybePrivateDataBytes, HasOriginalNetworkID(..), HasPrivateDataBytes(..))
+module Descriptor.ExtendedBroadcaster (
+  Class(..)
+  ,Data
+  ) where
+import Descriptor.Common(Base(..),HasMaybePrivateDataBytes(..), HasOriginalNetworkID(..), HasPrivateDataBytes(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 
-class (Base a, HasMaybePrivateDataBytes a) => ExtendedBroadcaster a where
+class (Base a, HasMaybePrivateDataBytes a) => Class a where
   broadcaster_type :: a -> Word8
 -- reserved_future_use
   maybe_broadcaster :: a -> Maybe Broadcaster
 
+data Data = MkData {
+  _descriptor_tag        :: Word8,
+  _descriptor_length     :: Word8,
+  _broadcaster_type      :: Word8,
+  _maybe_broadcaster     :: Maybe Broadcaster,
+  _maybe_private_data_bytes :: Maybe [Word8]
+  }
+
+instance Descriptor Data where
+  descriptor_tag    = _descriptor_tag
+  descriptor_length = _descriptor_length
+
+instance Base Data where
+  fromByteString bs = (Nothing, bs)
+
+instance HasMaybePrivateDataBytes Data where
+  maybe_private_data_bytes = _maybe_private_data_bytes 
+
+instance Class Data where  
+  broadcaster_type  = _broadcaster_type
+  maybe_broadcaster = _maybe_broadcaster
 
 -- class Base a => SystemControl a where
 class (HasPrivateDataBytes a) => BroadcasterCommon a where

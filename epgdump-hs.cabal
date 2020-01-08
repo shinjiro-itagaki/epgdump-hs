@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1cbecdf809816a2f18fb845f83c69a804b9ffd8d7f933a9fc149ccbdecc398f0
+-- hash: e0698fdd2b93e77f16c35cc0b6ca48e2a9cceddce4b8e7ca652cb394d7de109b
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -53,7 +53,6 @@ library
       Descriptor.ConnectedTransmission
       Descriptor.Content
       Descriptor.ContentAvailability
-      Descriptor.Copyright
       Descriptor.CountryAvailability
       Descriptor.DataComponent
       Descriptor.DataContents
@@ -92,6 +91,9 @@ library
       Descriptor.VideoDecodeControl
       Lib
       SITables
+      SITables.Common
+      SITables.EIT
+      SITables.NIT
       TS
   other-modules:
       Paths_epgdump_hs

@@ -1,36 +1,39 @@
-module Descriptor.TargetRegion where
+module Descriptor.TargetRegion (
+  Class(..)
+  ,Data
+  ) where
 import Descriptor.Common(Base(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 
-class Base a => TargetRegion a where
+class Base a => Class a where
   region_spec_type :: a -> Word8 -- only 0x01
-  specs :: a -> Maybe [TargetRegionSpecData]
+  specs            :: a -> Maybe [SpecData]
 
-class TargetRegionSpec a where
+class SpecClass a where
   pefecture_bitmap :: a -> Word64
 
-data TargetRegionSpecData = MkTargetRegionSpec {
+data SpecData = MkSpecData {
   _pefecture_bitmap :: Word64
   }
 
-data TargetRegionData = MkTargetRegionData {
-  _target_region_descriptor_tag :: Word8,
-  _target_region_descriptor_length :: Word8,
-  _target_region_spec_type :: Word8, -- only 0x01
-  _target_specs :: Maybe [TargetRegionSpecData]  
+data Data = MkData {
+  _descriptor_tag    :: Word8,
+  _descriptor_length :: Word8,
+  _region_spec_type  :: Word8, -- only 0x01
+  _specs             :: Maybe [SpecData]
   }
 
-instance Descriptor TargetRegionData where
-  descriptor_tag = _target_region_descriptor_tag
-  descriptor_length = _target_region_descriptor_length
+instance Descriptor Data where
+  descriptor_tag    = _descriptor_tag
+  descriptor_length = _descriptor_length
 
--- instance Base TargetRegionData where
+instance Base Data where
 
--- instance TargetRegion TargetRegionData where
---   region_spec_type = _target_region_spec_type
---   specs = _target_specs
+instance Class Data where
+  region_spec_type = _region_spec_type
+  specs            = _specs
 
-instance TargetRegionSpec TargetRegionSpecData where
+instance SpecClass SpecData where
   pefecture_bitmap = _pefecture_bitmap
 

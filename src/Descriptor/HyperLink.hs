@@ -1,8 +1,12 @@
-module Descriptor.HyperLink where
+module Descriptor.HyperLink (
+  Class(..)
+  ,Data
+  ) where
 import Descriptor.Common(
-  Base
-  ,HasSelector
+  Base(..)
+  ,HasSelector(..)
   ,HasOriginalNetworkID(..)
+  ,Descriptor(..)
   ,TOS(..)
   ,HasServiceID(..)
   ,HasOriginalNetworkID(..)
@@ -16,7 +20,7 @@ import Descriptor.Common(
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 
-class (Base a, HasSelector a) => HyperLink a where
+class (Base a, HasSelector a) => Class a where
   hyper_linkage_type :: a -> Word8
   link_destination_type :: a -> Word8 -- 
 --  selector_length :: a -> Word8
@@ -24,6 +28,33 @@ class (Base a, HasSelector a) => HyperLink a where
   link_destination :: a -> LinkDestination
   private_data :: a -> [Word8]
 
+data Data = MkData {
+  _descriptor_tag        :: Word8,
+  _descriptor_length     :: Word8,
+  _hyper_linkage_type    :: Word8,
+  _link_destination_type :: Word8,
+  _selector_length       :: Word8,
+  _selector_bytes        :: [Word8],
+  _link_destination      :: LinkDestination,
+  _private_data          :: [Word8]
+  }
+
+instance Descriptor Data where
+  descriptor_tag    = _descriptor_tag
+  descriptor_length = _descriptor_length
+
+instance Base Data where
+  fromByteString bs = (Nothing, bs)
+
+instance HasSelector Data where
+  selector_length = _selector_length
+  selector_bytes  = _selector_bytes
+
+instance Class Data where  
+  hyper_linkage_type    = _hyper_linkage_type
+  link_destination_type = _link_destination_type 
+  link_destination      = _link_destination
+  private_data          = _private_data 
 
 data LinkDestination =
   MkLinkService         LinkServiceInfo

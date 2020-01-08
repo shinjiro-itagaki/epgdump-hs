@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Descriptor.Common where
-import Data.Word(Word64, Word32, Word16, Word8)  
+import Data.Word(Word64, Word32, Word16, Word8)
 import Data.ByteString(ByteString)
 
 class Descriptor a where
@@ -9,7 +9,7 @@ class Descriptor a where
   descriptor_length :: a -> Word8
 
 class (Descriptor a) => Base a where
-  fromByteString :: ByteString -> (a,ByteString)
+  fromByteString :: ByteString -> (Maybe a,ByteString)
 
 class HasName a where
   name :: a -> String

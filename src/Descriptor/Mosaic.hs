@@ -1,20 +1,44 @@
-module Descriptor.Mosaic where
-import Descriptor.Common(Base,HasComponentTag,TOSData,HasOriginalNetworkID(..),TOS(..),HasServiceID(..),HasEventID(..))
+module Descriptor.Mosaic (
+  Class(..)
+  ,Data
+  ) where
+import Descriptor.Common(Base(..),HasComponentTag(..),TOSData(..),HasOriginalNetworkID(..),TOS(..),HasServiceID(..),HasEventID(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 
-class (Base a) => Mosaic a where
+class (Base a) => Class a where
   mosaic_entry_point :: a -> Bool
   number_of_horizontal_elementary_cells :: a -> Word8
 -- reserved_future_use :: a -> Word8
   number_of_vertical_elementary_cells :: a -> Word8
   mosaic_items :: a -> [MosaicItem]
 
+data Data = MkData {
+  _descriptor_tag                        :: Word8,
+  _descriptor_length                     :: Word8,
+  _mosaic_entry_point                    :: Bool,
+  _number_of_horizontal_elementary_cells :: Word8,
+  _number_of_vertical_elementary_cells   :: Word8,
+  _mosaic_items                          :: [MosaicItem]
+  }
+
+instance Descriptor Data where
+  descriptor_tag    = _descriptor_tag
+  descriptor_length = _descriptor_length
+
+instance Base Data where
+  fromByteString bs = (Nothing, bs)
+
+instance Class Data where
+  mosaic_entry_point                    = _mosaic_entry_point
+  number_of_horizontal_elementary_cells = _number_of_horizontal_elementary_cells
+  number_of_vertical_elementary_cells   = _number_of_vertical_elementary_cells
+  mosaic_items                          = _mosaic_items
 
 data ElementaryCellField = MkElementaryCellField {
 --  reserved_future_use
   elementary_cell_id :: Word8
-    }
+  }
 
 -- class TOS a => MosaicItem a where
 data MosaicItem = MkMosaicItem {

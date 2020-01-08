@@ -7,15 +7,15 @@ import Data.ByteString(ByteString)
   
 class (SubDescriptor a, HasName a) => Name a where
 
-data NameData = MkNameData {
+data Data = MkData {
   _name_descriptor_tag    :: Word8,
   _name_descriptor_length :: Word8,
   _name_name              :: String
   }
   
-instance HasName NameData where
+instance HasName Data where
   name = _name_name
 
-instance Descriptor NameData where
+instance Descriptor Data where
   descriptor_tag = _name_descriptor_tag
   descriptor_length = _name_descriptor_length

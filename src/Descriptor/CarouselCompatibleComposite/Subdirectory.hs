@@ -4,21 +4,21 @@ import Descriptor.Common(Base(..),Descriptor(..),HasText(..),HasName(..),HasText
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 
-class (SubDescriptor a) => Subdirectory a where
+class (SubDescriptor a) => Class a where
   subdirectory_path :: a -> String
 
-data SubdirectoryData = MkSubdirectoryData {
+data Data = MkData {
   _sd_descriptor_tag    :: Word8,
   _sd_descriptor_length :: Word8,
   _subdirectory_path    :: String
   }
 
-instance Descriptor SubdirectoryData where
+instance Descriptor Data where
   descriptor_tag = _sd_descriptor_tag
   descriptor_length = _sd_descriptor_length
 
 
-instance SubDescriptor SubdirectoryData where
+instance SubDescriptor Data where
 
-instance Subdirectory SubdirectoryData where
+instance Class Data where
   subdirectory_path = _subdirectory_path
