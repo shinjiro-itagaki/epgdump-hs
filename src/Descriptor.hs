@@ -28,6 +28,10 @@ class HasText a where
 class HasText a => HasTextAndLen a where
   text_length :: a -> Word8
 
+class HasTitle a where
+  title :: a -> String
+  title_length :: a -> Word8
+
 class Base a => ConditionalAccess a where
   
 class Base a => Copyright a where
@@ -76,17 +80,23 @@ class (Base a) => CountryAvailability a where
 --  reserved_future_use :: a -> Word8
   country_codes :: a -> [CountryCode]
 
-class (HasServiceID a) => TOS a where
-  transport_stream_id :: a -> Word16
+class HasOriginalNetworkID a where
   original_network_id :: a -> Word16
+
+class (HasServiceID a, HasOriginalNetworkID a) => TOS a where
+  transport_stream_id :: a -> Word16
+--  original_network_id :: a -> Word16
 --  service_id          :: a -> Word16
+
+class HasPrivateDataBytes a where
+  private_data_bytes :: a -> [Word8]
   
-class (Base a, TOS a) => Linkage a where
+class (Base a, TOS a, HasPrivateDataBytes a) => Linkage a where
 --  transport_stream_id :: a -> Word16
 --  original_network_id :: a -> Word16
 --  service_id          :: a -> Word16
   linkage_type        :: a -> Word8
-  private_data_bytes  :: a -> [Word8]
+--  private_data_bytes  :: a -> [Word8]
 
 class Base a => NVOD_Reference a where
   references :: a -> [TOSData]
@@ -138,8 +148,10 @@ data TOSData = MkTOSData {
   __service_id :: Word16
     }
 
-instance TOS TOSData where
+instance HasOriginalNetworkID TOSData where
   original_network_id = _original_network_id
+
+instance TOS TOSData where
   transport_stream_id = _transport_stream_id
   
 instance HasServiceID TOSData where  
@@ -164,8 +176,10 @@ data MosaicItem = MkMosaicItem {
 class HasEventID a where
   event_id :: a -> Word16
 
-instance TOS MosaicItem where
+instance HasOriginalNetworkID MosaicItem where
   original_network_id = original_network_id . tosdata
+
+instance TOS MosaicItem where
   transport_stream_id = transport_stream_id . tosdata
   
 instance HasServiceID MosaicItem where  
@@ -221,12 +235,15 @@ class Base a => ParentalRating a where
 class (Base a) => HierarchicalTransmission a where
   quality_level :: a -> Bool
   reference_pid :: a -> Word16
+
+class HasUserDefined a where
+  user_defined                   :: a -> Word8
   
-class ComponentControl a where
+class (HasUserDefined a) => ComponentControl a where
   digital_recording_control_data :: a -> Word8
   maximum_bitrate_flag           :: a -> Bool
 --  reserved_future_use            :: a -> Bool
-  user_defined                   :: a -> Word8
+--  user_defined                   :: a -> Word8
   maximum_bitrate                :: a -> Maybe Word8
 
 data ComponentControlData = MkComponentControl {
@@ -240,8 +257,10 @@ data ComponentControlData = MkComponentControl {
 instance ComponentControl ComponentControlData where
   digital_recording_control_data = _digital_recording_control_data
   maximum_bitrate_flag           = _maximum_bitrate_flag
-  user_defined                   = _user_defined
   maximum_bitrate                = _maximum_bitrate
+  
+instance HasUserDefined ComponentControlData where
+  user_defined                   = _user_defined
 
 instance HasComponentTag ComponentControlData where
   component_tag = _component_tag
@@ -333,8 +352,10 @@ data LinkServiceInfo = MkLinkServiceInfo {
   _link_service_info_service_id :: Word16
   } -- 0x01
 
-instance TOS LinkServiceInfo where
+instance HasOriginalNetworkID LinkServiceInfo where
   original_network_id = _link_service_info_original_network_id
+
+instance TOS LinkServiceInfo where
   transport_stream_id = _link_service_info_transport_stream_id
   
 instance HasServiceID LinkServiceInfo where  
@@ -347,8 +368,10 @@ data LinkEventInfo = MkLinkEventInfo {
   _link_event_info_event_id :: Word16
   } -- 0x02
 
-instance TOS LinkEventInfo where
+instance HasOriginalNetworkID LinkEventInfo where
   original_network_id = _link_event_info_original_network_id
+
+instance TOS LinkEventInfo where
   transport_stream_id = _link_event_info_transport_stream_id
   
 instance HasServiceID LinkEventInfo where  
@@ -372,8 +395,10 @@ data LinkModuleInfo  = MkLinkModuleInfo {
   _link_module_info_module_id :: Word16
     } -- 0x03
 
-instance TOS LinkModuleInfo where
+instance HasOriginalNetworkID LinkModuleInfo where
   original_network_id = _link_module_info_original_network_id
+
+instance TOS LinkModuleInfo where
   transport_stream_id = _link_module_info_transport_stream_id
   
 instance HasServiceID LinkModuleInfo where  
@@ -395,8 +420,10 @@ data LinkContentInfo = MkLinkContentInfo {
   _link_content_info_content_id :: Word32
   } -- 0x04
 
-instance TOS LinkContentInfo where
+instance HasOriginalNetworkID LinkContentInfo where
   original_network_id = _link_content_info_original_network_id
+
+instance TOS LinkContentInfo where
   transport_stream_id = _link_content_info_transport_stream_id
   
 instance HasServiceID LinkContentInfo where  
@@ -414,8 +441,10 @@ data LinkContentModuleInfo = LinkContentModuleInfo {
   _link_content_module_module_id :: Word16
   } -- 0x05
 
-instance TOS LinkContentModuleInfo where
+instance HasOriginalNetworkID LinkContentModuleInfo where
   original_network_id = _link_content_module_original_network_id
+
+instance TOS LinkContentModuleInfo where
   transport_stream_id = _link_content_module_transport_stream_id
   
 instance HasServiceID LinkContentModuleInfo where  
@@ -440,14 +469,14 @@ data LinkStoredContentInfo = MkLinkStoredContentInfo {
   } -- 0x07
 
 data LinkDestination =
-  MkService         LinkServiceInfo
-  | MkEvent         LinkEventInfo
-  | MkModule        LinkModuleInfo
-  | MkContent       LinkContentInfo
-  | MkContentModule LinkContentModuleInfo
-  | MkErtNode       LinkErtNodeInfo
-  | MkStoredContent LinkStoredContentInfo
-  
+  MkLinkService         LinkServiceInfo
+  | MkLinkEvent         LinkEventInfo
+  | MkLinkModule        LinkModuleInfo
+  | MkLinkContent       LinkContentInfo
+  | MkLinkContentModule LinkContentModuleInfo
+  | MkLinkErtNode       LinkErtNodeInfo
+  | MkLinkStoredContent LinkStoredContentInfo
+
 class (Base a, HasSelector a) => HyperLink a where
   hyper_linkage_type :: a -> Word8
   link_destination_type :: a -> Word8 -- 
@@ -492,51 +521,254 @@ class Base a => VideoDecodeControl a where
 --  reserved_future_use :: a -> Word8 -- 2
   
 class Base a => TerrestrialDeliverySystem a where
-  
+  area_code :: a -> AreaCode
+  guard_interval :: a -> Word8
+  transmission_mode :: a -> Word8
+  frequencies :: a -> [Word16]
+
 class Base a => PartialReception a where
+  service_ids :: a -> [Word16]
   
 class Base a => Series a where
+  series_id :: a -> Word16
+  repeat_label :: a -> Word8
+  program_pattern :: a -> Word8
+  expire_date_valid_flag :: a -> Bool
+  expire_date :: a -> Word16
+  episode_number :: a -> Word16
+  last_episode_number :: a -> Word16
+  series_name :: a -> String
+
+data Event = MkEvent {
+  _event_service_id :: Word16,
+  _event_event_id :: Word16
+  }
   
-class Base a => EventGroup a where
+data EventGroupData = MkEventGroupData {
+  _event_group_original_network_id :: Word16,
+  _event_group_transport_stream_id :: Word16,
+  _event_group_service_id :: Word16,
+  _event_group_event_id :: Word16
+  }
+
+instance HasOriginalNetworkID EventGroupData where
+  original_network_id = _event_group_original_network_id
+
+instance TOS EventGroupData where
+  transport_stream_id = _event_group_transport_stream_id
   
-class Base a => SI_TransmissionParameter a where
+instance HasServiceID EventGroupData where
+  service_id = _event_group_service_id
+
+instance HasEventID EventGroupData where
+  event_id = _event_group_event_id
+
+class HasMaybePrivateDataBytes a where
+  maybe_private_data_bytes :: a -> Maybe [Word8]
   
-class Base a => BroadcasterName a where
+class (Base a, HasMaybePrivateDataBytes a) => EventGroup a where
+  group_type :: a -> Word8
+  event_count :: a -> Word8
+  maybe_event :: a -> Maybe [Event]
+  maybe_group_data :: a -> Maybe [EventGroupData]
+--  maybe_private_data_bytes :: a -> Maybe [Word8]  
+
+data SI_TableDescription = MkSI_TableDescription{
+  table_id :: Word8,
+  table_description_length :: Word8,
+  table_description_bytes :: [Word8]
+  }
+
+class Base a => SI_Parameter a where
+  parameter_version :: a -> Word8
+  update_time :: a -> Word16
+  table_descriptions :: a -> [SI_TableDescription]
+  
+class (Base a, HasName a) => BroadcasterName a where
+
+data CA_Unit = MkCA_Unit {
+  ca_unit_id :: Word8,
+  num_of_component :: Word8,
+  component_tags :: [Word8]
+  }
+  
+data ComponentGroupData = MkComponentGroupData {
+  component_group_id :: Word8,
+  num_of_ca_unit :: Word8,
+  ca_units :: [CA_Unit],
+  total_bit_rate :: Maybe Word8,
+  _component_group_data_text_length :: Word8,
+  _component_group_data_text :: String
+  }
+
+instance HasText ComponentGroupData where
+  text = _component_group_data_text
+
+instance HasTextAndLen ComponentGroupData where
+  text_length = _component_group_data_text_length
+  
   
 class (Base a, HasText a, HasComponent a) => ComponentGroup a where
---  reserved_future_use :: a -> Word8
---  stream_content :: a -> Word8
---  component_type :: a -> Word8
---  component_tag :: a -> Word8
---  iso_639_language_code :: a -> LangCode
---  text :: a -> String
+  component_group_type :: a -> Word8
+  total_bit_rate_flag :: a -> Bool
+  num_of_group :: a -> Word8
+  groups :: a -> [ComponentGroupData]
   
+class (Base a, SI_Parameter a) => SI_Prime_TS a where
+--  parameter_version :: a -> Word8
+--  update_time :: a -> Word16
+  si_prime_ts_network_id :: a -> Word16
+  si_prime_transport_stream_id :: a -> Word16
+--  table_descriptions :: [SI_TableDescription]
   
-class Base a => SI_Prime_TS a where
+class (Base a, HasTitle a, HasTextAndLen a) => BoardInformation a where
+--  title :: a -> String
+--  title_length :: a -> Word8
+
+data LDT_LinkDesc = MkLDT_LinkDesc {
+  description_id :: Word16,
+--  reserved_future_use :: Word8,
+  description_type :: Word8,
+  _LDT_LinkDesc_user_defined :: Word8
+  }
+
+instance HasUserDefined LDT_LinkDesc where
+  user_defined = _LDT_LinkDesc_user_defined
   
-class Base a => BoardInformation a where
-  
-class Base a => LDT_Link a where
+class (Base a, TOS a) => LDT_Link a where
+  original_service_id :: a -> Word16
+  original_service_id = service_id
+  descriptions :: a -> [LDT_LinkDesc]
   
 class Base a => ConnectedTransmission a where
+  connected_transmission_group_id :: a -> Word16
+  segment_type :: a -> Word8
+  modulation_type_a :: a -> Word8
+  modulation_type_b :: a -> Word8
+--  reserved_future_use :: Word8,
+  additional_connected_transmission_infos :: a -> [Word8]
+
+data TransmissionType = MkTransmissionType {
+  transmission_type_info :: Word8,
+  num_of_service :: Word8,
+  services :: [Word16]
+  }
   
 class Base a => TS_Information a where
+  remote_control_key_id :: a -> Word8
+  length_of_ts_name :: a -> Word8
+  transmission_type_count :: a -> Word8
+  ts_name :: a -> String
+  transmission_types :: a -> [TransmissionType]
+
+data BroadcasterAffiliation = MkBroadcasterAffiliation {
+  affiliation_id :: Word8
+  }
+
+data BroadcasterInfo = MkBroadcasterInfo {
+  broadcaster_id :: Word8,
+  _broadcaster_original_network_id :: Word16
+  }  
+
+instance HasOriginalNetworkID BroadcasterInfo where
+  original_network_id = _broadcaster_original_network_id
+
+class (HasPrivateDataBytes a) => BroadcasterCommon a where
+  number_of_broadcaster_id_loop :: a -> Word8
+  info :: a -> [BroadcasterInfo]
+--  private_data_bytes :: a -> [Word8]
+
+data Broadcaster =
+  MkTV {
+  terrestrial_broadcaster_id :: Word16,
+  number_of_affiliation_id_loop :: Word8,
+  _tv_number_of_broadcaster_id_loop :: Word8,
+  affiliation_ids :: [Word8],
+  _tv_info :: [BroadcasterInfo],
+  _tv_private_data_bytes :: [Word8]
+  } |
+  MkSd {
+  terrestrial_sound_broadcaster_id :: Word16,
+  number_of_sound_broadcast_affiliation_id_loop :: Word8,
+  _sd_number_of_broadcaster_id_loop :: Word8,
+  sound_broadcast_affiliation_ids :: [Word8],
+  _sd_info :: [BroadcasterInfo],
+  _sd_private_data_bytes :: [Word8]
+  }
+
+instance HasPrivateDataBytes Broadcaster where
+  private_data_bytes (MkTV {_tv_private_data_bytes = x}) = x
+  private_data_bytes (MkSd {_sd_private_data_bytes = x}) = x
+
+instance BroadcasterCommon Broadcaster where
+  number_of_broadcaster_id_loop (MkTV {_tv_number_of_broadcaster_id_loop = x}) = x
+  number_of_broadcaster_id_loop (MkSd {_sd_number_of_broadcaster_id_loop = x}) = x
+  info (MkTV {_tv_info = x}) = x
+  info (MkSd {_sd_info = x}) = x
   
-class Base a => ExtensionBroadcaster a where
+class (Base a, HasMaybePrivateDataBytes a) => ExtendedBroadcaster a where
+  broadcaster_type :: a -> Word8
+-- reserved_future_use
+  maybe_broadcaster :: a -> Maybe Broadcaster
   
 class Base a => LogoTransmission a where
+  logo_transmission_type :: a -> Word8
+  logo_id :: a -> Maybe Word16
+  logo_version :: a -> Maybe Word16
+  download_data_id :: a -> Maybe Word16
+  logo_char :: a -> Maybe String
   
 class Base a => ContentAvailability a where
+  copy_restriction_mode :: a -> Bool
+  image_constraint_token :: a -> Bool
+  retention_mode :: a -> Bool
+  retention_state :: a -> Word8
+  encryption_mode :: a -> Bool
+-- reserved_future_use N  
   
 class Base a => CarouselCompatibleComposite a where
+  -- sub_scriptor
   
 class Base a => ConditionalPlayback a where
   
 class Base a => AVC_Video a where
+  profile_idc :: a -> Word8
+  constraint_set0_flag :: a -> Bool
+  constraint_set1_flag :: a -> Bool  
+  constraint_set2_flag :: a -> Bool
+  avc_compatible_flags :: a -> Word8
+  level_idc :: a -> Word8
+  avc_still_present :: a -> Bool
+  avc_24_hour_picture_flag :: a -> Bool
+--  reserved :: a -> Word8
   
 class Base a => AVC_Timing_HRD a where
+  hrd_management_valid_flag :: a -> Bool
+--  reserved :: a -> Word8
+  picture_and_timing_info_present :: a -> Bool
+  _90kHz_flag :: a -> Maybe Bool
+-- reserved :: a -> Word8
+  _N :: a -> Maybe Word32
+  _K :: a -> Maybe Word32
+  num_units_in_tick :: a -> Word32
+  fixed_farme_rate_flag :: a -> Bool
+  temporal_poc_flag :: a -> Bool
+  picture_to_display_conversion_flag :: a -> Bool
+-- reserved :: a -> Word8
+
+data ServicePair = ServicePair {
+  primary_service_id :: Word16,
+  secondary_service_id :: Word16
+  }
+
+data ServiceGroupType = Simultaneous Word8 | Undefined Word8
   
-class Base a => ServiceGroup a where
+class (Base a, HasMaybePrivateDataBytes a) => ServiceGroup a where
+  service_group_type :: a -> ServiceGroupType
+--  reserved_future_use
+  service_group_data :: a -> Maybe [ServicePair]
+--  maybe_private_data_bytes :: a -> Maybe [Word8]
+  
 
 class Base a => SystemManagement a where
   broadcasting_flag :: a -> Word8
