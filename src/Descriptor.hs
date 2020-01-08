@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Descriptor (
+  Descriptor(..),
+  SubDescriptor(..),
   Base(..),
   HasName(..),
   LangCode,
@@ -123,7 +125,28 @@ module Descriptor (
   ExtendedBroadcaster(..),
   LogoTransmission(..),
   ContentAvailability(..),
-  CarouselCompatibleComposite(..)
+  Type(..),
+  TypeData,
+  Name(..),
+  NameData,
+  Expire(..),
+  ExpireData,
+  ProviderPrivate(..),
+  ProviderPrivateData,
+  StoreRoot(..),
+  StoreRootData,
+  Subdirectory(..),
+  SubdirectoryData,
+  Title(..),
+  TitleData,
+  SubScriptor(..),
+  CarouselCompatibleComposite(..),
+  ConditionalPlayback(..),
+  AVC_Video(..),
+  AVC_Timing_HRD(..),
+  ServicePair(..),
+  ServiceGroupType(..),
+  SystemManagement(..)
   ) where
 
 import Data.Word(Word64, Word32, Word16, Word8)  
@@ -133,6 +156,8 @@ import qualified Data.ByteString as BS
 class Descriptor a where
   descriptor_tag    :: a -> Word8
   descriptor_length :: a -> Word8
+
+class Descriptor a => SubDescriptor a where
   
 class (Descriptor a) => Base a where
   fromByteString :: ByteString -> (a,ByteString)
@@ -852,7 +877,7 @@ class Base a => ContentAvailability a where
   encryption_mode :: a -> Bool
 -- reserved_future_use N  
 
-class (Descriptor a, HasText a) => Type a where
+class (SubDescriptor a, HasText a) => Type a where
 
 data TypeData = MkTypeData {
   _type_text :: String,
@@ -867,7 +892,7 @@ instance Descriptor TypeData where
 instance HasText TypeData where
   text = _type_text
   
-class (Descriptor a, HasName a) => Name a where
+class (SubDescriptor a, HasName a) => Name a where
 
 data NameData = MkNameData {
   _name_name :: String,
@@ -882,7 +907,7 @@ instance Descriptor NameData where
   descriptor_tag = _name_descriptor_tag
   descriptor_length = _name_descriptor_length
 
-class (Descriptor a) => Expire a where
+class (SubDescriptor a) => Expire a where
   time_mode :: a -> Word8
   mjd_jst_time :: a -> Maybe Word64
 --  reserved_future_use
@@ -900,12 +925,14 @@ instance Descriptor ExpireData where
   descriptor_tag = _expire_descriptor_tag
   descriptor_length = _expire_descriptor_length
 
+instance SubDescriptor ExpireData
+
 instance Expire ExpireData where
   time_mode = _expire_time_mode
   mjd_jst_time = _expire_mjd_jst_time
   passed_seconds = _expire_passed_seconds
 
-class (Descriptor a) => ProviderPrivate a where
+class (SubDescriptor a) => ProviderPrivate a where
   private_scope_type :: a -> Word8
   scope_identifier :: a -> Word32
   private_bytes :: a -> [Word8]
@@ -922,12 +949,14 @@ instance Descriptor ProviderPrivateData where
   descriptor_tag = _pp_descriptor_tag
   descriptor_length = _pp_descriptor_length
 
+instance SubDescriptor ProviderPrivateData
+
 instance ProviderPrivate ProviderPrivateData where
   private_scope_type = _pp_private_scope_type
   scope_identifier = _pp_scope_identifier
   private_bytes = _pp_private_bytes
 
-class (Descriptor a) => StoreRoot a where
+class (SubDescriptor a) => StoreRoot a where
   update_type :: a -> Bool
 -- reserved :: Word8
   store_root_path :: a -> String
@@ -943,11 +972,13 @@ instance Descriptor StoreRootData where
   descriptor_tag = _sr_descriptor_tag
   descriptor_length = _sr_descriptor_length
 
+instance SubDescriptor StoreRootData
+
 instance StoreRoot StoreRootData where
   update_type = _sr_update_type
   store_root_path = _sr_store_root_path
 
-class (Descriptor a) => Subdirectory a where
+class (SubDescriptor a) => Subdirectory a where
   subdirectory_path :: a -> String
 
 data SubdirectoryData = MkSubdirectoryData {
@@ -960,10 +991,12 @@ instance Descriptor SubdirectoryData where
   descriptor_tag = _sd_descriptor_tag
   descriptor_length = _sd_descriptor_length
 
+instance SubDescriptor SubdirectoryData where
+
 instance Subdirectory SubdirectoryData where
   subdirectory_path = _subdirectory_path
   
-class (Descriptor a,HasText a, HasISO_639_LanguageCode a) => Title a where
+class (SubDescriptor a,HasText a, HasISO_639_LanguageCode a) => Title a where
 
 data TitleData = MkTitleData {
   _title_descriptor_tag    :: Word8,
