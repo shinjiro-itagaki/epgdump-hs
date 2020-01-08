@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3b621a121d0d048b3b6e481fcccac0478a6ef46a44fd7762c495d72e0ca59c71
+-- hash: 1cbecdf809816a2f18fb845f83c69a804b9ffd8d7f933a9fc149ccbdecc398f0
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -28,8 +28,70 @@ source-repository head
 library
   exposed-modules:
       Descriptor
-      EIT
+      Descriptor.AudioComponent
+      Descriptor.AVC_Timing_HRD
+      Descriptor.AVC_Video
+      Descriptor.BoardInformation
+      Descriptor.BouquetName
+      Descriptor.BroadcasterName
+      Descriptor.CAIdentifier
+      Descriptor.CarouselCompatibleComposite
+      Descriptor.CarouselCompatibleComposite.Common
+      Descriptor.CarouselCompatibleComposite.Expire
+      Descriptor.CarouselCompatibleComposite.Name
+      Descriptor.CarouselCompatibleComposite.ProviderPrivate
+      Descriptor.CarouselCompatibleComposite.StoreRoot
+      Descriptor.CarouselCompatibleComposite.Subdirectory
+      Descriptor.CarouselCompatibleComposite.Title
+      Descriptor.CarouselCompatibleComposite.Type
+      Descriptor.Common
+      Descriptor.Component
+      Descriptor.ComponentControl
+      Descriptor.ComponentGroup
+      Descriptor.ConditionalAccess
+      Descriptor.ConditionalPlayback
+      Descriptor.ConnectedTransmission
+      Descriptor.Content
+      Descriptor.ContentAvailability
+      Descriptor.Copyright
+      Descriptor.CountryAvailability
+      Descriptor.DataComponent
+      Descriptor.DataContents
+      Descriptor.DigitalCopyControl
+      Descriptor.EmergencyInformation
+      Descriptor.EventGroup
+      Descriptor.ExtendedBroadcaster
+      Descriptor.ExtendedEvent
+      Descriptor.HierarchicalTransmission
+      Descriptor.HyperLink
+      Descriptor.LDT_Link
+      Descriptor.Linkage
+      Descriptor.LocalTimeOffset
+      Descriptor.LogoTransmission
+      Descriptor.Mosaic
+      Descriptor.NetworkName
+      Descriptor.NVOD_Reference
+      Descriptor.ParentalRating
+      Descriptor.PartialReception
+      Descriptor.SatelliteDeliverySystem
+      Descriptor.Series
+      Descriptor.Service
+      Descriptor.ServiceGroup
+      Descriptor.ServiceList
+      Descriptor.ShortEvent
+      Descriptor.SI_Parameter
+      Descriptor.SI_Prime_TS
+      Descriptor.StreamIdentifier
+      Descriptor.Stuffing
+      Descriptor.SystemManagement
+      Descriptor.TargetRegion
+      Descriptor.TerrestrialDeliverySystem
+      Descriptor.TimeShiftedEvent
+      Descriptor.TimeShiftedService
+      Descriptor.TS_Information
+      Descriptor.VideoDecodeControl
       Lib
+      SITables
       TS
   other-modules:
       Paths_epgdump_hs
