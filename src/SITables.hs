@@ -4,23 +4,25 @@ module SITables(
   ) where
   
 import SITables.Common(CommonHeader(..) ,CommonHeader2(..))
-import SITables.BAT
-import SITables.BIT
-import SITables.Common
-import SITables.EIT
-import SITables.LDT
-import SITables.NBIT
-import SITables.NIT
-import SITables.PCAT
-import SITables.RST
-import SITables.SDT
-import SITables.ST
-import SITables.TDT
-import SITables.TOT
+import qualified SITables.BAT
+import qualified SITables.BIT
+import qualified SITables.Common
+import qualified SITables.EIT
+import qualified SITables.LDT
+import qualified SITables.NBIT
+import qualified SITables.NIT
+import qualified SITables.PCAT
+import qualified SITables.RST
+import qualified SITables.SDT
+import qualified SITables.ST
+import qualified SITables.TDT
+import qualified SITables.TOT
+
+import Data.ByteString(ByteString)
 
 data Data =
   Other
-  | None
+  | Null
   | BAT  SITables.BAT.Data
   | BIT  SITables.BIT.Data
   | EIT  SITables.EIT.Data
@@ -34,3 +36,5 @@ data Data =
   | TDT  SITables.TDT.Data
   | TOT  SITables.TOT.Data
   
+parse :: ByteString -> (Data,ByteString)
+parse bytes = (Null,bytes)

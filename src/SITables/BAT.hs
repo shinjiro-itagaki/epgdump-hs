@@ -1,12 +1,20 @@
 module SITables.BAT (
   Data,
   Class(..),
-  Item
+  Item,
+  pids,
+  table_ids
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
-import Common(HasOriginalNetworkID(..))
+import Common(HasOriginalNetworkID(..),HasParser(..),ParseResult(..))
 import qualified Descriptor
+
+pids :: [Word64]
+pids = [0x0011]
+
+table_ids :: [Word32]
+table_ids = [0x4A]
 
 class (CommonHeader a ,CommonHeader2 a, HasDescriptors a) => Class a where
   bouquet_id                   :: a -> Word16
@@ -72,3 +80,6 @@ instance HasOriginalNetworkID Item where
 
 instance HasDescriptors Item where
   descriptors = __descriptors
+
+instance HasParser Data where
+  parse bytes = NotMatch

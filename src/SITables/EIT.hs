@@ -1,7 +1,9 @@
 module SITables.EIT(
   Data,
   Class(..),
-  Item  
+  Item,
+  pids,
+  table_ids
   ) where
 
 import Data.Word(Word64, Word32, Word16, Word8)
@@ -9,6 +11,12 @@ import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
 import Common(HasOriginalNetworkID(..))
 import Descriptor(HasServiceID(..))
 import qualified Descriptor
+
+pids :: [Word64]
+pids = [0x0012,0x0026,0x0027]
+
+table_ids :: [Word32]
+table_ids = [0x4E,0x4F] ++ [0x50..0x5F] ++ [0x60..0x6F]
 
 class (CommonHeader a ,CommonHeader2 a, HasOriginalNetworkID a, HasServiceID a) => Class a where
   transport_stream_id         :: a -> Word16

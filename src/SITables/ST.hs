@@ -1,12 +1,27 @@
 module SITables.ST(
   Data(data_bytes),
   Class(..),
+  pids, table_ids
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(CommonHeader(..))
+import SITables.Common(CommonHeader(..),MatchPID(..))
 import Common(HasOriginalNetworkID(..))
 import Descriptor(HasServiceID(..),HasEventID(..))
 import qualified Descriptor
+
+data PIDS = Exclude [Word64]
+
+instance MatchPID PIDS where
+  -- 仕様書にはExclude 0x0000,0x0001,0x0014 と書かれており、３つ以外の値という意味で合っているのかよくわからないため、とりあえずFalseを返すようにしておく
+  match_pid (Exclude (x:[])) y = False
+--  match_pid (Exclude (x:xs)) y = if x == y then True else match_pid xs y
+-- pids, table_ids
+
+pids :: PIDS
+pids = Exclude [0x0000,0x0001,0x0014]
+
+table_ids :: [Word32]
+table_ids = [0x72]
 
 class (CommonHeader a) => Class a where
 

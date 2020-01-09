@@ -1,13 +1,21 @@
 module SITables.PCAT (
   Data,
   Class(..),
-  Item
+  Item,
+  pids,
+  table_ids
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..),Schedule(..))
 import Common(HasOriginalNetworkID(..))
 import Descriptor(HasServiceID(..),HasEventID(..))
 import qualified Descriptor
+
+pids :: [Word64]
+pids = [0x0022]
+
+table_ids :: [Word32]
+table_ids = [0xC2]
 
 class (CommonHeader a ,CommonHeader2 a, HasServiceID a, HasOriginalNetworkID a) => Class a where
   transport_stream_id :: a -> Word16

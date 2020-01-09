@@ -1,13 +1,12 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module SITables.Common(
   CommonHeader(..)
   ,CommonHeader2(..)
   ,HasDescriptors(..)
-  -- TransportStream(
-  --     transport_stream_id,
-  --     original_network_id,
-  --     transport_descriptors_length
-  --     )
   ,Schedule(..)
+  ,MatchPID(..)
+  ,MatchTableID(..)
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
 import Descriptor
@@ -39,4 +38,16 @@ class Schedule a where
   start_time :: a -> Word64
   duration   :: a -> Word32
 
+class MatchPID a where
+  match_pid :: a -> Word64 -> Bool
 
+class MatchTableID a where
+  match_table_id :: a -> Word32 -> Bool
+
+instance MatchPID [Word64] where
+  match_pid (x:[]) y = False
+  match_pid (x:xs) y = if x == y then True else match_pid xs y
+
+instance MatchTableID [Word32] where
+  match_table_id (x:[]) y = False
+  match_table_id (x:xs) y = if x == y then True else match_table_id xs y

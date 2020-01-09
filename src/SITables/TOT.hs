@@ -1,11 +1,20 @@
-module SITables.TOT where
+module SITables.TOT (
+  Data,
+  Class(..),
+  pids, table_ids    
+  ) where
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
 import Common(HasOriginalNetworkID(..))
 import Descriptor(HasServiceID(..))
 import qualified Descriptor
 import qualified SITables.TDT
-                 
+
+pids :: [Word64]
+pids = [0x0014]
+
+table_ids :: [Word32]
+table_ids = [0x73]
 
 class (SITables.TDT.Class a, HasDescriptors a) => Class a where
 -- reserved

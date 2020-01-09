@@ -1,8 +1,19 @@
-module SITables.SDT where
+module SITables.SDT(
+  Data,
+  Class(..),
+  pids, table_ids
+  ) where
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
 import Common(HasOriginalNetworkID(..))
 import qualified Descriptor
+
+-- pids, table_ids
+pids :: [Word64]
+pids = [0x0011]
+
+table_ids :: [Word32]
+table_ids = [0x42,0x46]
 
 class (CommonHeader a ,CommonHeader2 a, HasOriginalNetworkID a) => Class a where
   transport_stream_id :: a -> Word16

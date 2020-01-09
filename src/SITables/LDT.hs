@@ -1,13 +1,21 @@
 module SITables.LDT (
   Data,
   Class(..),
-  Item
+  Item,
+  pids,
+  table_ids
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..),Schedule(..))
 import Common(HasOriginalNetworkID(..))
 import Descriptor(HasServiceID(..),HasEventID(..))
 import qualified Descriptor
+
+pids :: [Word64]
+pids = [0x0025]
+
+table_ids :: [Word32]
+table_ids = [0xC7]
 
 class (CommonHeader a ,CommonHeader2 a, HasOriginalNetworkID a) => Class a where
   original_service_id :: a -> Word16

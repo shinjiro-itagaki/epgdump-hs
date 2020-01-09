@@ -8,6 +8,12 @@ import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
 import Common(HasOriginalNetworkID(..))
 import qualified Descriptor
 
+pids :: [Word64]
+pids = [0x0010]
+
+table_ids :: [Word32]
+table_ids = [0x40,0x41]
+
 class (CommonHeader a ,CommonHeader2 a, HasDescriptors a) => Class a where
   network_id                   :: a -> Word16
   network_descriptors_length   :: a -> Word16
