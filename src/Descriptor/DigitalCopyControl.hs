@@ -2,7 +2,8 @@ module Descriptor.DigitalCopyControl (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),TOS(..),HasOriginalNetworkID(..),HasPrivateDataBytes(..),HasServiceID(..),Descriptor(..),HasUserDefined(..))
+import Common(HasOriginalNetworkID(..))
+import Descriptor.Common(Base(..),TOS(..),HasPrivateDataBytes(..),HasServiceID(..),Descriptor(..),HasUserDefined(..))
 import qualified Descriptor.ComponentControl as CC
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)

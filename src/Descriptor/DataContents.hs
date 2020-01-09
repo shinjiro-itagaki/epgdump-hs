@@ -52,7 +52,7 @@ instance HasSelector Data where
   selector_bytes  = _selector_bytes
   
 instance HasDataComponentID Data where
---  data_component_id :: a -> Word16
+  data_component_id = _data_component_id
   
 instance Class Data where
   entry_component      = _entry_component

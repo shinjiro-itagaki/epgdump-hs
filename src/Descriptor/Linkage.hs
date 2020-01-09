@@ -2,7 +2,8 @@ module Descriptor.Linkage (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),TOS(..),HasOriginalNetworkID(..),HasPrivateDataBytes(..),HasServiceID(..),Descriptor(..))
+import Common(HasOriginalNetworkID(..))
+import Descriptor.Common(Base(..),TOS(..),HasPrivateDataBytes(..),HasServiceID(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 

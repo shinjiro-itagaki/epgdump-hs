@@ -1,6 +1,34 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Descriptor.Common where
+module Descriptor.Common(
+  Descriptor(..)
+  ,Base(..)
+  ,HasName(..)
+  ,HasISO_639_LanguageCode(..)
+  ,HasText(..)
+  ,HasTextAndLen(..)
+  ,HasTitle(..)
+  ,HasServiceID(..)
+  ,HasServiceType(..)
+  ,TOS(..)
+  ,HasPrivateDataBytes(..)
+  ,HasReferenceServiceID(..)
+  ,HasEventID(..)
+  ,HasComponentTag(..)
+  ,HasComponent(..)  
+  ,HasCountryCode(..)
+  ,HasUserDefined(..)
+  ,HasDataComponentID(..)
+  ,HasModuleID(..)
+  ,HasContentID(..)
+  ,HasSelector(..)
+  ,HasMaybePrivateDataBytes(..)
+  ,LangCode
+  ,CountryCode
+  ,TOSData
+  ,AreaCode
+  ) where
+import Common(HasOriginalNetworkID(..))
 import Data.Word(Word64, Word32, Word16, Word8)
 import Data.ByteString(ByteString)
 
@@ -37,10 +65,6 @@ class HasServiceID a where
 class HasServiceType a where
   service_type :: a -> Word8
 
-
-class HasOriginalNetworkID a where
-  original_network_id :: a -> Word16
-
 class (HasServiceID a, HasOriginalNetworkID a) => TOS a where
   transport_stream_id :: a -> Word16
 --  original_network_id :: a -> Word16
@@ -48,7 +72,6 @@ class (HasServiceID a, HasOriginalNetworkID a) => TOS a where
 
 class HasPrivateDataBytes a where
   private_data_bytes :: a -> [Word8]
-
 
 class HasReferenceServiceID a where
   reference_service_id :: a -> Word16
@@ -92,7 +115,7 @@ type CountryCode = (Char,Char,Char)
 data TOSData = MkTOSData {
   _original_network_id :: Word16,
   _transport_stream_id :: Word16,
-  __service_id :: Word16
+  _service_id :: Word16
     }
 
 type AreaCode = Word16
@@ -104,4 +127,4 @@ instance TOS TOSData where
   transport_stream_id = _transport_stream_id
   
 instance HasServiceID TOSData where  
-  service_id = __service_id
+  service_id = _service_id

@@ -54,6 +54,7 @@ module Descriptor (
   -- module Descriptor.TimeShiftedEvent,
   -- module Descriptor.TimeShiftedService,
   -- module Descriptor.VideoDecodeControl
+  ,Descriptor.Data(..)
   ) where
 
 import Descriptor.Common
@@ -115,10 +116,10 @@ import Data.ByteString(ByteString)
 import qualified Data.ByteString as BS
 -- import Descriptor.Class(HasOriginalNetworkID,TOS,HasServiceID)
 
-data Desc =
+data Data =
   ParseFailed
-  | MkAVC_Timing_HRD             Descriptor.AVC_Timing_HRD.Data
-  | MkAVC_Video                  Descriptor.AVC_Video.Data
+  | AVC_Timing_HRD               Descriptor.AVC_Timing_HRD.Data
+  | AVC_Video                    Descriptor.AVC_Video.Data
   | AudioComponent               Descriptor.AudioComponent.Data
   | BoardInformation             Descriptor.BoardInformation.Data
   | BouquetName                  Descriptor.BouquetName.Data
@@ -170,5 +171,5 @@ data Desc =
   | TimeShiftedService           Descriptor.TimeShiftedService.Data
   | VideoDecodeControl           Descriptor.VideoDecodeControl.Data
   
-parse :: ByteString -> (Desc,ByteString)
+parse :: ByteString -> (Descriptor.Data,ByteString)
 parse bs = (ParseFailed, bs) 

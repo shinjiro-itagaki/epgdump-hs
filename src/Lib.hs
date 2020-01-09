@@ -16,3 +16,9 @@ import Data.Word(Word64, Word32, Word16, Word8)
 import Data.ByteString.Char8(pack)
 import Data.Bits((.&.),(.|.),shiftL,shiftR,Bits)
 import Data.Char(intToDigit,digitToInt)
+
+-- class Router a where
+--   (||>>) :: (a -> b) -> (a -> b) -> (a -> b)
+--   (||>>) f1 f2 = ()
+
+-- infixr 3 &&

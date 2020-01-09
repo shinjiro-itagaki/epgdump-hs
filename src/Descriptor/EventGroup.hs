@@ -2,7 +2,8 @@ module Descriptor.EventGroup (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),HasMaybePrivateDataBytes(..),TOS(..),HasOriginalNetworkID(..),HasEventID(..),HasServiceID(..),Descriptor(..))
+import Common(HasOriginalNetworkID(..))
+import Descriptor.Common(Base(..),HasMaybePrivateDataBytes(..),TOS(..),HasEventID(..),HasServiceID(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 

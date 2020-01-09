@@ -2,7 +2,8 @@ module Descriptor.Mosaic (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),HasComponentTag(..),TOSData(..),HasOriginalNetworkID(..),TOS(..),HasServiceID(..),HasEventID(..),Descriptor(..))
+import Common(HasOriginalNetworkID(..))
+import Descriptor.Common(Base(..),HasComponentTag(..),TOSData(..),TOS(..),HasServiceID(..),HasEventID(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 

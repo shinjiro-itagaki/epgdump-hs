@@ -2,7 +2,8 @@ module Descriptor.LDT_Link (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),TOS(..),HasServiceID(..),HasOriginalNetworkID(..),HasUserDefined(..),Descriptor(..))
+import Common(HasOriginalNetworkID(..))
+import Descriptor.Common(Base(..),TOS(..),HasServiceID(..),HasUserDefined(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 

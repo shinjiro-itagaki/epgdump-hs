@@ -20,6 +20,7 @@ instance Descriptor Data where
   descriptor_length = _descriptor_length
 
 instance Base Data where
+  fromByteString bs = (Nothing, bs)
 
 instance Class Data where
   stuffing_bytes = _stuffing_bytes

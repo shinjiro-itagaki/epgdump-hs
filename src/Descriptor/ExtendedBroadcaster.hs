@@ -2,7 +2,8 @@ module Descriptor.ExtendedBroadcaster (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),HasMaybePrivateDataBytes(..), HasOriginalNetworkID(..), HasPrivateDataBytes(..),Descriptor(..))
+import Common(HasOriginalNetworkID(..))
+import Descriptor.Common(Base(..),HasMaybePrivateDataBytes(..),HasPrivateDataBytes(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 

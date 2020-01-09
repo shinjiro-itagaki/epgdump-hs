@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e0698fdd2b93e77f16c35cc0b6ca48e2a9cceddce4b8e7ca652cb394d7de109b
+-- hash: d495cec28cb3aa950edb53090953b659256e9471903a111c8ca987945c02c0af
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      Common
       Descriptor
       Descriptor.AudioComponent
       Descriptor.AVC_Timing_HRD
@@ -91,9 +92,19 @@ library
       Descriptor.VideoDecodeControl
       Lib
       SITables
+      SITables.BAT
+      SITables.BIT
       SITables.Common
       SITables.EIT
+      SITables.LDT
+      SITables.NBIT
       SITables.NIT
+      SITables.PCAT
+      SITables.RST
+      SITables.SDT
+      SITables.ST
+      SITables.TDT
+      SITables.TOT
       TS
   other-modules:
       Paths_epgdump_hs

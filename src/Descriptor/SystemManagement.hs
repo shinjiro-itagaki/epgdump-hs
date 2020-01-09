@@ -26,6 +26,7 @@ instance Descriptor Data where
   descriptor_length = _descriptor_length
 
 instance Base Data where
+  fromByteString bs = (Nothing, bs)
 
 instance Class Data where
   broadcasting_flag                  = _broadcasting_flag

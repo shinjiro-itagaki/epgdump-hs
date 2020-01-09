@@ -2,7 +2,7 @@ module Descriptor.ShortEvent (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base,HasISO_639_LanguageCode,HasTextAndLen,LangCode,Descriptor(..),HasTextAndLen(..), HasText(..))
+import Descriptor.Common(Base(..),HasISO_639_LanguageCode(..),HasTextAndLen(..),LangCode,Descriptor(..),HasTextAndLen(..), HasText(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 
@@ -19,7 +19,8 @@ data Data = MkData {
   _event_name_length :: Word8,
   _event_name        :: String,
   _text_length       :: Word8,
-  _text              :: String
+  _text              :: String,
+  _iso_639_language_code :: LangCode
   }
 
 instance Descriptor Data where
@@ -27,8 +28,10 @@ instance Descriptor Data where
   descriptor_length = _descriptor_length
 
 instance Base Data where
-
+  fromByteString bs = (Nothing, bs)
+  
 instance HasISO_639_LanguageCode Data where
+  iso_639_language_code = _iso_639_language_code
 
 instance HasTextAndLen Data where
   text_length = _text_length

@@ -2,14 +2,13 @@ module Descriptor.HyperLink (
   Class(..)
   ,Data
   ) where
+import Common(HasOriginalNetworkID(..))
 import Descriptor.Common(
   Base(..)
   ,HasSelector(..)
-  ,HasOriginalNetworkID(..)
   ,Descriptor(..)
   ,TOS(..)
   ,HasServiceID(..)
-  ,HasOriginalNetworkID(..)
   ,HasEventID(..)
   ,HasComponentTag(..)
   ,HasModuleID(..)
