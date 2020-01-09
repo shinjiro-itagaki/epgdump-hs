@@ -5,7 +5,7 @@ module SITables.NIT(
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
-import Common(HasOriginalNetworkID(..))
+import Common(HasOriginalNetworkID(..),HasParser(..))
 import qualified Descriptor
 
 pids :: [Word64]
@@ -78,3 +78,6 @@ instance HasOriginalNetworkID Item where
 
 instance HasDescriptors Item where
   descriptors = __descriptors
+
+--instance HasParser Data where
+--  parse :: ByteString -> ParseResult a
