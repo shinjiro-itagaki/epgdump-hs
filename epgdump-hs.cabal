@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d495cec28cb3aa950edb53090953b659256e9471903a111c8ca987945c02c0af
+-- hash: 2b44e3e19427dc0528753d674e4843d7a270b8ab28a19e4490b750df46ec94c9
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -91,6 +91,7 @@ library
       Descriptor.TS_Information
       Descriptor.VideoDecodeControl
       Lib
+      Parser
       SITables
       SITables.BAT
       SITables.BIT
