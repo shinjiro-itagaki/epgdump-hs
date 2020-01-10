@@ -4,7 +4,9 @@ module SITables.NIT(
   Item  
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
+import SITables.Common(HasDescriptors(..))
+import qualified SITables.Header1 as Header1
+import qualified SITables.Header2 as Header2
 import Common(HasOriginalNetworkID(..){-,HasParser(..)-})
 import qualified Descriptor
 
@@ -14,7 +16,7 @@ pids = [0x0010]
 table_ids :: [Word32]
 table_ids = [0x40,0x41]
 
-class (CommonHeader a ,CommonHeader2 a, HasDescriptors a) => Class a where
+class (Header1.Class a, Header2.Class a, HasDescriptors a) => Class a where
   network_id                   :: a -> Word16
   network_descriptors_length   :: a -> Word16
   transport_stream_loop_length :: a -> Word16
@@ -42,14 +44,14 @@ data Data = MkData {
   _last_section_number         :: Word8 -- h->last_section_number = getBit(data, &boff, 8);    
   }
 
-instance CommonHeader Data where
+instance Header1.Class Data where
   table_id                 = _table_id
   section_syntax_indicator = _section_syntax_indicator
   reserved_future_use      = _reserved_future_use
   reserved1                = _reserved1
   section_length           = _section_length
   
-instance CommonHeader2 Data where
+instance Header2.Class Data where
   reserved2                = _reserved2
   version_number           = _version_number
   current_next_indicator   = _current_next_indicator

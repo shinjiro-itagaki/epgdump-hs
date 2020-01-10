@@ -6,7 +6,9 @@ module SITables.NBIT (
   table_ids
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..),Schedule(..))
+import SITables.Common(HasDescriptors(..),Schedule(..))
+import qualified SITables.Header1 as Header1
+import qualified SITables.Header2 as Header2
 import Common(HasOriginalNetworkID(..))
 import Descriptor(HasServiceID(..),HasEventID(..))
 import qualified Descriptor
@@ -17,7 +19,7 @@ pids = [0x0025]
 table_ids :: [Word32]
 table_ids = [0xC5,0xC6]
 
-class (CommonHeader a ,CommonHeader2 a, HasOriginalNetworkID a) => Class a where
+class (Header1.Class a, Header2.Class a, HasOriginalNetworkID a) => Class a where
   
 data Data = MkData {
   -- CommonHeader 
@@ -55,14 +57,14 @@ data Item = MkItem {
 instance HasDescriptors Item where
   descriptors = _descriptors
 
-instance CommonHeader Data where
+instance Header1.Class Data where
   table_id                 = _table_id
   section_syntax_indicator = _section_syntax_indicator
   reserved_future_use      = _reserved_future_use
   reserved1                = _reserved1
   section_length           = _section_length
   
-instance CommonHeader2 Data where
+instance Header2.Class Data where
   reserved2                = _reserved2
   version_number           = _version_number
   current_next_indicator   = _current_next_indicator

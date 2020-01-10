@@ -4,7 +4,9 @@ module SITables.TDT (
   pids, table_ids  
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
+import SITables.Common(HasDescriptors(..))
+import qualified SITables.Header1 as Header1
+import qualified SITables.Header2 as Header2
 import Common(HasOriginalNetworkID(..))
 import Descriptor(HasServiceID(..))
 import qualified Descriptor
@@ -15,7 +17,7 @@ pids = [0x0014]
 table_ids :: [Word32]
 table_ids = [0x70]
 
-class (CommonHeader a) => Class a where
+class (Header1.Class a) => Class a where
   jst_time :: a -> Word64
 
 data Data = MkData {
@@ -29,7 +31,7 @@ data Data = MkData {
   _jst_time :: Word64
   }
 
-instance CommonHeader Data where
+instance Header1.Class Data where
   table_id                 = _table_id
   section_syntax_indicator = _section_syntax_indicator
   reserved_future_use      = _reserved_future_use

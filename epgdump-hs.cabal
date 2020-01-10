@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2b44e3e19427dc0528753d674e4843d7a270b8ab28a19e4490b750df46ec94c9
+-- hash: ce28dc236432578e42d75d81c20b96d17dc9f0ab3aff2f39f3bff32f7c30a299
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -97,6 +97,8 @@ library
       SITables.BIT
       SITables.Common
       SITables.EIT
+      SITables.Header1
+      SITables.Header2
       SITables.LDT
       SITables.NBIT
       SITables.NIT

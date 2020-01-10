@@ -5,8 +5,9 @@ module SITables.RST(
   pids, table_ids
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(CommonHeader(..))
 import Common(HasOriginalNetworkID(..))
+import qualified SITables.Header1 as Header1
+import qualified SITables.Header2 as Header2
 import Descriptor(HasServiceID(..),HasEventID(..))
 import qualified Descriptor
 
@@ -17,7 +18,7 @@ pids = [0x0013]
 table_ids :: [Word32]
 table_ids = [0x71]
 
-class (CommonHeader a) => Class a where
+class (Header1.Class a) => Class a where
 
 data Data = MkData {
   -- CommonHeader 
@@ -29,7 +30,7 @@ data Data = MkData {
   sections                     :: [Item]
   }
 
-instance CommonHeader Data where
+instance Header1.Class Data where
   table_id                 = _table_id
   section_syntax_indicator = _section_syntax_indicator
   reserved_future_use      = _reserved_future_use

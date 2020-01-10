@@ -3,7 +3,6 @@
 module SITables(
   ) where
   
-import SITables.Common(CommonHeader(..) ,CommonHeader2(..))
 import qualified SITables.BAT
 import qualified SITables.BIT
 import qualified SITables.Common

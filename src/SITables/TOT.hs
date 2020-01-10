@@ -4,7 +4,9 @@ module SITables.TOT (
   pids, table_ids    
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
+import SITables.Common(HasDescriptors(..))
+import qualified SITables.Header1 as Header1
+import qualified SITables.Header2 as Header2
 import Common(HasOriginalNetworkID(..))
 import Descriptor(HasServiceID(..))
 import qualified Descriptor
@@ -34,7 +36,7 @@ data Data = MkData {
   _descriptors :: [Descriptor.Data]
   }
 
-instance CommonHeader Data where
+instance Header1.Class Data where
   table_id                 = _table_id
   section_syntax_indicator = _section_syntax_indicator
   reserved_future_use      = _reserved_future_use
