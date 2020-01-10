@@ -8,7 +8,7 @@ module SITables.EIT(
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(CommonHeader(..) ,CommonHeader2(..),HasDescriptors(..))
-import Common(HasOriginalNetworkID(..))
+import Common(HasOriginalNetworkID(..),HasParser(..),ParseResult(..),ParseCondition(..))
 import Descriptor(HasServiceID(..))
 import qualified Descriptor
 
@@ -83,3 +83,6 @@ data Item = MkItem {
 
 instance HasDescriptors Item where
   descriptors = _descriptors
+
+instance HasParser Data where
+  

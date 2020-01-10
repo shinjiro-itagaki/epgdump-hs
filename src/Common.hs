@@ -81,14 +81,14 @@ instance FromWord64 Word64 where
 
 data ParseResult a = Parsed a (ByteHead,ByteString) | MaybeBug | NotMatch | DataIsTooShort Word64
 
-data (FromWord64 vtype) => ParseCondition symbol state vtype result =
-  ParseStart (ParseCondition symbol state vtype result) -- 一番最初のパース条件を返す関数を含んだコンストラクタ
+data (Eq symbol {- , FromWord64 vtype -}) => ParseCondition symbol state {- vtype -} result =
+  ParseStart (ParseCondition symbol state {- vtype -} result) -- 一番最初のパース条件を返す関数を含んだコンストラクタ
   | ParseFinished result -- パースを終了して状態から成果物を作成するためのコンストラクタ
   | NextParse
     BitLen -- 取得するビットの長さ  
     symbol -- 対象になっている項目を示す何か
     state  -- 任意の状態
-    (vtype -> symbol -> state -> ParseCondition symbol state vtype result) -- パースした結果、対象になっている項目、状態、を入力すると次のパース条件を返す関数
+    ({- vtype -} Word64 -> symbol -> state -> ParseCondition symbol state {- vtype -} result) -- パースした結果、対象になっている項目、状態、を入力すると次のパース条件を返す関数
 
 --type Hoge a = (a,a)
 --newtype HexRGBA = HexRGBA (Hoge Word32)
@@ -96,9 +96,9 @@ data (FromWord64 vtype) => ParseCondition symbol state vtype result =
 --color = HexRGBA (0xFFFFFFFF,0xFFFFFFFF)
 
 class HasParser a where
-  startParse :: (FromWord64 vtype) => ByteString -> (ParseCondition sym st vtype a) -> ParseResult a
+  startParse :: ({-FromWord64 vtype, -}Eq sym) => ByteString -> (ParseCondition sym st {-vtype-} a) -> ParseResult a
   startParse bytes cond = parse (mkEmpty, bytes) cond
-  parse :: (FromWord64 vtype) => (ByteHead,ByteString) -> (ParseCondition sym st vtype a) -> ParseResult a  
+  parse :: ({-FromWord64 vtype,-} Eq sym) => (ByteHead,ByteString) -> (ParseCondition sym st {-vtype-} a) -> ParseResult a  
   parse bytes (ParseStart cond) = parse bytes cond -- パース開始
   parse bytes (NextParse len sym state next) =
     let res = readValue len bytes
