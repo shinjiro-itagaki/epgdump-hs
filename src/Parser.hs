@@ -156,9 +156,9 @@ data ParseFailedInfo = DataIsTooShort Word64 | UnknownReason
 data ParseResult a = Parsed a (ByteHead,ByteString) | MaybeBug | NotMatch | ParseFailed ParseFailedInfo 
 
 class HasParser a where
-  startParse :: (Eq sym,EmptyExist st) => ByteString -> (ParseCondition sym st a) -> ParseResult a
-  startParse bytes cond = parse (mkEmpty, bytes) cond
-  parse :: (Eq sym,EmptyExist st) => (ByteHead,ByteString) -> (ParseCondition sym st a) -> ParseResult a  
+  startParse :: (ParseConditionSymbol sym,EmptyExist state) => ByteString -> (sym -> Word64 -> state -> state) -> (state -> Maybe a) -> ParseResult a
+  startParse bytes f1 f2 = parse (mkEmpty, bytes) (firstCondition f1 f2)
+  parse :: (Eq sym,EmptyExist st) => (ByteHead,ByteString) -> (ParseCondition sym st a) -> ParseResult a
   parse bytes (ParseStart cond) = parse bytes cond -- パース開始
   parse bytes (NextParse len sym state next) =
     let res = readValue len bytes
