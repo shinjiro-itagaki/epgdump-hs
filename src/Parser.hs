@@ -132,7 +132,7 @@ class (Eq a,Enum a,Bounded a) => ParseConditionSymbol a where
   _generateNextCondition :: (EmptyExist state) => (Maybe a -> ValueCache -> CacheInfo a state result -> ParseCondition a state result) -> ValueCache -> a -> CacheInfo a state result -> ParseCondition a state result
   _generateNextCondition cond_finder rawv sym (MkCacheInfo state updater@(MkStateUpdater updaterf) fx) = cond_finder nextsym rawv (MkCacheInfo newstate updater fx)
     where
-      nextsym = (findNext sym) <|> (snd updated)
+      nextsym = (snd updated) <|> (findNext sym)
       updated = updaterf sym rawv state
       newstate = fst $ updated
 
