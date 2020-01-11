@@ -26,41 +26,25 @@ class (Header1.Class a, Header2.Class a, HasDescriptors a) => Class a where
   transport_streams            :: a -> [Item]
 
 data Data = MkData {
-  -- CommonHeader 
-  _table_id                    :: Word8, -- h->table_id = getBit(data, &boff, 8);
-  _section_syntax_indicator    :: Bool, -- h->section_syntax_indicator = getBit(data, &boff, 1);
-  _reserved_future_use         :: Bool, -- h->reserved_future_use = getBit(data, &boff, 1);
-  _reserved1                   :: Word8, -- h->reserved1 = getBit(data, &boff, 2);
-  _section_length              :: Word16, -- h->section_length =getBit(data, &boff,12);
-
+  
+  _header1    :: Header1.Data,
+  
   _bouquet_id                   :: Word16,
   _bouquet_descriptors_length   :: Word16, 
   _descriptors                  :: [Descriptor.Data],
   _transport_stream_loop_length :: Word16,
   _transport_streams            :: [Item],
   
-  -- CommonHeader2  
-  _reserved2                   :: Word8, -- h->reserved2 = getBit(data, &boff, 2);
-  _version_number              :: Word8, -- h->version_number = getBit(data, &boff, 5);
-  _current_next_indicator      :: Bool, -- h->current_next_indicator = getBit(data, &boff, 1);
-  _section_number              :: Word8, -- h->section_number = getBit(data, &boff, 8);
-  _last_section_number         :: Word8 -- h->last_section_number = getBit(data, &boff, 8);    
+  -- CommonHeader2
+  _header2    :: Header2.Data 
   }
 
 instance Header1.Class Data where
-  table_id                 = _table_id
-  section_syntax_indicator = _section_syntax_indicator
-  reserved_future_use      = _reserved_future_use
-  reserved1                = _reserved1
-  section_length           = _section_length
+  header1 = _header1
   
 instance Header2.Class Data where
-  reserved2                = _reserved2
-  version_number           = _version_number
-  current_next_indicator   = _current_next_indicator
-  section_number           = _section_number
-  last_section_number      = _last_section_number
-
+  header2 = _header2
+  
 instance HasDescriptors Data where
   descriptors = _descriptors
 

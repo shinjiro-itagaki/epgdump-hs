@@ -23,7 +23,6 @@ instance EmptyExist Word16 where
 instance EmptyExist Word8  where
   mkEmpty = 0
 
-
 --type Hoge a = (a,a)
 --newtype HexRGBA = HexRGBA (Hoge Word32)
 --color :: HexRGBA

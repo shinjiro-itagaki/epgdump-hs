@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module SITables.EIT(
   Data,
   Class(..),
@@ -13,7 +15,7 @@ import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import Common(HasOriginalNetworkID(..),EmptyExist(..))
 import Descriptor(HasServiceID(..))
-import Parser(HasParser(startParse),ParseResult(..),ParseConditionSymbol(..),ValueCache,FromValueCache(..))
+import Parser(or, HasParser(..),ParseResult(..),ParseConditionSymbol(..),ValueCache,FromValueCache(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)
 
@@ -29,22 +31,9 @@ class (Header1.Class a, Header2.Class a, HasOriginalNetworkID a, HasServiceID a)
   last_table_id               :: a -> Word8
 
 data Data = MkData {
-  -- CommonHeader 
-  _table_id                    :: Word8, -- h->table_id = getBit(data, &boff, 8);
-  _section_syntax_indicator    :: Bool, -- h->section_syntax_indicator = getBit(data, &boff, 1);
-  _reserved_future_use         :: Bool, -- h->reserved_future_use = getBit(data, &boff, 1);
-  _reserved1                   :: Word8, -- h->reserved1 = getBit(data, &boff, 2);
-  _section_length              :: Word16, -- h->section_length =getBit(data, &boff,12);
-
+  _header1    :: Header1.Data,
   _service_id :: Word16,
-  
-  -- CommonHeader2  
-  _reserved2                   :: Word8, -- h->reserved2 = getBit(data, &boff, 2);
-  _version_number              :: Word8, -- h->version_number = getBit(data, &boff, 5);
-  _current_next_indicator      :: Bool, -- h->current_next_indicator = getBit(data, &boff, 1);
-  _section_number              :: Word8, -- h->section_number = getBit(data, &boff, 8);
-  _last_section_number         :: Word8, -- h->last_section_number = getBit(data, &boff, 8);
-
+  _header2    :: Header2.Data,
   _transport_stream_id :: Word16,
   _original_network_id :: Word16,
   _segment_last_section_number :: Word8,
@@ -52,21 +41,13 @@ data Data = MkData {
   }
 
 instance EmptyExist Data where
-  mkEmpty = MkData 0 False False 0 0 0 0 0 False 0 0 0 0 0 0
+  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty
 
 instance Header1.Class Data where
-  table_id                 = _table_id
-  section_syntax_indicator = _section_syntax_indicator
-  reserved_future_use      = _reserved_future_use
-  reserved1                = _reserved1
-  section_length           = _section_length
+  header1 = _header1
   
 instance Header2.Class Data where
-  reserved2                = _reserved2
-  version_number           = _version_number
-  current_next_indicator   = _current_next_indicator
-  section_number           = _section_number
-  last_section_number      = _last_section_number
+  header2 = _header2
 
 instance HasOriginalNetworkID Data where
   original_network_id = _original_network_id
@@ -92,32 +73,28 @@ data Item = MkItem {
 instance HasDescriptors Item where
   descriptors = _descriptors
 
-instance HasParser Data where
-
-data Symbol = CommonHeader | ServiceID | CommonHeader2 | TransportStreamID | OriginalNetworkID | SegmentLastSectionNumber | LastTableID deriving (Eq,Enum,Bounded)
+data Symbol = Header1 | ServiceID | Header2 | TransportStreamID | OriginalNetworkID | SegmentLastSectionNumber | LastTableID deriving (Eq,Enum,Bounded)
 
 instance ParseConditionSymbol Symbol where
-  getLen CommonHeader             = 24
+  getLen Header1                  = Header1.length
   getLen ServiceID                = 16
-  getLen CommonHeader2            = 24
+  getLen Header2                  = Header2.length
   getLen TransportStreamID        = 16
   getLen OriginalNetworkID        = 16
   getLen SegmentLastSectionNumber = 8
   getLen LastTableID              = 8
 
 update :: Symbol -> ValueCache -> Data -> Data
-update CommonHeader  v old = old
-update CommonHeader2 v old = old
-update x v old =
-  case x of
-    ServiceID                -> old {_service_id                  = fromValueCache v}
-    TransportStreamID        -> old {_transport_stream_id         = fromValueCache v}
-    OriginalNetworkID        -> old {_original_network_id         = fromValueCache v}
-    SegmentLastSectionNumber -> old {_segment_last_section_number = fromValueCache v}
-    LastTableID              -> old {_last_table_id               = fromValueCache v}
+update Header1                  v old = old {_header1                     = (`Parser.or` mkEmpty) $ parse $ fst v}
+update Header2                  v old = old {_header2                     = (`Parser.or` mkEmpty) $ parse $ fst v}
+update ServiceID                v old = old {_service_id                  = fromValueCache v}
+update TransportStreamID        v old = old {_transport_stream_id         = fromValueCache v}
+update OriginalNetworkID        v old = old {_original_network_id         = fromValueCache v}
+update SegmentLastSectionNumber v old = old {_segment_last_section_number = fromValueCache v}
+update LastTableID              v old = old {_last_table_id               = fromValueCache v}
 
 result :: Data -> Maybe Data
 result x = Just x
-  
-parse :: ByteString -> ParseResult Data
-parse x = startParse x update result
+
+instance HasParser Data where
+  parse = startParse update result
