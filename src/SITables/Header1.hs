@@ -44,12 +44,12 @@ instance EmptyExist Data where
   
 data Symbol = TableID | SectionSyntaxIndicator | ReservedFutureUse | Reserved1 | SectionLength deriving (Eq,Enum,Bounded)
 
-update :: Symbol -> ValueCache -> Data -> Data
-update TableID                v st = st { _table_id                 = fromValueCache v }
-update SectionSyntaxIndicator v st = st { _section_syntax_indicator = fromValueCache v }
-update ReservedFutureUse      v st = st { _reserved_future_use      = fromValueCache v }
-update Reserved1              v st = st { _reserved1                = fromValueCache v }
-update SectionLength          v st = st { _section_length           = fromValueCache v }
+update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
+update TableID                v st = (st { _table_id                 = fromValueCache v },Nothing)
+update SectionSyntaxIndicator v st = (st { _section_syntax_indicator = fromValueCache v },Nothing)
+update ReservedFutureUse      v st = (st { _reserved_future_use      = fromValueCache v },Nothing)
+update Reserved1              v st = (st { _reserved1                = fromValueCache v },Nothing)
+update SectionLength          v st = (st { _section_length           = fromValueCache v },Nothing)
 
 result :: Data -> Maybe Data
 result x = Just x

@@ -24,8 +24,8 @@ instance EmptyExist Data where
   
 data Symbol = CRC_32 deriving (Eq,Enum,Bounded)
 
-update :: Symbol -> ValueCache -> Data -> Data
-update CRC_32 v st = MkData $ fromValueCache v
+update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
+update CRC_32 v st = (MkData $ fromValueCache v, Nothing)
 
 result :: Data -> Maybe Data
 result x = Just x

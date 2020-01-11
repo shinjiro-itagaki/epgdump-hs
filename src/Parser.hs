@@ -21,6 +21,8 @@ import Data.Word(Word64, Word32, Word16, Word8)
 import Data.ByteString(ByteString,pack,unpack,null,uncons,empty,take,drop,append)
 import Data.Bits((.&.),(.|.),shiftL,shiftR,finiteBitSize)
 import Data.Char(chr)
+import Data.Maybe(fromMaybe)
+import Control.Applicative((<|>))
 
 type ByteLen = Word8
 type BitLen  = Word8
@@ -81,7 +83,7 @@ instance ToWord ValueCache where
 instance ToWord ByteString where
   toWord64 x = toWord64 ((x,mkEmpty) :: ValueCache)
   
-data (Eq sym, EmptyExist state) => StateUpdater sym state = MkStateUpdater (sym -> ValueCache -> state -> state)
+data (Eq sym, EmptyExist state) => StateUpdater sym state = MkStateUpdater (sym -> ValueCache -> state -> (state,Maybe sym))
 data (EmptyExist state) => StateToResult state result = MkStateToResult (state -> Maybe result)
 
 data (EmptyExist state) => CacheInfo sym state result = MkCacheInfo state (StateUpdater sym state) (StateToResult state result) -- 状態の具体的なデータ、状態を更新する関数 状態を最終結果に変換するための関数
@@ -99,6 +101,8 @@ data (Eq symbol, EmptyExist state) => ParseCondition symbol state result =
     (CacheInfo symbol state result) -- キャッシュの内容一式
     (ValueCache -> symbol -> (CacheInfo symbol state result) -> ParseCondition symbol state result) -- パースした結果を受け取り、対象になっている項目、状態、を入力すると次のパース条件を返す関数
 
+data BitLenType = Static BitLen | Dynamic
+
 class (Eq a,Enum a,Bounded a) => ParseConditionSymbol a where
   -- please define following functions --
   getLen    :: a -> BitLen
@@ -110,7 +114,7 @@ class (Eq a,Enum a,Bounded a) => ParseConditionSymbol a where
   conditionDefines :: [(a,BitLen)]
   conditionDefines = map (\sym -> (sym, getLen sym)) allSymbols
 
-  firstCondition :: (EmptyExist state) => (a -> ValueCache -> state -> state) -> (state -> Maybe result) -> ParseCondition a state result
+  firstCondition :: (EmptyExist state) => (a -> ValueCache -> state -> (state,Maybe a)) -> (state -> Maybe result) -> ParseCondition a state result
   firstCondition f_StateUpdater f_StateToResult =
     let cache = MkCacheInfo mkEmpty (MkStateUpdater f_StateUpdater) (MkStateToResult f_StateToResult)
     in findParseCondition (Just minBound) mkEmpty cache
@@ -128,8 +132,9 @@ class (Eq a,Enum a,Bounded a) => ParseConditionSymbol a where
   _generateNextCondition :: (EmptyExist state) => (Maybe a -> ValueCache -> CacheInfo a state result -> ParseCondition a state result) -> ValueCache -> a -> CacheInfo a state result -> ParseCondition a state result
   _generateNextCondition cond_finder rawv sym (MkCacheInfo state updater@(MkStateUpdater updaterf) fx) = cond_finder nextsym rawv (MkCacheInfo newstate updater fx)
     where
-      nextsym = findNext sym
-      newstate = updaterf sym rawv state
+      nextsym = (findNext sym) <|> (snd updated)
+      updated = updaterf sym rawv state
+      newstate = fst $ updated
 
   nextConditionGenerator :: (EmptyExist state) => ValueCache -> a -> CacheInfo a state result -> ParseCondition a state result
   nextConditionGenerator = _generateNextCondition findParseCondition
@@ -212,7 +217,7 @@ or (Parsed x _) y = x
 or _ y = y
 
 class HasParser a where
-  startParse :: (ParseConditionSymbol sym,EmptyExist state) => (sym -> ValueCache -> state -> state) -> (state -> Maybe a) -> ByteString -> ParseResult a
+  startParse :: (ParseConditionSymbol sym,EmptyExist state) => (sym -> ValueCache -> state -> (state,Maybe sym)) -> (state -> Maybe a) -> ByteString -> ParseResult a
   startParse f1 f2 bytes = parse__ bytes (firstCondition f1 f2)
   parse__ :: (Eq sym,EmptyExist st) => ByteString -> (ParseCondition sym st a) -> ParseResult a
   parse__ bytes (ParseStart cond) = parse__ bytes cond -- パース開始

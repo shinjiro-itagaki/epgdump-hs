@@ -45,12 +45,12 @@ instance EmptyExist Data where
   
 data Symbol = Reserved2 | VersionNumber | CurrentNextIndicator | SectionNumber | LastSectionNumber deriving (Eq,Enum,Bounded)
 
-update :: Symbol -> ValueCache -> Data -> Data
-update Reserved2            v st = st { _reserved2              = fromValueCache v }
-update VersionNumber        v st = st { _version_number         = fromValueCache v }
-update CurrentNextIndicator v st = st { _current_next_indicator = fromValueCache v }
-update SectionNumber        v st = st { _section_number         = fromValueCache v }
-update LastSectionNumber    v st = st { _last_section_number    = fromValueCache v }
+update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
+update Reserved2            v st = (st { _reserved2              = fromValueCache v },Nothing)
+update VersionNumber        v st = (st { _version_number         = fromValueCache v },Nothing)
+update CurrentNextIndicator v st = (st { _current_next_indicator = fromValueCache v },Nothing)
+update SectionNumber        v st = (st { _section_number         = fromValueCache v },Nothing)
+update LastSectionNumber    v st = (st { _last_section_number    = fromValueCache v },Nothing)
 
 result :: Data -> Maybe Data
 result x = Just x

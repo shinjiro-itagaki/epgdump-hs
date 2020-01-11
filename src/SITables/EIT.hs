@@ -13,6 +13,7 @@ import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
+import qualified SITables.Footer as Footer
 import Common(HasOriginalNetworkID(..),EmptyExist(..))
 import Descriptor(HasServiceID(..))
 import Parser(or, HasParser(..),ParseResult(..),ParseConditionSymbol(..),ValueCache,FromValueCache(..))
@@ -37,11 +38,12 @@ data Data = MkData {
   _transport_stream_id :: Word16,
   _original_network_id :: Word16,
   _segment_last_section_number :: Word8,
-  _last_table_id               :: Word8
+  _last_table_id               :: Word8,
+  _footer     :: Footer.Data
   }
 
 instance EmptyExist Data where
-  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty
+  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty
 
 instance Header1.Class Data where
   header1 = _header1
@@ -73,7 +75,7 @@ data Item = MkItem {
 instance HasDescriptors Item where
   descriptors = _descriptors
 
-data Symbol = Header1 | ServiceID | Header2 | TransportStreamID | OriginalNetworkID | SegmentLastSectionNumber | LastTableID deriving (Eq,Enum,Bounded)
+data Symbol = Header1 | ServiceID | Header2 | TransportStreamID | OriginalNetworkID | SegmentLastSectionNumber | LastTableID | Items | Footer deriving (Eq,Enum,Bounded)
 
 instance ParseConditionSymbol Symbol where
   getLen Header1                  = Header1.length
@@ -83,15 +85,18 @@ instance ParseConditionSymbol Symbol where
   getLen OriginalNetworkID        = 16
   getLen SegmentLastSectionNumber = 8
   getLen LastTableID              = 8
+  getLen Items                    = 12 -- hoge
+  getLen Footer                   = Footer.length
 
-update :: Symbol -> ValueCache -> Data -> Data
-update Header1                  v old = old {_header1                     = (`Parser.or` mkEmpty) $ parse $ fst v}
-update Header2                  v old = old {_header2                     = (`Parser.or` mkEmpty) $ parse $ fst v}
-update ServiceID                v old = old {_service_id                  = fromValueCache v}
-update TransportStreamID        v old = old {_transport_stream_id         = fromValueCache v}
-update OriginalNetworkID        v old = old {_original_network_id         = fromValueCache v}
-update SegmentLastSectionNumber v old = old {_segment_last_section_number = fromValueCache v}
-update LastTableID              v old = old {_last_table_id               = fromValueCache v}
+update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
+update Header1                  v old = (old {_header1                     = (`Parser.or` mkEmpty) $ parse $ fst v} ,Nothing)
+update Header2                  v old = (old {_header2                     = (`Parser.or` mkEmpty) $ parse $ fst v} ,Nothing)
+update ServiceID                v old = (old {_service_id                  = fromValueCache v}                      ,Nothing)
+update TransportStreamID        v old = (old {_transport_stream_id         = fromValueCache v}                      ,Nothing)
+update OriginalNetworkID        v old = (old {_original_network_id         = fromValueCache v}                      ,Nothing)
+update SegmentLastSectionNumber v old = (old {_segment_last_section_number = fromValueCache v}                      ,Nothing)
+update LastTableID              v old = (old {_last_table_id               = fromValueCache v}                      ,Nothing)
+update Footer                   v old = (old {_footer                      = (`Parser.or` mkEmpty) $ parse $ fst v} ,Nothing)
 
 result :: Data -> Maybe Data
 result x = Just x
