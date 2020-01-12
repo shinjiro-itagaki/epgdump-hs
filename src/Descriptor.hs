@@ -114,7 +114,7 @@ import Descriptor.VideoDecodeControl
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 import qualified Data.ByteString as BS
--- import Descriptor.Class(HasOriginalNetworkID,TOS,HasServiceID)
+import Parser(HasParser(..),ParseResult(..))
 
 data Data =
   ParseFailed
@@ -170,6 +170,7 @@ data Data =
   | TimeShiftedEvent             Descriptor.TimeShiftedEvent.Data
   | TimeShiftedService           Descriptor.TimeShiftedService.Data
   | VideoDecodeControl           Descriptor.VideoDecodeControl.Data
+
   
-parse :: ByteString -> (Descriptor.Data,ByteString)
-parse bs = (ParseFailed, bs) 
+instance HasParser Descriptor.Data where
+  parse bs = NotMatch

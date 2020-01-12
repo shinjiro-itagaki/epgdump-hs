@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c6bc69d8fccd67a2154226a3c4a0bebb96d34b84873149f9324acd875f0eca9c
+-- hash: 7c4c836794171ee33e3910297f5c700747b185946b123daf2d9190e929439fed
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -110,6 +110,13 @@ library
       SITables.TDT
       SITables.TOT
       TS
+      TS.FileHandle
+      TS.Packet
+      TS.Packet.AdaptationField
+      TS.Packet.AdaptationField.OptionalFields1
+      TS.Packet.AdaptationField.OptionalFields2
+      TS.Packet.Body
+      TS.Packet.Header
   other-modules:
       Paths_epgdump_hs
   hs-source-dirs:

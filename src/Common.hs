@@ -3,9 +3,12 @@
 
 module Common where
 import Data.Word(Word64, Word32, Word16, Word8)
-import Data.ByteString(ByteString,pack,unpack,null,uncons,empty)
+import Data.ByteString.Lazy(ByteString,pack,unpack,null,uncons,empty)
 import Data.Bits((.&.),shiftL,shiftR)
 import Data.Char(chr)
+
+type BytesLen = Word8
+type BitsLen  = Word8
 
 class HasOriginalNetworkID a where
   original_network_id :: a -> Word16
@@ -13,7 +16,7 @@ class HasOriginalNetworkID a where
 class EmptyExist a where
   mkEmpty :: a
 instance EmptyExist ByteString where
-  mkEmpty = Data.ByteString.empty
+  mkEmpty = Data.ByteString.Lazy.empty
 instance EmptyExist Word64 where
   mkEmpty = 0
 instance EmptyExist Word32 where

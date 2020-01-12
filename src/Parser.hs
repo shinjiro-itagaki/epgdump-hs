@@ -1,8 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 module Parser (
-  ByteLen
-  ,ByteHead
+  ByteHead
   ,ValueCache
   ,CacheInfo
   ,cacheToResult
@@ -13,19 +12,17 @@ module Parser (
   ,ParseResult(..)
   ,HasParser(..)
   ,Parser.or
-  ,BitLen
 ) where
 
-import Common(EmptyExist(..))
+import Common(EmptyExist(..),BytesLen,BitsLen)
+import Data.Int(Int64)
 import Data.Word(Word64, Word32, Word16, Word8)
-import Data.ByteString(ByteString,pack,unpack,null,uncons,empty,take,drop,append)
+import Data.ByteString.Lazy(ByteString,pack,unpack,null,uncons,empty,take,drop,append)
 import Data.Bits((.&.),(.|.),shiftL,shiftR,finiteBitSize)
 import Data.Char(chr)
 import Data.Maybe(fromMaybe)
 import Control.Applicative((<|>))
 
-type ByteLen = Word8
-type BitLen  = Word8
 type ByteHead = Word8
 type ByteRest = ByteString
 
@@ -37,24 +34,24 @@ instance EmptyExist (EnableBits a) where
 -- Data.ByteStringをunpackした後の型の桁数を返す
 
 w8lenInt :: Int
-w8lenInt = finiteBitSize $ head $ (++[0]) $ unpack $ Data.ByteString.empty 
+w8lenInt = finiteBitSize $ head $ (++[0]) $ unpack $ Data.ByteString.Lazy.empty 
 
-w8len :: BitLen
+w8len :: BitsLen
 w8len = fromInteger $ toInteger $ w8lenInt
 
-toEnableBits :: (Integral a) => a -> EnableBits BitLen
+toEnableBits :: (Integral a) => a -> EnableBits BitsLen
 toEnableBits n
   | (1 < (toInteger n)) && ((toInteger n) < (toInteger w8len)) = LeftBits $ fromInteger $ toInteger n
   | otherwise = All
 
-toNum :: (Num a) => EnableBits BitLen -> a
+toNum :: (Num a) => EnableBits BitsLen -> a
 toNum x = fromInteger
   $ case x of
       All          -> toInteger $ w8len
       (LeftBits n) -> toInteger $ n
 
 -- タプルの右側は先頭バイトの左側のうち、いくつが使われているかを示す値で、Allはすべてを意味する
-type ValueCache = (ByteString,EnableBits BitLen)
+type ValueCache = (ByteString,EnableBits BitsLen)
 
 instance EmptyExist ValueCache where
   mkEmpty = (mkEmpty,mkEmpty)
@@ -96,22 +93,22 @@ data (Eq symbol, EmptyExist state) => ParseCondition symbol state result =
   | ParseFinished (Maybe result) -- パースを終了して状態から成果物を作成するためのコンストラクタ
   | NextParse
     ValueCache -- 前回の値
-    BitLen -- 取得するビットの長さ
+    BitsLen -- 取得するビットの長さ
     symbol -- 対象になっている項目を示す何か
     (CacheInfo symbol state result) -- キャッシュの内容一式
     (ValueCache -> symbol -> (CacheInfo symbol state result) -> ParseCondition symbol state result) -- パースした結果を受け取り、対象になっている項目、状態、を入力すると次のパース条件を返す関数
 
-data BitLenType = Static BitLen | Dynamic
+data BitsLenType = Static BitsLen | Dynamic
 
 class (Eq a,Enum a,Bounded a) => ParseConditionSymbol a where
   -- please define following functions --
-  getLen    :: a -> BitLen
+  getLen    :: a -> BitsLen
   ---------- 
 
-  bitLength :: [a] -> BitLen
-  bitLength xs = foldl (+) 0 $ map getLen xs
+  bitsLength :: [a] -> BitsLen
+  bitsLength xs = foldl (+) 0 $ map getLen xs
 
-  conditionDefines :: [(a,BitLen)]
+  conditionDefines :: [(a,BitsLen)]
   conditionDefines = map (\sym -> (sym, getLen sym)) allSymbols
 
   firstCondition :: (EmptyExist state) => (a -> ValueCache -> state -> (state,Maybe a)) -> (state -> Maybe result) -> ParseCondition a state result
@@ -133,7 +130,7 @@ class (Eq a,Enum a,Bounded a) => ParseConditionSymbol a where
   _generateNextCondition cond_finder rawv sym (MkCacheInfo state updater@(MkStateUpdater updaterf) fx) = cond_finder nextsym rawv (MkCacheInfo newstate updater fx)
     where
       nextsym = (snd updated) <|> (findNext sym)
-      updated = updaterf sym rawv state
+      updated = updaterf sym rawv state -- hoge
       newstate = fst $ updated
 
   nextConditionGenerator :: (EmptyExist state) => ValueCache -> a -> CacheInfo a state result -> ParseCondition a state result
@@ -143,7 +140,7 @@ class (Eq a,Enum a,Bounded a) => ParseConditionSymbol a where
   findParseCondition Nothing    oldv cache = ParseFinished $ cacheToResult cache
   findParseCondition (Just sym) oldv cache = findParseConditionImpl sym oldv cache conditionDefines
 
-  findParseConditionImpl :: (EmptyExist state) => a -> ValueCache -> CacheInfo a state result -> [(a,BitLen)] -> ParseCondition a state result
+  findParseConditionImpl :: (EmptyExist state) => a -> ValueCache -> CacheInfo a state result -> [(a,BitsLen)] -> ParseCondition a state result
   findParseConditionImpl   _ oldv cache     [] = ParseFinished $ cacheToResult cache
   findParseConditionImpl sym oldv cache (x:[]) = ParseFinished $ cacheToResult cache
   findParseConditionImpl sym oldv cache ((xsym,xbitlen):xs)
@@ -161,16 +158,16 @@ class (EmptyExist a) => FromValueCache a where
   fromMaybeValueCache (Just x) = fromValueCache x
   fromMaybeValueCache Nothing = fromNothing
   
-readValue :: BitLen -> ValueCache -> ByteString -> (ValueCache,ByteString)
+readValue :: BitsLen -> ValueCache -> ByteString -> (ValueCache,ByteString)
 readValue 0 oldv    bytes = (oldv,bytes)
 readValue l (old,en) bytes =
   case en of
     All ->
       let (divn,modn) = l `divMod` w8len
-          n = (fromInteger $ toInteger $ divn + 1) :: Int
-          bytes2 = bytes `Data.ByteString.append` (Data.ByteString.pack $ map (\x -> 0) [1..n]) -- 確実に長さがn以上のバイト配列を作成
-          head = Data.ByteString.take n bytes2
-          tail = Data.ByteString.drop n bytes2
+          n = (fromInteger $ toInteger $ divn + 1) :: Int64
+          bytes2 = bytes `Data.ByteString.Lazy.append` (Data.ByteString.Lazy.pack $ map (\x -> 0) [1..n]) -- 確実に長さがn以上のバイト配列を作成
+          head = Data.ByteString.Lazy.take n bytes2
+          tail = Data.ByteString.Lazy.drop n bytes2
       in
           ((head,toEnableBits modn),tail)
     LeftBits n ->

@@ -2,8 +2,8 @@
 
 module SITables.Header1 where
 import Data.Word(Word64, Word32, Word16, Word8)
-import Common(EmptyExist(..))
-import Parser(HasParser(..),ParseConditionSymbol(..),FromValueCache(..),ValueCache,BitLen)
+import Common(EmptyExist(..),BitsLen)
+import Parser(HasParser(..),ParseConditionSymbol(..),FromValueCache(..),ValueCache)
 class Class a where
   header1                     :: a -> Data
   table_id                    :: a -> Word8
@@ -64,5 +64,5 @@ instance ParseConditionSymbol Symbol where
 instance HasParser Data where
   parse = startParse update result
 
-length :: BitLen
-length = bitLength (allSymbols :: [Symbol])
+length :: BitsLen
+length = bitsLength (allSymbols :: [Symbol])
