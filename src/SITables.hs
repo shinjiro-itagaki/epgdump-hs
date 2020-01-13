@@ -18,6 +18,12 @@ import qualified SITables.TDT
 import qualified SITables.TOT
 
 import Data.ByteString(ByteString)
+import TS.Packet(FromPackets(..))
+import Parser(HasParser(..))
+
+instance FromPackets SITables.EIT.Data where
+  pids      _ = SITables.EIT.pids
+  table_ids _ = SITables.EIT.table_ids
 
 data Data =
   Other
@@ -34,6 +40,6 @@ data Data =
   | ST   SITables.ST.Data
   | TDT  SITables.TDT.Data
   | TOT  SITables.TOT.Data
-  
-parse :: ByteString -> (Data,ByteString)
-parse bytes = (Null,bytes)
+
+parse :: (HasParser a) => [(a -> Data)] -> ByteString -> (Data,ByteString)
+parse constructors bytes = (Null,bytes)

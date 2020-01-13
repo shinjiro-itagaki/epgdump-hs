@@ -8,7 +8,6 @@ module Parser (
   ,ParseCondition
   ,ParseConditionSymbol(..)
   ,FromValueCache(..)
-  ,ParseFailedInfo(..)
   ,ParseResult(..)
   ,HasParser(..)
   ,Parser.or
@@ -17,11 +16,13 @@ module Parser (
 import Common(EmptyExist(..),BytesLen,BitsLen)
 import Data.Int(Int64)
 import Data.Word(Word64, Word32, Word16, Word8)
-import Data.ByteString.Lazy(ByteString,pack,unpack,null,uncons,empty,take,drop,append)
+import Data.ByteString.Lazy(ByteString)
+import Data.ByteString.Lazy as BS
 import Data.Bits((.&.),(.|.),shiftL,shiftR,finiteBitSize)
 import Data.Char(chr)
 import Data.Maybe(fromMaybe)
 import Control.Applicative((<|>))
+import qualified Data.Vector as V
 
 type ByteHead = Word8
 type ByteRest = ByteString
@@ -31,10 +32,10 @@ data EnableBits a = All | LeftBits a
 instance EmptyExist (EnableBits a) where
   mkEmpty = All
 
--- Data.ByteStringをunpackした後の型の桁数を返す
+-- ByteStringをunpackした後の型の桁数を返す
 
 w8lenInt :: Int
-w8lenInt = finiteBitSize $ head $ (++[0]) $ unpack $ Data.ByteString.Lazy.empty 
+w8lenInt = finiteBitSize $ Prelude.head $ (++[0]) $ BS.unpack BS.empty 
 
 w8len :: BitsLen
 w8len = fromInteger $ toInteger $ w8lenInt
@@ -68,14 +69,14 @@ class ToWord a where
 instance ToWord ValueCache where
   toWord64 (bytes,enable) =
     let n = max 0 $ min w8lenInt $ toNum enable -- 0 <= n <= 7 :: Int
-        tail8 = map (fromInteger . toInteger) $ Prelude.reverse $ Prelude.take 8 $ Prelude.reverse $ ([0,0,0,0,0,0,0,0] ++) $ unpack bytes
+        tail8 = Prelude.map (fromInteger . toInteger) $ Prelude.reverse $ Prelude.take 8 $ Prelude.reverse $ ([0,0,0,0,0,0,0,0] ++) $ BS.unpack bytes
         head7 = Prelude.take 7 tail8
         last1 = Prelude.last tail8
         init = 0 :: Word64
         func rtn e = (rtn `shiftL` (finiteBitSize e)) .|. (fromInteger $  toInteger e)
     in case n of
-      0 -> (foldl func init tail8)
-      _ -> (.|. (0xFF .&. last1)) $ (`shiftL` n) $ (foldl func init head7) 
+      0 -> (Prelude.foldl func init tail8)
+      _ -> (.|. (0xFF .&. last1)) $ (`shiftL` n) $ (Prelude.foldl func init head7) 
 
 instance ToWord ByteString where
   toWord64 x = toWord64 ((x,mkEmpty) :: ValueCache)
@@ -106,10 +107,10 @@ class (Eq a,Enum a,Bounded a) => ParseConditionSymbol a where
   ---------- 
 
   bitsLength :: [a] -> BitsLen
-  bitsLength xs = foldl (+) 0 $ map getLen xs
+  bitsLength xs = Prelude.foldl (+) 0 $ Prelude.map getLen xs
 
   conditionDefines :: [(a,BitsLen)]
-  conditionDefines = map (\sym -> (sym, getLen sym)) allSymbols
+  conditionDefines = Prelude.map (\sym -> (sym, getLen sym)) allSymbols
 
   firstCondition :: (EmptyExist state) => (a -> ValueCache -> state -> (state,Maybe a)) -> (state -> Maybe result) -> ParseCondition a state result
   firstCondition f_StateUpdater f_StateToResult =
@@ -157,25 +158,27 @@ class (EmptyExist a) => FromValueCache a where
   fromMaybeValueCache :: Maybe ValueCache -> a
   fromMaybeValueCache (Just x) = fromValueCache x
   fromMaybeValueCache Nothing = fromNothing
+
+data ReadValueResult a = ReadValueSuccess a | TooShort
   
-readValue :: BitsLen -> ValueCache -> ByteString -> (ValueCache,ByteString)
-readValue 0 oldv    bytes = (oldv,bytes)
+readValue :: BitsLen -> ValueCache -> ByteString -> ReadValueResult (ValueCache,ByteString)
+readValue 0 oldv bytes = ReadValueSuccess (oldv,bytes)
 readValue l (old,en) bytes =
   case en of
     All ->
-      let (divn,modn) = l `divMod` w8len
-          n = (fromInteger $ toInteger $ divn + 1) :: Int64
-          bytes2 = bytes `Data.ByteString.Lazy.append` (Data.ByteString.Lazy.pack $ map (\x -> 0) [1..n]) -- 確実に長さがn以上のバイト配列を作成
-          head = Data.ByteString.Lazy.take n bytes2
-          tail = Data.ByteString.Lazy.drop n bytes2
+      let (divn,modn) = (l `divMod`) $ fromInteger $ toInteger w8len
+          n = fromInteger $ toInteger $ divn + 1
+          -- bytes2 = bytes `Data.ByteString.Lazy.append` (Data.ByteString.Lazy.pack $ map (\x -> 0) [1..n]) -- 確実に長さがn以上のバイト配列を作成
+          head = BS.take n bytes
+          tail = BS.drop n bytes -- こちらはオリジナルのtailを取得
       in
-          ((head,toEnableBits modn),tail)
+          if (BS.length head) < n then TooShort else ReadValueSuccess ((head,toEnableBits modn),tail)
     LeftBits n ->
       let n' = l + n
           (divn',modn') = n' `divMod` w8len
       in
         if divn' < 1
-        then ((old,toEnableBits n'),bytes) -- シークせずに有効ビット数のみ変更して終了
+        then ReadValueSuccess ((old,toEnableBits n'),bytes) -- シークせずに有効ビット数のみ変更して終了
         else readValue divn' (old,All) bytes
 
 instance FromValueCache Bool where
@@ -205,24 +208,41 @@ instance FromValueCache Word64 where
 instance FromValueCache ValueCache where
   fromValueCache x = x
 
-data ParseFailedInfo = DataIsTooShort ValueCache | UnknownReason
-  
-data ParseResult a = Parsed a ByteString | MaybeBug | NotMatch | ParseFailed ParseFailedInfo
+data ParseResult a = Parsed a | DataIsTooShort | NotMatch | UnknownReason
 
 or :: ParseResult a -> a -> a
-or (Parsed x _) y = x
+or (Parsed x) y = x
 or _ y = y
 
 class HasParser a where
-  startParse :: (ParseConditionSymbol sym,EmptyExist state) => (sym -> ValueCache -> state -> (state,Maybe sym)) -> (state -> Maybe a) -> ByteString -> ParseResult a
+  -- please implement
+  -- startParse に関数を2つ追加すれば実装できる
+  -- ex. parse = startParse update result
+  parse :: ByteString -> (ParseResult a, ByteString)
+  -----
+
+  -- パースした結果と余ったByteString
+  startParse :: (ParseConditionSymbol sym,EmptyExist state) => (sym -> ValueCache -> state -> (state,Maybe sym)) -> (state -> Maybe a) -> ByteString -> (ParseResult a,ByteString)
   startParse f1 f2 bytes = parse__ bytes (firstCondition f1 f2)
-  parse__ :: (Eq sym,EmptyExist st) => ByteString -> (ParseCondition sym st a) -> ParseResult a
+  parse__ :: (Eq sym,EmptyExist st) => ByteString -> (ParseCondition sym st a) -> (ParseResult a,ByteString)
   parse__ bytes (ParseStart cond) = parse__ bytes cond -- パース開始
   parse__ bytes (NextParse oldv len sym state next) =
-    let (val,rest) = readValue len oldv bytes
-    in parse__ rest (next val sym state)
-  parse__ bytes (ParseFinished mres) = case mres of
-    Nothing -> ParseFailed UnknownReason
-    Just res -> Parsed res bytes -- 終了
+    let res = readValue len oldv bytes
+    in case res of
+      ReadValueSuccess (val,rest) -> parse__ rest (next val sym state)
+      TooShort -> (DataIsTooShort,BS.empty)
+  parse__ bytes (ParseFinished mres) = (\x -> (x,bytes)) $ case mres of
+    Nothing -> UnknownReason
+    Just res -> Parsed res -- 終了
 
-  parse :: ByteString -> ParseResult a
+  parseMulti' :: V.Vector a -> ByteString -> (V.Vector a, ByteString)
+  parseMulti' curr bytes =
+    case parse bytes of
+      (Parsed a      ,rest) -> let next = parseMulti' (V.snoc curr a) rest in (fst next, snd next)
+      (DataIsTooShort,rest) -> (curr,rest) -- データが短すぎて終了したのでこれで終わり
+      (_             ,rest) -> parseMulti' curr rest -- 失敗したようだが、データは残っていると思われるので続行
+
+  parseMulti :: ByteString -> (V.Vector a, ByteString)
+  parseMulti = parseMulti' V.empty
+
+      

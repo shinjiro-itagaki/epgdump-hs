@@ -173,4 +173,4 @@ data Data =
 
   
 instance HasParser Descriptor.Data where
-  parse bs = NotMatch
+  parse bs = (NotMatch,bs)

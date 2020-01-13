@@ -60,5 +60,7 @@ _each fh something act = do
   if Packet.isEOF p
     then return something
     else act p something (FileHandle.getReadonlyInfo fh') bytes >>= (\(continue,something') -> if continue then _each fh' something' act else return something' )
+--      else (if False then act p something (FileHandle.getReadonlyInfo fh') bytes else return (True,something)) >>= (\(continue,something') -> if continue then _each fh' something' act else return something' )
+
 
   

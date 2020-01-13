@@ -4,7 +4,7 @@ module TS.Packet.Header where
 import Data.Word(Word64, Word32, Word16, Word8)
 import Data.Bits(Bits(..))
 import Data.ByteString.Lazy(ByteString,head,unpack)
-import Common(EmptyExist(..))
+import Common(EmptyExist(..),PID,TableID)
 
 data ScrambleControl =
   NoScramble -- '00'
@@ -32,7 +32,7 @@ class (EmptyExist a) => Class a where
   transport_priority           :: a -> Bool -- 1 bits
   transport_priority = transport_priority . header
   
-  pid                          :: a -> Word16 -- 13 bits
+  pid                          :: a -> PID -- 13 bits
   pid = pid . header
 
   -- TSパケットのペイロードのスクランブルモードを識別するのに使用する領域
@@ -77,8 +77,8 @@ instance Class Data where
   transport_error_indicator    = (> 0) . (.&. 0x80) . fst -- 1 10000000 00000000 00000000 
   payload_unit_start_indicator = (> 0) . (.&. 0x40) . fst -- 1 01000000 00000000 00000000 
   transport_priority           = (> 0) . (.&. 0x20) . fst -- 1 00100000 00000000 00000000 
-  pid                        x = let l = (`shiftL` 8) $ fromInteger $ toInteger $ (.&. 0x1F) $ fst x :: Word16 -- 13 00011111 11111111 00000000 
-                                     r = fromInteger $ toInteger $ fst $ snd x :: Word16
+  pid                        x = let l = (`shiftL` 8) $ fromInteger $ toInteger $ (.&. 0x1F) $ fst x :: PID -- 13 00011111 11111111 00000000 
+                                     r = fromInteger $ toInteger $ fst $ snd x :: PID
                                  in l .&. r
   transport_scrambling_control_raw = (`shiftR` 6) . (.&. 0xC0) . snd . snd -- 2 00000000 00000000 11000000
   adaptation_field_control     = (`shiftR` 4) . (.&. 0x30) . snd . snd -- 2 00000000 00000000 00110000

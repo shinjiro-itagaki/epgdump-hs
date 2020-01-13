@@ -14,17 +14,17 @@ import SITables.Common(HasDescriptors(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..))
+import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID)
 import Descriptor(HasServiceID(..))
 import Parser(or, HasParser(..),ParseResult(..),ParseConditionSymbol(..),ValueCache,FromValueCache(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
 
-pids :: [Word64]
+pids :: [PID]
 pids = [0x0012,0x0026,0x0027]
 
-table_ids :: [Word32]
+table_ids :: [TableID]
 table_ids = [0x4E,0x4F] ++ [0x50..0x5F] ++ [0x60..0x6F]
 
 class (Header1.Class a, Header2.Class a, HasOriginalNetworkID a, HasServiceID a) => Class a where
@@ -109,14 +109,15 @@ instance ParseConditionSymbol Symbol where
   getLen Footer                   = Footer.length
 
 update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
-update Header1                  v old = (old {_header1                     = (`Parser.or` mkEmpty) $ parse $ fst v} ,Nothing)
-update Header2                  v old = (old {_header2                     = (`Parser.or` mkEmpty) $ parse $ fst v} ,Nothing)
+-- 取得したByteStringでparseを実行
+update Header1                  v old = (old {_header1                     = (`Parser.or` mkEmpty) $ fst $ parse $ fst v} ,Nothing)
+update Header2                  v old = (old {_header2                     = (`Parser.or` mkEmpty) $ fst $ parse $ fst v} ,Nothing)
 update ServiceID                v old = (old {_service_id                  = fromValueCache v}                      ,Nothing)
 update TransportStreamID        v old = (old {_transport_stream_id         = fromValueCache v}                      ,Nothing)
 update OriginalNetworkID        v old = (old {_original_network_id         = fromValueCache v}                      ,Nothing)
 update SegmentLastSectionNumber v old = (old {_segment_last_section_number = fromValueCache v}                      ,Nothing)
 update LastTableID              v old = (old {_last_table_id               = fromValueCache v}                      ,Nothing)
-update Footer                   v old = (old {_footer                      = (`Parser.or` mkEmpty) $ parse $ fst v} ,Nothing)
+update Footer                   v old = (old {_footer                      = (`Parser.or` mkEmpty) $ fst $ parse $ fst v} ,Nothing)
 
 result :: a -> Maybe a
 result x = Just x

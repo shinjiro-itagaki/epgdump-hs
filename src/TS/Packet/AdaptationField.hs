@@ -9,7 +9,7 @@ import qualified TS.Packet.AdaptationField.OptionalFields1 as OptionalFields1
 data Flags5 = MkFlags5 Bool Bool Bool Bool Bool
 
 class Class a where
-  adaptation_field_length              :: a -> Word8 -- 8
+  adaptation_field_length              :: (Num b) => a -> b -- 8
   discontinuity_indicator              :: a -> Bool -- 1
   random_access_indicator              :: a -> Bool -- 1
   elementary_stream_priority_indicator :: a -> Bool -- 1
@@ -28,7 +28,7 @@ data Data = MkData {
   }
 
 instance Class Data where
-  adaptation_field_length              = _adaptation_field_length
+  adaptation_field_length              = fromInteger . toInteger . _adaptation_field_length
   discontinuity_indicator              = _discontinuity_indicator
   random_access_indicator              = _random_access_indicator
   elementary_stream_priority_indicator = _elementary_stream_priority_indicator

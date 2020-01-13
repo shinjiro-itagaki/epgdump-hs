@@ -6,9 +6,10 @@ import qualified TS.Packet.Body   as Body
 import qualified TS.FileHandle    as FH
 
 import Data.Word(Word64, Word32, Word16, Word8)
-import Data.ByteString.Lazy(ByteString,length,take,drop)
-import Common(BytesLen,EmptyExist(..))
+import qualified Data.ByteString.Lazy as BS
+import Common(BytesLen,EmptyExist(..),PID,TableID)
 import qualified Parser
+import qualified Data.Vector as V
 
 type FileHandle = FH.Data
 
@@ -18,57 +19,31 @@ bytesLen = 188
 _TSPAYLOADMAX :: Int
 _TSPAYLOADMAX=184
 
-class PacketHolder a where
-  add :: a -> Data -> a
+--class PacketHolder a where
+--  add :: a -> Data -> a
 
 class (Header.Class t, Body.Class t) => Class t where
   -- please implement
---  header :: t -> Header.Data
---  body   :: t -> Body.Data
   mkEOF :: t
   mkOK  :: Header.Data -> Body.Data -> t
   isEOF :: t -> Bool
   isOK  :: t -> Bool
   ----------
 
-  typeNum :: t -> Word16
-  typeNum = Header.pid . Header.header
-  
-  isNIT :: t -> Bool
-  isNIT = (0x10==) . typeNum
-  
-  isSDT :: t -> Bool
-  isSDT = (0x11==) . typeNum
-  
-  isEIT :: t -> Bool
-  isEIT = (0x12==) . typeNum
-  
-  isRST :: t -> Bool
-  isRST = (0x13==) . typeNum
-  
-  isTDT :: t -> Bool
-  isTDT = (0x14==) . typeNum
-  
-  isSDTT:: t -> Bool
-  isSDTT= (\x -> x == 0x23 || x == 0x28) . typeNum
-  
-  isBIT :: t -> Bool
-  isBIT = (0x24==) . typeNum
-
   -- 引数のByteStringは同期用の先頭バイトは削られているもの
-  fromByteString :: ByteString -> t
+  fromByteString :: BS.ByteString -> t
   fromByteString bytes =
     let plen'     = fromInteger $ toInteger $ bytesLen - 1
-        byteslen' = Data.ByteString.Lazy.length bytes
-        bytes'    = Data.ByteString.Lazy.take plen' bytes
-        header    = Header.parse $ Data.ByteString.Lazy.take 3 bytes'
-        body      = Body.parse $ Data.ByteString.Lazy.drop 3 bytes'
+        byteslen' = BS.length bytes
+        bytes'    = BS.take plen' bytes
+        header    = Header.parse $ BS.take 3 bytes'
+        body      = BS.drop 3 bytes'
     in
       if byteslen' < plen'
       then mkEOF
       else mkOK header body
 
-  read :: FileHandle -> IO (t,(ByteString,FileHandle))
+  read :: FileHandle -> IO (t,(BS.ByteString,FileHandle))
   read h = do
     h' <- FH.syncIO h
     res@(bytes,h'') <- FH.getBytes h' bytesLen
@@ -84,8 +59,9 @@ instance Header.Class Data where
   header  _           = mkEmpty :: Header.Data  
   
 instance Body.Class Data where
-  body (MkData _ b) = b
-  body _            = mkEmpty :: Body.Data  
+  header (MkData h _) = h
+  body_data (MkData _ b) = b
+  body_data _            = mkEmpty :: Body.Data  
 
 instance Class Data where
   isEOF EOF = True
@@ -95,3 +71,16 @@ instance Class Data where
 
   mkEOF = EOF
   mkOK h b = MkData h b
+
+class (EmptyExist a, Parser.HasParser a) => FromPackets a where
+  table_ids :: (a -> b) -> [TableID]
+  pids      :: (a -> b) -> [PID]
+  
+  isMatch :: (a -> b) -> Data -> Bool
+  isMatch f packet = let pid = Header.pid packet in any (==pid) (pids f)
+  
+  fromPackets :: (a -> b) -> V.Vector Data -> V.Vector a
+  fromPackets f =
+    let table_ids' = table_ids f
+    in fst . Parser.parseMulti . (V.foldl BS.append BS.empty) . (V.map Body.payload) . V.filter (isMatch f)
+

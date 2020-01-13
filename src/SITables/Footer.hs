@@ -8,7 +8,7 @@ class Class a where
   footer :: a -> Data
   crc_32 :: a -> Word32
   crc_32 = _crc_32 . footer
-
+  
 data Data = MkData {
   _crc_32 :: Word32
   }

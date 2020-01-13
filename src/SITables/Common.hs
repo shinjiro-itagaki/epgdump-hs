@@ -5,13 +5,12 @@ module SITables.Common(
   ,Schedule(..)
   ,MatchPID(..)
   ,MatchTableID(..)
-  ,PID
-  ,TableID
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
 import Descriptor
 import Common(EmptyExist(..))
 import Parser(ParseConditionSymbol(..),FromValueCache(..),ValueCache)
+import Common(PID,TableID)
 
 class HasDescriptors a where
   descriptors :: a -> [Descriptor.Data]
@@ -19,9 +18,6 @@ class HasDescriptors a where
 class Schedule a where
   start_time :: a -> Word64
   duration   :: a -> Word32
-
-type PID = Word64
-type TableID = Word32
 
 class MatchPID a where
   match_pid :: a -> PID -> Bool

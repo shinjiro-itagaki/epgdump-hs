@@ -7,8 +7,11 @@ import Data.ByteString.Lazy(ByteString,pack,unpack,null,uncons,empty)
 import Data.Bits((.&.),shiftL,shiftR)
 import Data.Char(chr)
 
-type BytesLen = Word8
-type BitsLen  = Word8
+type BytesLen = Word64
+type BitsLen  = Word64
+
+type PID = Word64
+type TableID = Word32
 
 class HasOriginalNetworkID a where
   original_network_id :: a -> Word16
