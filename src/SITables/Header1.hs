@@ -9,15 +9,20 @@ import SITables.Common()
 
 class Class a where
   header1                     :: a -> Data
+  
+  table_id                 = table_id                 . header1  
   table_id                    :: a -> Common.TableID
+  
   section_syntax_indicator    :: a -> Bool
-  reserved_future_use         :: a -> Bool
-  reserved1                   :: a -> Word8
-  section_length              :: a -> Word16
-  table_id                 = table_id                 . header1
   section_syntax_indicator = section_syntax_indicator . header1
+
+  reserved_future_use         :: a -> Bool
   reserved_future_use      = reserved_future_use      . header1
+  
+  reserved1                   :: a -> Word8
   reserved1                = reserved1                . header1
+  
+  section_length              :: a -> Word16
   section_length           = section_length           . header1
 
 data Data = MkData {
@@ -69,3 +74,4 @@ instance HasParser Data where
 
 length :: BitsLen
 length = bitsLength (allSymbols :: [Symbol])
+

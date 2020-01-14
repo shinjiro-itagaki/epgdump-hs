@@ -6,15 +6,20 @@ import Common(EmptyExist(..),BitsLen)
 import Parser(HasParser(..),ParseConditionSymbol(..),FromValueCache(..),ValueCache)
 class Class a where
   header2                :: a -> Data
+  
   reserved2              :: a -> Word8
-  version_number         :: a -> Word8
-  current_next_indicator :: a -> Bool
-  section_number         :: a -> Word8
-  last_section_number    :: a -> Word8
   reserved2              = reserved2              . header2
+  
+  version_number         :: a -> Word8
   version_number         = version_number         . header2
+  
+  current_next_indicator :: a -> Bool
   current_next_indicator = current_next_indicator . header2
+  
+  section_number         :: a -> Word8
   section_number         = section_number         . header2
+  
+  last_section_number    :: a -> Word8
   last_section_number    = last_section_number    . header2
 
 data Data = MkData {
