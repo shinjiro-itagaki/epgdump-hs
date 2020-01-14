@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module SITables(
-  ) where
+module SITables where
   
 import qualified SITables.BAT
 import qualified SITables.BIT
@@ -18,8 +17,10 @@ import qualified SITables.TDT
 import qualified SITables.TOT
 
 import Data.ByteString(ByteString)
+import qualified TS.Packet as Packet
 import TS.Packet(FromPackets(..))
-import Parser(HasParser(..))
+import Parser(HasParser(..),ParseResult(..))
+import Common(BytesHolder(..),BytesHolderIO(..))
 
 instance FromPackets SITables.EIT.Data where
   pids      _ = SITables.EIT.pids
@@ -41,5 +42,13 @@ data Data =
   | TDT  SITables.TDT.Data
   | TOT  SITables.TOT.Data
 
-parse :: (HasParser a) => [(a -> Data)] -> ByteString -> (Data,ByteString)
-parse constructors bytes = (Null,bytes)
+class Holder a where
+  add :: a -> Data -> a
+
+data (BytesHolderIO a) => ConstructorHolderIO a = MkConstructorHolderIO (a -> IO (ParseResult Data, a))
+
+
+
+parse :: (Holder a, BytesHolder b) => a -> b -> (a,b)
+parse cache bytes = (add cache Null, bytes)
+

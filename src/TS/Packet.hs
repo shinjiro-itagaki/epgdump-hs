@@ -10,17 +10,13 @@ import qualified Data.ByteString.Lazy as BS
 import Common(BytesLen,EmptyExist(..),PID,TableID)
 import qualified Parser
 import qualified Data.Vector as V
+import Data.Int(Int64)
 
 type FileHandle = FH.Data
 
+-- sync byteを含めた長さ
 bytesLen :: BytesLen
 bytesLen = 188
-
-_TSPAYLOADMAX :: Int
-_TSPAYLOADMAX=184
-
---class PacketHolder a where
---  add :: a -> Data -> a
 
 class (Header.Class t, Body.Class t) => Class t where
   -- please implement
@@ -33,9 +29,10 @@ class (Header.Class t, Body.Class t) => Class t where
   -- 引数のByteStringは同期用の先頭バイトは削られているもの
   fromByteString :: BS.ByteString -> t
   fromByteString bytes =
-    let plen'     = fromInteger $ toInteger $ bytesLen - 1
-        byteslen' = BS.length bytes
-        bytes'    = BS.take plen' bytes
+    let plen'     = toInteger $ bytesLen - 1    :: Integer
+        plen''    = fromInteger plen'           :: Int64
+        byteslen' = toInteger $ BS.length bytes :: Integer
+        bytes'    = BS.take plen'' bytes
         header    = Header.parse $ BS.take 3 bytes'
         body      = BS.drop 3 bytes'
     in
@@ -46,8 +43,8 @@ class (Header.Class t, Body.Class t) => Class t where
   read :: FileHandle -> IO (t,(BS.ByteString,FileHandle))
   read h = do
     h' <- FH.syncIO h
-    res@(bytes,h'') <- FH.getBytes h' bytesLen
-    return (fromByteString bytes,(bytes,h''))
+    res@(bytes,h'') <- FH.getBytes h' (bytesLen - 1)
+    return (fromByteString bytes,res)
   
 data Data = MkData Header.Data Body.Data | EOF | Broken
 
@@ -84,3 +81,5 @@ class (EmptyExist a, Parser.HasParser a) => FromPackets a where
     let table_ids' = table_ids f
     in fst . Parser.parseMulti . (V.foldl BS.append BS.empty) . (V.map Body.payload) . V.filter (isMatch f)
 
+class Holder a where
+  get :: a -> [Data]

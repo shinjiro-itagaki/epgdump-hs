@@ -2,11 +2,14 @@
 
 module SITables.Header1 where
 import Data.Word(Word64, Word32, Word16, Word8)
+import qualified Common
 import Common(EmptyExist(..),BitsLen)
 import Parser(HasParser(..),ParseConditionSymbol(..),FromValueCache(..),ValueCache)
+import SITables.Common()
+
 class Class a where
   header1                     :: a -> Data
-  table_id                    :: a -> Word8
+  table_id                    :: a -> Common.TableID
   section_syntax_indicator    :: a -> Bool
   reserved_future_use         :: a -> Bool
   reserved1                   :: a -> Word8
@@ -18,7 +21,7 @@ class Class a where
   section_length           = section_length           . header1
 
 data Data = MkData {
-  _table_id                 :: Word8,
+  _table_id                 :: Common.TableID,
   _section_syntax_indicator :: Bool,
   _reserved_future_use      :: Bool,
   _reserved1                :: Word8,

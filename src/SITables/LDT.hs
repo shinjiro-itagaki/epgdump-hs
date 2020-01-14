@@ -25,31 +25,22 @@ class (Header1.Class a, Header2.Class a, HasOriginalNetworkID a) => Class a wher
   
   
 data Data = MkData {
-  -- CommonHeader 
-  _table_id                    :: Word8, -- h->table_id = getBit(data, &boff, 8);
-  _section_syntax_indicator    :: Bool, -- h->section_syntax_indicator = getBit(data, &boff, 1);
-  _reserved_future_use         :: Bool, -- h->reserved_future_use = getBit(data, &boff, 1);
-  _reserved1                   :: Word8, -- h->reserved1 = getBit(data, &boff, 2);
-  _section_length              :: Word16, -- h->section_length =getBit(data, &boff,12);
-
+  _header1 :: Header1.Data,
   _original_service_id :: Word16,
-  
-  -- CommonHeader2  
-  _reserved2                   :: Word8, -- h->reserved2 = getBit(data, &boff, 2);
-  _version_number              :: Word8, -- h->version_number = getBit(data, &boff, 5);
-  _current_next_indicator      :: Bool, -- h->current_next_indicator = getBit(data, &boff, 1);
-  _section_number              :: Word8, -- h->section_number = getBit(data, &boff, 8);
-  _last_section_number         :: Word8, -- h->last_section_number = getBit(data, &boff, 8);
-
-  _transport_stream_id    :: Word16,  
+  _header2 :: Header2.Data,
+  _transport_stream_id    :: Word16,
   _original_network_id    :: Word16,
-  items :: [Item]
+  _items :: [Item]
   }
 
+class (HasDescriptors a) => ItemClass a where
+  description_id          :: a -> Word16
+  descriptors_loop_length :: a -> Word16
+
 data Item = MkItem {
-  description_id :: Word16,
+  _description_id :: Word16,
 -- reserved_future_use,  
-  descriptors_loop_length :: Word16,
+  _descriptors_loop_length :: Word16,
   _descriptors :: [Descriptor.Data]
   }
 
@@ -57,18 +48,10 @@ instance HasDescriptors Item where
   descriptors = _descriptors
 
 instance Header1.Class Data where
-  table_id                 = _table_id
-  section_syntax_indicator = _section_syntax_indicator
-  reserved_future_use      = _reserved_future_use
-  reserved1                = _reserved1
-  section_length           = _section_length
+  header1 = _header1
   
 instance Header2.Class Data where
-  reserved2                = _reserved2
-  version_number           = _version_number
-  current_next_indicator   = _current_next_indicator
-  section_number           = _section_number
-  last_section_number      = _last_section_number
+  header2 = _header2
 
 instance HasOriginalNetworkID Data where
   original_network_id = _original_network_id
@@ -76,3 +59,7 @@ instance HasOriginalNetworkID Data where
 instance Class Data where
   original_service_id = _original_service_id
   transport_stream_id = _transport_stream_id
+
+instance ItemClass Item where
+  description_id = _description_id 
+  descriptors_loop_length = _descriptors_loop_length

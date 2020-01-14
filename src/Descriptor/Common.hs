@@ -28,7 +28,7 @@ module Descriptor.Common(
   ,TOSData
   ,AreaCode
   ) where
-import Common(HasOriginalNetworkID(..))
+import Common(HasOriginalNetworkID(..),HasServiceID(..))
 import Data.Word(Word64, Word32, Word16, Word8)
 import Data.ByteString(ByteString)
 
@@ -58,9 +58,6 @@ class HasText a => HasTextAndLen a where
 class HasTitle a where
   title :: a -> String
   title_length :: a -> Word8
-
-class HasServiceID a where
-  service_id :: a -> Word16
   
 class HasServiceType a where
   service_type :: a -> Word8

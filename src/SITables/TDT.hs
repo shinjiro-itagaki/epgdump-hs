@@ -22,21 +22,12 @@ class (Header1.Class a) => Class a where
 
 data Data = MkData {
   -- CommonHeader 
-  _table_id                    :: Word8, -- h->table_id = getBit(data, &boff, 8);
-  _section_syntax_indicator    :: Bool, -- h->section_syntax_indicator = getBit(data, &boff, 1);
-  _reserved_future_use         :: Bool, -- h->reserved_future_use = getBit(data, &boff, 1);
-  _reserved1                   :: Word8, -- h->reserved1 = getBit(data, &boff, 2);
-  _section_length              :: Word16, -- h->section_length =getBit(data, &boff,12);
-
+  _header1 :: Header1.Data,
   _jst_time :: Word64
   }
 
 instance Header1.Class Data where
-  table_id                 = _table_id
-  section_syntax_indicator = _section_syntax_indicator
-  reserved_future_use      = _reserved_future_use
-  reserved1                = _reserved1
-  section_length           = _section_length
+  header1 = _header1
   
 instance Class Data where
   jst_time  = _jst_time 

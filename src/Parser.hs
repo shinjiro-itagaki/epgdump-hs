@@ -13,7 +13,7 @@ module Parser (
   ,Parser.or
 ) where
 
-import Common(EmptyExist(..),BytesLen,BitsLen)
+import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..))
 import Data.Int(Int64)
 import Data.Word(Word64, Word32, Word16, Word8)
 import Data.ByteString.Lazy(ByteString)
@@ -209,7 +209,11 @@ instance FromValueCache Word64 where
 instance FromValueCache ValueCache where
   fromValueCache x = x
 
-data ParseResult a = Parsed a | DataIsTooShort | NotMatch | UnknownReason
+data ParseResult a =
+  Parsed a
+  | DataIsTooShort -- 一致するデータがあったが、元データが不足している（続きのデータを追加して再実行すればうまくいくと思われる）
+  | NotMatch       -- 一致するデータが存在しなかった
+  | UnknownReason  -- 原因不明の失敗
 
 or :: ParseResult a -> a -> a
 or (Parsed x) y = x
@@ -220,7 +224,7 @@ class HasParser a where
   -- startParse に関数を2つ追加すれば実装できる
   -- ex. parse = startParse update result
   parse :: ByteString -> (ParseResult a, ByteString)
-  parseByFH :: FileHandle.Data -> (a -> b) -> IO (FileHandle.Data,b)
+  parseIO :: (BytesHolderIO bh) => bh -> IO (ParseResult a, bh)
   -----
 
   -- パースした結果と余ったByteString
@@ -246,5 +250,3 @@ class HasParser a where
 
   parseMulti :: ByteString -> (V.Vector a, ByteString)
   parseMulti = parseMulti' V.empty
-
-      

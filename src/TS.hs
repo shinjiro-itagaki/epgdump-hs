@@ -49,14 +49,14 @@ import qualified TS.Packet as Packet
 
 -- type FileHandle = FileHandle.Data 
 
-each :: String -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> IO (Bool,a)) -> IO a
+each :: String -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
 each path something act = do
   fh <- FileHandle.new path
   _each fh something act
 
-_each :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> IO (Bool,a)) -> IO a
+_each :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
 _each fh something act = do
-  (p,(_,fh')) <- Packet.read fh
+  (p,(bytes,fh')) <- Packet.read fh
   if Packet.isEOF p
     then return something
-    else act p something (FileHandle.getReadonlyInfo fh') >>= (\(continue,something') -> if continue then _each fh' something' act else return something' )
+    else act p something (FileHandle.getReadonlyInfo fh') bytes >>= (\(continue,something') -> if continue then _each fh' something' act else return something' )

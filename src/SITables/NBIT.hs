@@ -22,54 +22,51 @@ table_ids = [0xC5,0xC6]
 class (Header1.Class a, Header2.Class a, HasOriginalNetworkID a) => Class a where
   
 data Data = MkData {
-  -- CommonHeader 
-  _table_id                    :: Word8, -- h->table_id = getBit(data, &boff, 8);
-  _section_syntax_indicator    :: Bool, -- h->section_syntax_indicator = getBit(data, &boff, 1);
-  _reserved_future_use         :: Bool, -- h->reserved_future_use = getBit(data, &boff, 1);
-  _reserved1                   :: Word8, -- h->reserved1 = getBit(data, &boff, 2);
-  _section_length              :: Word16, -- h->section_length =getBit(data, &boff,12);
-
-  _original_network_id    :: Word16,  
-  
-  -- CommonHeader2  
-  _reserved2                   :: Word8, -- h->reserved2 = getBit(data, &boff, 2);
-  _version_number              :: Word8, -- h->version_number = getBit(data, &boff, 5);
-  _current_next_indicator      :: Bool, -- h->current_next_indicator = getBit(data, &boff, 1);
-  _section_number              :: Word8, -- h->section_number = getBit(data, &boff, 8);
-  _last_section_number         :: Word8, -- h->last_section_number = getBit(data, &boff, 8);
-
-  items :: [Item]
+  _header1             :: Header1.Data,
+  _original_network_id :: Word16,  
+  _header2             :: Header2.Data,
+  _items               :: [Item]
   }
 
+class (HasDescriptors a) => ItemClass a where
+  information_id            :: a -> Word16
+  information_type          :: a -> Word8
+  description_body_location :: a -> (Bool,Bool)
+  user_defined              :: a -> Word8
+  number_of_keys            :: a -> Word8
+  keys                      :: a -> [Word16]
+  descriptors_loop_length   :: a -> Word16
+  
 data Item = MkItem {
-  information_id :: Word16,
-  information_type :: Word8,
-  description_body_location :: (Bool,Bool),
+  _information_id :: Word16,
+  _information_type :: Word8,
+  _description_body_location :: (Bool,Bool),
 -- reserved_future_use,
   _user_defined :: Word8,
-  number_of_keys :: Word8,
-  keys :: [Word16],
+  _number_of_keys :: Word8,
+  _keys :: [Word16],
 -- reserved_future_use
-  descriptors_loop_length :: Word16,
+  _descriptors_loop_length :: Word16,
   _descriptors :: [Descriptor.Data]
   }
 
 instance HasDescriptors Item where
   descriptors = _descriptors
 
+instance ItemClass Item where
+  information_id = _information_id
+  information_type = _information_type 
+  description_body_location = _description_body_location
+  user_defined = _user_defined
+  number_of_keys = _number_of_keys
+  keys = _keys
+  descriptors_loop_length = _descriptors_loop_length
+
 instance Header1.Class Data where
-  table_id                 = _table_id
-  section_syntax_indicator = _section_syntax_indicator
-  reserved_future_use      = _reserved_future_use
-  reserved1                = _reserved1
-  section_length           = _section_length
+  header1 = _header1
   
 instance Header2.Class Data where
-  reserved2                = _reserved2
-  version_number           = _version_number
-  current_next_indicator   = _current_next_indicator
-  section_number           = _section_number
-  last_section_number      = _last_section_number
+  header2 = _header2
 
 instance HasOriginalNetworkID Data where
   original_network_id = _original_network_id
