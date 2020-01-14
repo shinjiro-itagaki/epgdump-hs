@@ -27,8 +27,8 @@ main = do
 --  test fh 0 >>= putStrLn . show
   TS.each filepath counter action >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)
 
-action :: TS.Packet.Data -> BytesLen -> FileHandle.ReadonlyData -> BS.ByteString -> IO (Bool,BytesLen)
-action _ x info _ = do
+action :: TS.Packet.Data -> BytesLen -> FileHandle.ReadonlyData -> IO (Bool,BytesLen)
+action _ x info = do
   let newx = x+1
   if newx `mod` 20000 == 0
     then putStrLn $ show $ FileHandle.progress_percent info
@@ -37,8 +37,8 @@ action _ x info _ = do
 
 test :: FileHandle.Data -> Word64 -> IO Word64
 test fh i = do
-  FileHandle.syncIO fh
-  bs <- FileHandle.hGet fh 187
+  fh2 <- FileHandle.syncIO fh
+  (bs,fh3) <- FileHandle.hGet fh2 187
   if BS.length bs < 1
     then return i
     else do

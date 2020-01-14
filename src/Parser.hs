@@ -23,6 +23,7 @@ import Data.Char(chr)
 import Data.Maybe(fromMaybe)
 import Control.Applicative((<|>))
 import qualified Data.Vector as V
+import qualified TS.FileHandle as FileHandle
 
 type ByteHead = Word8
 type ByteRest = ByteString
@@ -219,6 +220,7 @@ class HasParser a where
   -- startParse に関数を2つ追加すれば実装できる
   -- ex. parse = startParse update result
   parse :: ByteString -> (ParseResult a, ByteString)
+  parseByFH :: FileHandle.Data -> (a -> b) -> IO (FileHandle.Data,b)
   -----
 
   -- パースした結果と余ったByteString
