@@ -69,15 +69,18 @@ instance ParseConditionSymbol Symbol where
   getLen Reserved1              = 2
   getLen SectionLength          =12
 
-instance HasParser Data where
-  parse = startParse update result
-  parseIO fh = getBitsIO_M fh [
+_parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow fh init = getBitsIO_M fh [
     (8 , (\(v,d) -> d { _table_id                 = fromWord64 v})),
     (1 , (\(v,d) -> d { _section_syntax_indicator = fromWord64 v})),
     (1 , (\(v,d) -> d { _reserved_future_use      = fromWord64 v})),
     (2 , (\(v,d) -> d { _reserved1                = fromWord64 v})),
     (12, (\(v,d) -> d { _section_length           = fromWord64 v}))
-    ] mkEmpty
+    ] init
+
+instance HasParser Data where
+  parse = startParse update result
+  parseIOFlow = flowStart _parseIOFlow
 
 length :: BitsLen
 length = bitsLength (allSymbols :: [Symbol])

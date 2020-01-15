@@ -273,14 +273,40 @@ or :: ParseResult a -> a -> a
 or (Parsed x) y = x
 or _ y = y
 
-class HasParser a where
+data (BytesHolderIO bh, HasParser result) => ParseIOFlow bh result =
+  MkParseIOFlow (bh -> result -> IO (ParseResult result, bh))
+  | MkParseIOFlowPair (ParseIOFlow bh result) (ParseIOFlow bh result)
+  | Finish
+
+(|>>=) :: (BytesHolderIO bh, HasParser result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result
+(|>>=) c1 c2 = MkParseIOFlowPair c1 c2
+infixl 4 |>>=
+
+(=<<|) l r = r |>>= l
+infixl 3 =<<|
+
+class (EmptyExist a) => HasParser a where
   -- please implement
   -- startParse に関数を2つ追加すれば実装できる
   -- ex. parse = startParse update result
   parse :: ByteString -> (ParseResult a, ByteString)
-  parseIO :: (BytesHolderIO bh) => bh -> IO (ParseResult a, bh)
+  parseIOFlow :: (BytesHolderIO bh) => ParseIOFlow bh a
   -----
 
+  flowStart :: (BytesHolderIO bh) => (bh -> a -> IO (ParseResult a, bh)) -> ParseIOFlow bh a
+  flowStart = MkParseIOFlow
+
+  parseIO :: (BytesHolderIO bh) => bh -> IO (ParseResult a, bh)
+  parseIO bh = execParseIOFlow bh mkEmpty parseIOFlow
+
+  execParseIOFlow :: (BytesHolderIO bh) => bh -> a -> ParseIOFlow bh a -> IO (ParseResult a, bh)
+  execParseIOFlow bh init (MkParseIOFlow f) = f bh init
+  execParseIOFlow bh init (MkParseIOFlowPair l r) = do
+    lres@(res, bh2) <- execParseIOFlow bh init l
+    case res of
+      Parsed init2 -> execParseIOFlow bh2 init2 r
+      x -> return lres
+    
   -- 
   getBitsIO_M :: (BytesHolderIO bh) => bh -> [(BitsLen, (Word64,a) -> a)] -> a -> IO (ParseResult a, bh)
   getBitsIO_M fh conds init = do

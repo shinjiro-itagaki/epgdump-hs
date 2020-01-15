@@ -172,5 +172,5 @@ data Data =
   | VideoDecodeControl           Descriptor.VideoDecodeControl.Data
 
   
-instance HasParser Descriptor.Data where
-  parse bs = (NotMatch,bs)
+--instance HasParser Descriptor.Data where
+--  parse bs = (NotMatch,bs)
