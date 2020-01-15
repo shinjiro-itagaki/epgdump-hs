@@ -2,8 +2,8 @@
 
 module SITables.Header2 where
 import Data.Word(Word64, Word32, Word16, Word8)
-import Common(EmptyExist(..),BitsLen)
-import Parser(HasParser(..),ParseConditionSymbol(..),FromValueCache(..),ValueCache)
+import Common(EmptyExist(..),BitsLen,BytesHolderIO(..))
+import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 class Class a where
   header2                :: a -> Data
   
@@ -48,27 +48,37 @@ instance EmptyExist Data where
     _last_section_number      = mkEmpty
     }
   
-data Symbol = Reserved2 | VersionNumber | CurrentNextIndicator | SectionNumber | LastSectionNumber deriving (Eq,Enum,Bounded)
+-- data Symbol = Reserved2 | VersionNumber | CurrentNextIndicator | SectionNumber | LastSectionNumber deriving (Eq,Enum,Bounded)
 
-update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
-update Reserved2            v st = (st { _reserved2              = fromValueCache v },Nothing)
-update VersionNumber        v st = (st { _version_number         = fromValueCache v },Nothing)
-update CurrentNextIndicator v st = (st { _current_next_indicator = fromValueCache v },Nothing)
-update SectionNumber        v st = (st { _section_number         = fromValueCache v },Nothing)
-update LastSectionNumber    v st = (st { _last_section_number    = fromValueCache v },Nothing)
+-- update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
+-- update Reserved2            v st = (st { _reserved2              = fromValueCache v },Nothing)
+-- update VersionNumber        v st = (st { _version_number         = fromValueCache v },Nothing)
+-- update CurrentNextIndicator v st = (st { _current_next_indicator = fromValueCache v },Nothing)
+-- update SectionNumber        v st = (st { _section_number         = fromValueCache v },Nothing)
+-- update LastSectionNumber    v st = (st { _last_section_number    = fromValueCache v },Nothing)
 
-result :: Data -> Maybe Data
-result x = Just x
+-- result :: Data -> Maybe Data
+-- result x = Just x
 
-instance ParseConditionSymbol Symbol where
-  getLen Reserved2            = 2
-  getLen VersionNumber        = 5 
-  getLen CurrentNextIndicator = 1
-  getLen SectionNumber        = 8
-  getLen LastSectionNumber    = 8
+-- instance ParseConditionSymbol Symbol where
+--   getLen Reserved2            = 2
+--   getLen VersionNumber        = 5 
+--   getLen CurrentNextIndicator = 1
+--   getLen SectionNumber        = 8
+--   getLen LastSectionNumber    = 8
+
+_parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow fh init = getBitsIO_M fh [
+    (2 , (\(v,d) -> d { _reserved2              = fromWord64 v})),
+    (5 , (\(v,d) -> d { _version_number         = fromWord64 v})),
+    (1 , (\(v,d) -> d { _current_next_indicator = fromWord64 v})),
+    (8 , (\(v,d) -> d { _section_number         = fromWord64 v})),
+    (8 , (\(v,d) -> d { _last_section_number    = fromWord64 v}))
+    ] init
 
 instance HasParser Data where
-  parse = startParse update result
+  -- parse = startParse update result
+  parseIOFlow = flowStart |>>= _parseIOFlow  
 
-length :: BitsLen
-length = bitsLength (allSymbols :: [Symbol])
+-- length :: BitsLen
+-- length = bitsLength (allSymbols :: [Symbol])

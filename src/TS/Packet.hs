@@ -76,10 +76,10 @@ class (EmptyExist a, Parser.HasParser a) => FromPackets a where
   isMatch :: (a -> b) -> Data -> Bool
   isMatch f packet = let pid = Header.pid packet in any (==pid) (pids f)
   
-  fromPackets :: (a -> b) -> V.Vector Data -> V.Vector a
-  fromPackets f =
-    let table_ids' = table_ids f
-    in fst . Parser.parseMulti . (V.foldl BS.append BS.empty) . (V.map Body.payload) . V.filter (isMatch f)
+--  fromPackets :: (a -> b) -> V.Vector Data -> V.Vector a
+--  fromPackets f = 
+--    let table_ids' = table_ids f
+--    in fst . Parser.parseMulti . (V.foldl BS.append BS.empty) . (V.map Body.payload) . V.filter (isMatch f)
 
 class Holder a where
   get :: a -> [Data]

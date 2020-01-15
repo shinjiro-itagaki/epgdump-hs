@@ -4,7 +4,7 @@ module SITables.Header1 where
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Common
 import Common(EmptyExist(..),BitsLen,BytesHolderIO(..))
-import Parser(HasParser(..),ParseConditionSymbol(..),FromValueCache(..),ValueCache,FromWord64(..),ParseResult(..))
+import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import SITables.Common()
 
 class Class a where
@@ -49,25 +49,6 @@ instance EmptyExist Data where
     _reserved1                = mkEmpty,
     _section_length           = mkEmpty
     }
-  
-data Symbol = TableID | SectionSyntaxIndicator | ReservedFutureUse | Reserved1 | SectionLength deriving (Eq,Enum,Bounded)
-
-update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
-update TableID                v st = (st { _table_id                 = fromValueCache v },Nothing)
-update SectionSyntaxIndicator v st = (st { _section_syntax_indicator = fromValueCache v },Nothing)
-update ReservedFutureUse      v st = (st { _reserved_future_use      = fromValueCache v },Nothing)
-update Reserved1              v st = (st { _reserved1                = fromValueCache v },Nothing)
-update SectionLength          v st = (st { _section_length           = fromValueCache v },Nothing)
-
-result :: Data -> Maybe Data
-result x = Just x
-
-instance ParseConditionSymbol Symbol where
-  getLen TableID                = 8
-  getLen SectionSyntaxIndicator = 1
-  getLen ReservedFutureUse      = 1
-  getLen Reserved1              = 2
-  getLen SectionLength          =12
 
 _parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = getBitsIO_M fh [
@@ -79,9 +60,8 @@ _parseIOFlow fh init = getBitsIO_M fh [
     ] init
 
 instance HasParser Data where
-  parse = startParse update result
-  parseIOFlow = flowStart _parseIOFlow
+  parseIOFlow = flowStart |>>= _parseIOFlow
 
-length :: BitsLen
-length = bitsLength (allSymbols :: [Symbol])
+-- length :: BitsLen
+-- length = bitsLength (allSymbols :: [Symbol])
 
