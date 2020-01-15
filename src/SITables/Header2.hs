@@ -3,9 +3,10 @@
 module SITables.Header2 where
 import Data.Word(Word64, Word32, Word16, Word8)
 import Common(EmptyExist(..),BitsLen,BytesHolderIO(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..))
+import Parser(HasParser(..),FromWord64(..),ParseResult(..),parseFlow)
 class Class a where
   header2                :: a -> Data
+  setHeader2             :: a -> Data -> a
   
   reserved2              :: a -> Word8
   reserved2              = reserved2              . header2
@@ -47,25 +48,6 @@ instance EmptyExist Data where
     _section_number           = mkEmpty,
     _last_section_number      = mkEmpty
     }
-  
--- data Symbol = Reserved2 | VersionNumber | CurrentNextIndicator | SectionNumber | LastSectionNumber deriving (Eq,Enum,Bounded)
-
--- update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
--- update Reserved2            v st = (st { _reserved2              = fromValueCache v },Nothing)
--- update VersionNumber        v st = (st { _version_number         = fromValueCache v },Nothing)
--- update CurrentNextIndicator v st = (st { _current_next_indicator = fromValueCache v },Nothing)
--- update SectionNumber        v st = (st { _section_number         = fromValueCache v },Nothing)
--- update LastSectionNumber    v st = (st { _last_section_number    = fromValueCache v },Nothing)
-
--- result :: Data -> Maybe Data
--- result x = Just x
-
--- instance ParseConditionSymbol Symbol where
---   getLen Reserved2            = 2
---   getLen VersionNumber        = 5 
---   getLen CurrentNextIndicator = 1
---   getLen SectionNumber        = 8
---   getLen LastSectionNumber    = 8
 
 _parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = getBitsIO_M fh [
@@ -77,8 +59,10 @@ _parseIOFlow fh init = getBitsIO_M fh [
     ] init
 
 instance HasParser Data where
-  -- parse = startParse update result
   parseIOFlow = flowStart |>>= _parseIOFlow  
 
--- length :: BitsLen
--- length = bitsLength (allSymbols :: [Symbol])
+parseFlow :: (BytesHolderIO bh, HasParser a, Class a) => bh -> a -> IO (ParseResult a, bh)
+parseFlow = Parser.parseFlow caster
+  where
+    caster :: (Class a) => Data -> a -> a
+    caster header2 d = setHeader2 d header2

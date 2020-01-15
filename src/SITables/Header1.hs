@@ -3,13 +3,14 @@
 module SITables.Header1 where
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Common
-import Common(EmptyExist(..),BitsLen,BytesHolderIO(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..))
+import Common(EmptyExist(..),BitsLen,BytesHolderIO(..),BytesLen,BytesCounter(..))
+import Parser(HasParser(..),FromWord64(..),ParseResult(..),mapParseResult,parseFlow)
 import SITables.Common()
 
 class Class a where
   header1                     :: a -> Data
-  
+  setHeader1                  :: a -> Data -> a
+
   table_id                 = table_id                 . header1  
   table_id                    :: a -> Common.TableID
   
@@ -22,7 +23,7 @@ class Class a where
   reserved1                   :: a -> Word8
   reserved1                = reserved1                . header1
   
-  section_length              :: a -> Word16
+  section_length              :: a -> BytesLen
   section_length           = section_length           . header1
 
 data Data = MkData {
@@ -30,11 +31,12 @@ data Data = MkData {
   _section_syntax_indicator :: Bool,
   _reserved_future_use      :: Bool,
   _reserved1                :: Word8,
-  _section_length           :: Word16
+  _section_length           :: BytesLen
   }
 
 instance Class Data where
   header1                x = x
+  setHeader1  self header1 = header1
   table_id                 = _table_id 
   section_syntax_indicator = _section_syntax_indicator
   reserved_future_use      = _reserved_future_use
@@ -51,17 +53,21 @@ instance EmptyExist Data where
     }
 
 _parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow fh init = getBitsIO_M fh [
+_parseIOFlow fh init = do
+  (res,fh2) <- getBitsIO_M fh [
     (8 , (\(v,d) -> d { _table_id                 = fromWord64 v})),
     (1 , (\(v,d) -> d { _section_syntax_indicator = fromWord64 v})),
     (1 , (\(v,d) -> d { _reserved_future_use      = fromWord64 v})),
     (2 , (\(v,d) -> d { _reserved1                = fromWord64 v})),
     (12, (\(v,d) -> d { _section_length           = fromWord64 v}))
     ] init
+  return (res, (resetBytesCounter fh2))
 
 instance HasParser Data where
   parseIOFlow = flowStart |>>= _parseIOFlow
 
--- length :: BitsLen
--- length = bitsLength (allSymbols :: [Symbol])
-
+parseFlow :: (BytesHolderIO bh, HasParser a, Class a) => bh -> a -> IO (ParseResult a, bh)
+parseFlow = Parser.parseFlow caster
+  where
+    caster :: (Class a) => Data -> a -> a
+    caster header1 d = setHeader1 d header1

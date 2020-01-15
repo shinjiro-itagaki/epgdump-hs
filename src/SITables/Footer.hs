@@ -3,9 +3,11 @@
 module SITables.Footer where
 import Data.Word(Word64, Word32, Word16, Word8)
 import Common(EmptyExist(..),BitsLen,BytesHolderIO(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..))
+import Parser(HasParser(..),FromWord64(..),ParseResult(..),parseFlow)
 class Class a where
   footer :: a -> Data
+  setFooter :: a -> Data -> a
+  
   crc_32 :: a -> Word32
   crc_32 = _crc_32 . footer
   
@@ -21,17 +23,6 @@ instance EmptyExist Data where
   mkEmpty = MkData {
     _crc_32 = mkEmpty
     }
-  
--- data Symbol = CRC_32 deriving (Eq,Enum,Bounded)
-
--- update :: Symbol -> ValueCache -> Data -> (Data,Maybe Symbol)
--- update CRC_32 v st = (MkData $ fromValueCache v, Nothing)
-
--- result :: Data -> Maybe Data
--- result x = Just x
-
--- instance ParseConditionSymbol Symbol where
---   getLen CRC_32 = 32
 
 _parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = getBitsIO_M fh [
@@ -41,5 +32,8 @@ _parseIOFlow fh init = getBitsIO_M fh [
 instance HasParser Data where
   parseIOFlow = flowStart |>>= _parseIOFlow
 
--- length :: BitsLen
--- length = bitsLength (allSymbols :: [Symbol])
+parseFlow :: (BytesHolderIO bh, HasParser a, Class a) => bh -> a -> IO (ParseResult a, bh)
+parseFlow = Parser.parseFlow caster
+  where
+    caster :: (Class a) => Data -> a -> a
+    caster footer d = setFooter d footer

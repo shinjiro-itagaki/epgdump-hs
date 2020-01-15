@@ -4,6 +4,7 @@ module Parser (
   ParseResult(..)
   ,HasParser(..)
   ,FromWord64(..)
+  ,parseFlow
 ) where
 
 import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..))
@@ -107,3 +108,10 @@ class (EmptyExist a) => HasParser a where
             return (Parsed $ f (v,d), fh'')
           DataIsTooShort mblen -> return $ (\x->(x,fh')) $ DataIsTooShort $ Just $ (+i) $ fromMaybe 0 mblen
           x -> return res
+
+parseFlow :: (BytesHolderIO bh, HasParser a, HasParser b) => (a -> b -> b) -> bh -> b -> IO (ParseResult b, bh)
+parseFlow caster fh init = do
+  (res_header,fh') <- parseIO fh
+  return $ (\x -> (x,fh')) $ mapParseResult res_header $ case res_header of
+    Parsed header1 -> caster header1 init
+    _              -> mkEmpty

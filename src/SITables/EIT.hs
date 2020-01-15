@@ -17,7 +17,7 @@ import Descriptor(HasServiceID(..))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)
-import Data.Vector(Vector,toList,empty)
+import Data.Vector(Vector,toList,empty,snoc)
 import Data.Maybe(fromMaybe)
 
 import qualified SITables.EIT.Item as Item
@@ -41,8 +41,7 @@ data Data = MkData {
   _original_network_id         :: Word16,
   _segment_last_section_number :: Word8,
   _last_table_id               :: Word8,
---  _items                       :: Vector ItemData,
-  _item                        :: Item.Data, 
+  _items                       :: Vector Item.Data, 
   _footer                      :: Footer.Data
   }
 
@@ -51,9 +50,15 @@ instance EmptyExist Data where
 
 instance Header1.Class Data where
   header1 = _header1
+  setHeader1 x h = x {_header1 = h}  
   
 instance Header2.Class Data where
   header2 = _header2
+  setHeader2 x h = x {_header2 = h}
+
+instance Footer.Class Data where
+  footer = _footer
+  setFooter x y = x {_footer = y}
 
 instance HasOriginalNetworkID Data where
   original_network_id = _original_network_id
@@ -67,11 +72,7 @@ instance Class Data where
   last_table_id               = _last_table_id
 
 _parseIOFlow1_header1 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow1_header1 fh init = do
-  (res_header,fh') <- parseIO fh
-  return $ (\x -> (x,fh')) $ mapParseResult res_header $ case res_header of
-    Parsed header1 -> init {_header1 = header1}
-    _              -> mkEmpty
+_parseIOFlow1_header1 = Header1.parseFlow
 
 _parseIOFlow2 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =
@@ -94,12 +95,18 @@ _parseIOFlow4 fh init = do
     ( 8, (\(v,d) -> d { _last_table_id               = fromWord64 v}))
     ] init
 
-_parseIOFlow5_item :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow5_item fh init = do
-  (res_item,fh') <- parseIO fh
-  return $ (\x -> (x,fh')) $ mapParseResult res_item $ case res_item of
-    Parsed item -> init {_item = item}
-    _           -> mkEmpty
+_parseIOFlow5_items :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow5_items fh init = do
+  impl' fh init (toInteger $ Header1.section_length init)
+  where
+    impl' :: (BytesHolderIO bh) => bh -> Data -> Integer -> IO (ParseResult Data, bh)
+    impl' fh' init' rest'
+      | rest' < 1 = return (Parsed init', fh')
+      | otherwise = do
+          res@(res_item,fh'') <- parseIO fh'
+          case res_item of
+            Parsed item -> impl' fh'' (init' {_items = snoc (_items init') item}) (rest' - 100)
+            _           -> return $ (\x -> (x,fh'')) $ mapParseResult res_item init'
 
 _parseIOFlow6_footer :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow6_footer fh init = do
@@ -115,5 +122,5 @@ instance HasParser Data where
     |>>= _parseIOFlow2
     |>>= _parseIOFlow3_header2
     |>>= _parseIOFlow4
-    |>>= _parseIOFlow5_item
+    |>>= _parseIOFlow5_items
     |>>= _parseIOFlow6_footer

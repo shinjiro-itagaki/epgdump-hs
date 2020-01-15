@@ -36,11 +36,15 @@ instance EmptyExist Word8  where
 --color :: HexRGBA
 --color = HexRGBA (0xFFFFFFFF,0xFFFFFFFF)
 
-class BytesHolder a where
+class BytesCounter a where
+  getBytesCounter   :: a -> BytesLen
+  resetBytesCounter :: a -> a
+
+class (BytesCounter a) => BytesHolder a where
   getBits  :: (Integral i) => a -> i -> (Word64, a)
   getBytes :: (Integral i) => a -> i -> (ByteString, a)
   
-class BytesHolderIO a where
+class (BytesCounter a) => BytesHolderIO a where
   getBitsIO  :: (Integral i) => a -> i -> IO (Word64, a)
   getBytesIO :: (Integral i) => a -> i -> IO (ByteString, a)
   isEOF      :: a -> IO Bool

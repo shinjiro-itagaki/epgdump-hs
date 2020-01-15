@@ -6,7 +6,7 @@ import Data.ByteString.Lazy(hGet,ByteString,head,last)
 import qualified Data.ByteString.Lazy as BS
 import System.IO(Handle,hIsEOF,SeekMode(..),hSeek,hFileSize,openFile, IOMode(ReadMode))
 import Data.Vector(Vector,empty,toList)
-import Common(BytesLen,BytesHolderIO(..))
+import Common(BytesLen,BytesHolderIO(..),BytesCounter(..))
 import Data.Ratio(Ratio)
 import Data.Bits(shiftL,shiftR,(.|.),(.&.))
 
@@ -125,8 +125,13 @@ data Data = MkData {
   _pos       :: Word64, -- bits
   _filesize  :: BytesLen,
   _loaded    :: Word8,
-  _stockedBitsLen :: StockedBitsLen
+  _stockedBitsLen :: StockedBitsLen,
+  _bytesCounter :: BytesLen
   }
+
+instance BytesCounter Data where
+  getBytesCounter     = _bytesCounter 
+  resetBytesCounter x = x {_bytesCounter = 0 }
 
 instance ReadonlyInfo Data where
   pos = _pos
@@ -135,7 +140,7 @@ instance ReadonlyInfo Data where
 
 -- private method
 _addPos :: Data -> Word64 -> Data
-_addPos x i = x { _pos = i + (_pos x) }
+_addPos x i = x { _pos = i + (_pos x),  _bytesCounter = i + (_bytesCounter x) }
 
 class ToWord64 a where
   toWord64 :: a -> Word64
@@ -159,6 +164,7 @@ instance Class Data where
       _pos       = 0,
       _handle    = h,
       _loaded    = 0,
+      _bytesCounter = 0,
       _stockedBitsLen = Zero
       }
       
