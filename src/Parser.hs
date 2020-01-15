@@ -11,6 +11,7 @@ module Parser (
   ,ParseResult(..)
   ,HasParser(..)
   ,Parser.or
+  ,FromWord64(..)
 ) where
 
 import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..))
@@ -100,12 +101,10 @@ data (Eq symbol, EmptyExist state) => ParseCondition symbol state result =
     (CacheInfo symbol state result) -- キャッシュの内容一式
     (ValueCache -> symbol -> (CacheInfo symbol state result) -> ParseCondition symbol state result) -- パースした結果を受け取り、対象になっている項目、状態、を入力すると次のパース条件を返す関数
 
-data BitsLenType = Static BitsLen | Dynamic
-
 class (Eq a,Enum a,Bounded a) => ParseConditionSymbol a where
   -- please define following functions --
   getLen    :: a -> BitsLen
-  ---------- 
+  ----------
 
   bitsLength :: [a] -> BitsLen
   bitsLength xs = Prelude.foldl (+) 0 $ Prelude.map getLen xs
@@ -160,7 +159,7 @@ class (EmptyExist a) => FromValueCache a where
   fromMaybeValueCache (Just x) = fromValueCache x
   fromMaybeValueCache Nothing = fromNothing
 
-data ReadValueResult a = ReadValueSuccess a | TooShort
+data ReadValueResult a = ReadValueSuccess a | TooShort (Maybe BytesLen)
   
 readValue :: BitsLen -> ValueCache -> ByteString -> ReadValueResult (ValueCache,ByteString)
 readValue 0 oldv bytes = ReadValueSuccess (oldv,bytes)
@@ -173,7 +172,7 @@ readValue l (old,en) bytes =
           head = BS.take n bytes
           tail = BS.drop n bytes -- こちらはオリジナルのtailを取得
       in
-          if (BS.length head) < n then TooShort else ReadValueSuccess ((head,toEnableBits modn),tail)
+          if (BS.length head) < n then TooShort (Just $ fromInteger $ toInteger $ n - (BS.length head) ) else ReadValueSuccess ((head,toEnableBits modn),tail)
     LeftBits n ->
       let n' = l + n
           (divn',modn') = n' `divMod` w8len
@@ -209,11 +208,66 @@ instance FromValueCache Word64 where
 instance FromValueCache ValueCache where
   fromValueCache x = x
 
+class FromWord64 a where
+  fromWord64 :: Word64 -> a
+
+instance FromWord64 Char where
+  fromWord64 x = chr $ fromInteger $ toInteger ((fromWord64 x) :: Word8)
+  
+instance FromWord64 Bool where
+  fromWord64 = (> 0)
+
+instance FromWord64 Word8 where
+  fromWord64 = fromInteger . toInteger . (.&. 0xFF)
+
+instance FromWord64 Word16 where
+  fromWord64 = fromInteger . toInteger . (.&. 0xFFFF)
+
+instance FromWord64 Word32 where
+  fromWord64 = fromInteger . toInteger . (.&. 0xFFFFFFFF)
+
 data ParseResult a =
   Parsed a
-  | DataIsTooShort -- 一致するデータがあったが、元データが不足している（続きのデータを追加して再実行すればうまくいくと思われる）
+  | DataIsTooShort (Maybe BytesLen)-- 一致するデータがあったが、元データが不足している（続きのデータを追加して再実行すればうまくいくと思われる）。値は不足しているバイト数
   | NotMatch       -- 一致するデータが存在しなかった
   | UnknownReason  -- 原因不明の失敗
+
+-- data ParseResultIO a b =
+--   ParsedIO a b
+--   | DataIsTooShortIO (Maybe BytesLen) b -- 一致するデータがあったが、元データが不足している（続きのデータを追加して再実行すればうまくいくと思われる）。値は不足しているバイト数
+--   | NotMatchIO b      -- 一致するデータが存在しなかった
+--   | UnknownReasonIO b -- 原因不明の失敗
+
+-- class FromWord64 a where
+--   fromWord64 :: Word64 -> a
+--           parse fh >>> (\(x,v) -> x { _x1 = v })
+-- |>>= parser  (\(x,v) -> x { _header1 = v })
+-- |>>= bits 16 (\(x,v) -> x { _x2 = v })
+-- |>>= parser  (\(x,v) -> x { _header2 = v })
+-- |>>= bits 16 (\(x,v) -> x { _x3 = v })
+-- |>>= bits  8 (\(x,v) -> x { _x4 = v })
+-- |>>= parser  (\(x,v) -> x { _x5 = v })
+-- |>>= branch  (\x ->
+--                  if flag x
+--                     then (bits 16 (\(x,v) -> x { _x6 = v }))
+--                     else (bits 16 (\(x,v) -> x { _x7 = v }))
+--              )
+-- |>>= ...
+-- data (BytesHolderIO bh, HasParser sub) => ParseFlowIO bh result =
+--   ByBits BitsLen ((Word64,result) -> result) -- getBitsで値を作成
+--   | ByParse      ((sub,   result) -> result) -- parseIOで値を作成
+--   | PairFlow (ParseFlowIO bh result) (ParseFlowIO bh result)
+--   | Branch (result -> ParseFlowIO bh result)
+--   | Finished -- 終了フラグ
+
+-- bits bl f = ByBits bl f
+-- parser f = ByParse f
+
+-- (|>>=) l r = PairFlow l r
+-- infixl 4 |>>=
+
+-- (=<<|) l r = PairFlow r l
+-- infixl 3 =<<|
 
 or :: ParseResult a -> a -> a
 or (Parsed x) y = x
@@ -227,6 +281,24 @@ class HasParser a where
   parseIO :: (BytesHolderIO bh) => bh -> IO (ParseResult a, bh)
   -----
 
+  -- 
+  getBitsIO_M :: (BytesHolderIO bh) => bh -> [(BitsLen, (Word64,a) -> a)] -> a -> IO (ParseResult a, bh)
+  getBitsIO_M fh conds init = do
+    Prelude.foldl each' (return (Parsed init,fh)) conds
+    where
+      each' rtn (i,f) = do
+        res@(res_d,fh') <- rtn
+        case res_d of
+          Parsed d -> do
+            (v,fh'') <- getBitsIO fh' i 
+            return (Parsed $ f (v,d), fh'')
+          DataIsTooShort mblen -> return $ (\x->(x,fh')) $ DataIsTooShort $ Just $ (+i) $ fromMaybe 0 mblen
+          x -> return res
+
+    
+  
+--  update :: (BytesHolderIO bh) => a -> bh -> IO (a, bh)
+
   -- パースした結果と余ったByteString
   startParse :: (ParseConditionSymbol sym,EmptyExist state) => (sym -> ValueCache -> state -> (state,Maybe sym)) -> (state -> Maybe a) -> ByteString -> (ParseResult a,ByteString)
   startParse f1 f2 bytes = parse__ bytes (firstCondition f1 f2)
@@ -236,7 +308,7 @@ class HasParser a where
     let res = readValue len oldv bytes
     in case res of
       ReadValueSuccess (val,rest) -> parse__ rest (next val sym state)
-      TooShort -> (DataIsTooShort,BS.empty)
+      TooShort x -> (DataIsTooShort x,BS.empty)
   parse__ bytes (ParseFinished mres) = (\x -> (x,bytes)) $ case mres of
     Nothing -> UnknownReason
     Just res -> Parsed res -- 終了
@@ -244,9 +316,9 @@ class HasParser a where
   parseMulti' :: V.Vector a -> ByteString -> (V.Vector a, ByteString)
   parseMulti' curr bytes =
     case parse bytes of
-      (Parsed a      ,rest) -> let next = parseMulti' (V.snoc curr a) rest in (fst next, snd next)
-      (DataIsTooShort,rest) -> (curr,rest) -- データが短すぎて終了したのでこれで終わり
-      (_             ,rest) -> parseMulti' curr rest -- 失敗したようだが、データは残っていると思われるので続行
+      (Parsed a        ,rest) -> let next = parseMulti' (V.snoc curr a) rest in (fst next, snd next)
+      (DataIsTooShort _,rest) -> (curr,rest) -- データが短すぎて終了したのでこれで終わり
+      (_               ,rest) -> parseMulti' curr rest -- 失敗したようだが、データは残っていると思われるので続行
 
   parseMulti :: ByteString -> (V.Vector a, ByteString)
   parseMulti = parseMulti' V.empty

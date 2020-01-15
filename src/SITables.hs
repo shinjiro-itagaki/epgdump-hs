@@ -47,8 +47,6 @@ class Holder a where
 
 data (BytesHolderIO a) => ConstructorHolderIO a = MkConstructorHolderIO (a -> IO (ParseResult Data, a))
 
-
-
 parse :: (Holder a, BytesHolder b) => a -> b -> (a,b)
 parse cache bytes = (add cache Null, bytes)
 

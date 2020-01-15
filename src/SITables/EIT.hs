@@ -124,6 +124,7 @@ result x = Just x
 
 instance HasParser Data where
   parse = startParse update result
+--  parseIO bh = do
 
 data ItemSymbol = EventID | StartTime | Duration | RunningStatus | FreeCA_Mode | DescriptorLoopLength deriving (Eq,Enum,Bounded)
 

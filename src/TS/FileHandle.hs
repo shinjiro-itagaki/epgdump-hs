@@ -89,13 +89,13 @@ class (ReadonlyInfo a, BytesHolderIO a) => Class a where
   -- please implement
   syncByte  :: a -> Word8
   new       :: String -> IO a
-  isEOF     :: a -> IO Bool
+--  isEOF     :: a -> IO Bool
   hGet      :: (Integral i) => a -> i -> IO (ByteString,a)
   hSeek     :: (Integral i) => a -> i -> IO a
   syncIO    :: a -> IO a
   loaded    :: a -> Word8
   stockedBitsLen :: a -> StockedBitsLen
-  getBits   :: (Integral i) => a -> i -> IO (Word64, a)  
+  getBits   :: (Integral i) => a -> i -> IO (Word64, a)
   ----- 
 
   stockedValueMask :: a -> Word8
@@ -146,11 +146,11 @@ instance ToWord64 Word8 where
 instance BytesHolderIO Data where
   getBytesIO = getBytes
   getBitsIO = getBits
+  isEOF = hIsEOF . _handle  
 
 instance Class Data where
   loaded = _loaded
   stockedBitsLen = _stockedBitsLen
-  isEOF = hIsEOF . _handle
   new filepath = do
     h <- openFile filepath ReadMode
     filesize <- return . fromInteger =<< hFileSize h

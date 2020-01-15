@@ -43,6 +43,7 @@ class BytesHolder a where
 class BytesHolderIO a where
   getBitsIO  :: (Integral i) => a -> i -> IO (Word64, a)
   getBytesIO :: (Integral i) => a -> i -> IO (ByteString, a)
+  isEOF      :: a -> IO Bool
 
 class (Eq a) => Matcher a where
   -- please implement
