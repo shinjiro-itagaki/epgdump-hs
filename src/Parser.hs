@@ -5,6 +5,9 @@ module Parser (
   ,HasParser(..)
   ,FromWord64(..)
   ,parseFlow
+  ,ParseIOFlow(..)
+  ,(>>==)
+  ,(==<<)  
 ) where
 
 import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..))
@@ -58,6 +61,14 @@ data (BytesHolderIO bh, HasParser result) => ParseIOFlow bh result =
   | MkParseIOFlowPair (ParseIOFlow bh result) (ParseIOFlow bh result)
   | MkFlowEnd
 
+(>>==) :: (BytesHolderIO bh, HasParser result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result
+(>>==) = MkParseIOFlowPair
+infixl 2 >>==
+
+(==<<) :: (BytesHolderIO bh, HasParser result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result  
+(==<<) l r = r >>== l
+infixl 2 ==<<
+  
 class (EmptyExist a) => HasParser a where
   -- please implement
   parseIOFlow :: (BytesHolderIO bh) => ParseIOFlow bh a

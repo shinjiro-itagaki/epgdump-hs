@@ -22,11 +22,7 @@ import TS.Packet(FromPackets(..))
 import Parser(HasParser(..),ParseResult(..))
 import Common(BytesHolder(..),BytesHolderIO(..))
 
-instance FromPackets SITables.EIT.Data where
-  pids      _ = SITables.EIT.pids
-  table_ids _ = SITables.EIT.table_ids
-
-data Data =
+Bdata Data =
   Other
   | Null
   | BAT  SITables.BAT.Data

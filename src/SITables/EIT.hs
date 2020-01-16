@@ -3,18 +3,16 @@
 module SITables.EIT(
   Data,
   Class(..),
-  pids,
-  table_ids,
   ) where
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified SITables.Base as Base
-import SITables.Common(HasDescriptors(..))
+import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..))
+import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import Descriptor(HasServiceID(..))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import qualified Descriptor
@@ -24,13 +22,7 @@ import Data.Maybe(fromMaybe)
 
 import qualified SITables.EIT.Item as Item
 
-pids :: [PID]
-pids = [0x0012,0x0026,0x0027]
-
-table_ids :: [TableID]
-table_ids = [0x4E,0x4F] ++ [0x50..0x5F] ++ [0x60..0x6F]
-
-class (Base.Class a, Header1.Class a, Header2.Class a, HasOriginalNetworkID a, HasServiceID a) => Class a where
+class (Base.Class a, HasOriginalNetworkID a, HasServiceID a) => Class a where
   transport_stream_id         :: a -> Word16
   segment_last_section_number :: a -> Word8
   last_table_id               :: a -> Word8
@@ -68,9 +60,20 @@ instance HasOriginalNetworkID Data where
 instance HasServiceID Data where
   service_id = _service_id
 
+instance SITableIDs Data where
+  pids      _ = MkPIDs [0x0012,0x0026,0x0027]
+  table_ids _ = [0x4E,0x4F] ++ [0x50..0x5F] ++ [0x60..0x6F]
+
 instance Base.Class Data where
   header1 = _header1
   footer  = Just . _footer
+  parseIOFlowAfterHeader1 =
+    flowStart
+    |>>= _parseIOFlow2
+    |>>= Header2.parseFlow
+    |>>= _parseIOFlow4
+    |>>= _parseIOFlow5_items
+    |>>= Footer.parseFlow
 
 instance Class Data where
   transport_stream_id         = _transport_stream_id
@@ -83,6 +86,7 @@ _parseIOFlow2 fh init =
   (16, (\(v,d) -> d { _service_id = fromWord64 v}))
   ] init
 
+_parseIOFlow4 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4 fh init = do
   getBitsIO_M fh [
     (16, (\(v,d) -> d { _transport_stream_id         = fromWord64 v})),
@@ -97,12 +101,4 @@ _parseIOFlow5_items bh init = Items.gather addItem' (Base.section_length_without
     addItem' :: Data -> Item.Data -> Data
     addItem' x item = x {_items = (snoc (_items x) item)  }
 
-instance HasParser Data where
-  parseIOFlow =
-    flowStart
-    |>>= Header1.parseFlow
-    |>>= _parseIOFlow2
-    |>>= Header2.parseFlow
-    |>>= _parseIOFlow4
-    |>>= _parseIOFlow5_items
-    |>>= Footer.parseFlow
+instance HasParser Data

@@ -3,9 +3,12 @@
 
 module Common where
 import Data.Word(Word64, Word32, Word16, Word8)
-import Data.ByteString.Lazy(ByteString,pack,unpack,null,uncons,empty)
+import Data.ByteString.Lazy(pack,unpack,null,uncons,empty)
 import Data.Bits((.&.),shiftL,shiftR)
 import Data.Char(chr)
+import qualified Data.ByteString.Lazy as BS
+
+type ByteString = BS.ByteString
 
 type BytesLen = Word64
 type BitsLen  = Word64
