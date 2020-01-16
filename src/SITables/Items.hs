@@ -6,6 +6,7 @@ module SITables.Items(
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
+import qualified SITables.Base as Base
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
@@ -18,8 +19,7 @@ import Data.Vector(Vector,toList,empty,snoc)
 import Data.Maybe(fromMaybe)
 
 class (HasParser a) => Element a where
---  add :: b -> a -> b
-  gather :: (BytesHolderIO bh,HasParser b) => (b -> a -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
+  gather :: (BytesHolderIO bh, HasParser b) => (b -> a -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
   gather appender restlen fh init
       | restlen < 1 = return (Parsed init, fh)
       | otherwise = do

@@ -10,7 +10,7 @@ module SITables.EIT(
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified SITables.Base as Base
 import SITables.Common(HasDescriptors(..))
-import SITables.Items(Element(gather))
+import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
@@ -92,7 +92,7 @@ _parseIOFlow4 fh init = do
     ] init
 
 _parseIOFlow5_items :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow5_items fh init = gather addItem' (Base.section_length_without_crc init) fh init
+_parseIOFlow5_items bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
   where
     addItem' :: Data -> Item.Data -> Data
     addItem' x item = x {_items = (snoc (_items x) item)  }
