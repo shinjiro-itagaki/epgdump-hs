@@ -13,6 +13,7 @@ import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
+import SITables.Items(Element(..))
 
 class (HasDescriptors a) => Class a where
   event_id                :: a -> Word16
@@ -60,7 +61,5 @@ _parseIOFlow fh init = do
 instance HasParser Data where
   parseIOFlow = 
     flowStart |>>= _parseIOFlow
-
-instance EmptyExist (Vector Data) where
-  mkEmpty = Data.Vector.empty
-
+    
+instance Element Data where

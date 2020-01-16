@@ -2,12 +2,19 @@
 
 module SITables.Footer where
 import Data.Word(Word64, Word32, Word16, Word8)
-import Common(EmptyExist(..),BitsLen,BytesHolderIO(..))
+import Common(EmptyExist(..),BitsLen,BytesHolderIO(..),BytesLen,BitsLen)
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),parseFlow)
 class Class a where
   footer :: a -> Data
+  
   setFooter :: a -> Data -> a
   
+  crc_32_bitslen :: a -> BitsLen
+  crc_32_bitslen _ = 32
+
+  crc_32_byteslen :: a -> BytesLen
+  crc_32_byteslen = (`div` 8) . crc_32_bitslen
+
   crc_32 :: a -> Word32
   crc_32 = _crc_32 . footer
   
@@ -16,6 +23,7 @@ data Data = MkData {
   }
 
 instance Class Data where
+  setFooter x footer' = footer'
   footer  x = x
   crc_32    = _crc_32
 
@@ -26,7 +34,7 @@ instance EmptyExist Data where
 
 _parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = getBitsIO_M fh [
-    (32 , (\(v,d) -> d { _crc_32 = fromWord64 v}))
+    (crc_32_bitslen init , (\(v,d) -> d { _crc_32 = fromWord64 v}))
     ] init
   
 instance HasParser Data where

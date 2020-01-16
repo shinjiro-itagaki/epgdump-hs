@@ -8,7 +8,9 @@ module SITables.EIT(
   ) where
 
 import Data.Word(Word64, Word32, Word16, Word8)
+import qualified SITables.Base as Base
 import SITables.Common(HasDescriptors(..))
+import SITables.Items(Element(gather))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
@@ -28,7 +30,7 @@ pids = [0x0012,0x0026,0x0027]
 table_ids :: [TableID]
 table_ids = [0x4E,0x4F] ++ [0x50..0x5F] ++ [0x60..0x6F]
 
-class (Header1.Class a, Header2.Class a, HasOriginalNetworkID a, HasServiceID a) => Class a where
+class (Base.Class a, Header1.Class a, Header2.Class a, HasOriginalNetworkID a, HasServiceID a) => Class a where
   transport_stream_id         :: a -> Word16
   segment_last_section_number :: a -> Word8
   last_table_id               :: a -> Word8
@@ -46,7 +48,7 @@ data Data = MkData {
   }
 
 instance EmptyExist Data where
-  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty
+  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty empty mkEmpty
 
 instance Header1.Class Data where
   header1 = _header1
@@ -66,26 +68,20 @@ instance HasOriginalNetworkID Data where
 instance HasServiceID Data where
   service_id = _service_id
 
+instance Base.Class Data where
+  header1 = _header1
+  footer  = Just . _footer
+
 instance Class Data where
   transport_stream_id         = _transport_stream_id
   segment_last_section_number = _segment_last_section_number
   last_table_id               = _last_table_id
-
-_parseIOFlow1_header1 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow1_header1 = Header1.parseFlow
 
 _parseIOFlow2 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =
   getBitsIO_M fh [
   (16, (\(v,d) -> d { _service_id = fromWord64 v}))
   ] init
-
-_parseIOFlow3_header2 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow3_header2 fh init = do
-  (res_header,fh') <- parseIO fh
-  return $ (\x -> (x,fh')) $ mapParseResult res_header $ case res_header of
-    Parsed header2 -> init {_header2 = header2}
-    _              -> mkEmpty
 
 _parseIOFlow4 fh init = do
   getBitsIO_M fh [
@@ -96,31 +92,17 @@ _parseIOFlow4 fh init = do
     ] init
 
 _parseIOFlow5_items :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow5_items fh init = do
-  impl' fh init (toInteger $ Header1.section_length init)
+_parseIOFlow5_items fh init = gather addItem' (Base.section_length_without_crc init) fh init
   where
-    impl' :: (BytesHolderIO bh) => bh -> Data -> Integer -> IO (ParseResult Data, bh)
-    impl' fh' init' rest'
-      | rest' < 1 = return (Parsed init', fh')
-      | otherwise = do
-          res@(res_item,fh'') <- parseIO fh'
-          case res_item of
-            Parsed item -> impl' fh'' (init' {_items = snoc (_items init') item}) (rest' - 100)
-            _           -> return $ (\x -> (x,fh'')) $ mapParseResult res_item init'
-
-_parseIOFlow6_footer :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow6_footer fh init = do
-  (res_footer,fh') <- parseIO fh
-  return $ (\x -> (x,fh')) $ mapParseResult res_footer $ case res_footer of
-    Parsed footer -> init {_footer = footer }
-    _              -> mkEmpty  
+    addItem' :: Data -> Item.Data -> Data
+    addItem' x item = x {_items = (snoc (_items x) item)  }
 
 instance HasParser Data where
   parseIOFlow =
     flowStart
-    |>>= _parseIOFlow1_header1
+    |>>= Header1.parseFlow
     |>>= _parseIOFlow2
-    |>>= _parseIOFlow3_header2
+    |>>= Header2.parseFlow
     |>>= _parseIOFlow4
     |>>= _parseIOFlow5_items
-    |>>= _parseIOFlow6_footer
+    |>>= Footer.parseFlow
