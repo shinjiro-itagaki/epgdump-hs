@@ -71,3 +71,6 @@ parseFlow = Parser.parseFlow caster
   where
     caster :: (Class a) => Data -> a -> a
     caster header1 d = setHeader1 d header1
+
+parseIO :: (BytesHolderIO bh) => bh -> IO (ParseResult Data, bh)
+parseIO = Parser.parseIO

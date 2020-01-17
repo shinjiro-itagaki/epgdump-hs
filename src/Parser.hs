@@ -7,7 +7,8 @@ module Parser (
   ,parseFlow
   ,ParseIOFlow(..)
   ,(>>==)
-  ,(==<<)  
+  ,(==<<)
+  ,mapParseResult
 ) where
 
 import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..))
@@ -35,7 +36,10 @@ instance FromWord64 Char where
   fromWord64 x = chr $ fromInteger $ toInteger ((fromWord64 x) :: Word8)
   
 instance FromWord64 Bool where
-  fromWord64 = (> 0)
+  fromWord64 = (> 0) . (.&. 0x01)
+
+instance FromWord64 (Bool,Bool) where
+  fromWord64 x = ((x .&. 0x02 ) > 0,(x .&. 0x01) > 0)
 
 instance FromWord64 Word8 where
   fromWord64 = fromInteger . toInteger . (.&. 0xFF)
@@ -55,6 +59,13 @@ data ParseResult a =
   | NotMatch       -- 一致するデータが存在しなかった
   | UnknownReason  -- 原因不明の失敗
 
+mapParseResult :: (a -> b) -> ParseResult a -> ParseResult b
+mapParseResult f x = case x of
+  Parsed x         -> Parsed $ f x
+  DataIsTooShort i -> DataIsTooShort i
+  NotMatch         -> NotMatch 
+  UnknownReason    -> UnknownReason
+
 data (BytesHolderIO bh, HasParser result) => ParseIOFlow bh result =
   MkFlowStart
   | MkParseIOFlow (bh -> result -> IO (ParseResult result, bh))
@@ -70,17 +81,10 @@ infixl 2 >>==
 infixl 2 ==<<
   
 class (EmptyExist a) => HasParser a where
-  -- please implement
+  -- please implement if you need
   parseIOFlow :: (BytesHolderIO bh) => ParseIOFlow bh a
+  parseIOFlow = flowStart
   -----
-
-  mapParseResult :: (HasParser b) => ParseResult a -> b -> ParseResult b
-  mapParseResult x y = case x of
-    Parsed _         -> Parsed y
-    DataIsTooShort x -> DataIsTooShort x
-    NotMatch         -> NotMatch 
-    UnknownReason    -> UnknownReason
-
 
   (|>>=) :: (BytesHolderIO bh) => ParseIOFlow bh a -> (bh -> a -> IO (ParseResult a, bh)) -> ParseIOFlow bh a
   (|>>=) flow func = MkParseIOFlowPair flow (MkParseIOFlow func)
@@ -123,6 +127,4 @@ class (EmptyExist a) => HasParser a where
 parseFlow :: (BytesHolderIO bh, HasParser a, HasParser b) => (a -> b -> b) -> bh -> b -> IO (ParseResult b, bh)
 parseFlow caster fh init = do
   (res_header,fh') <- parseIO fh
-  return $ (\x -> (x,fh')) $ mapParseResult res_header $ case res_header of
-    Parsed header1 -> caster header1 init
-    _              -> mkEmpty
+  return $ (\x -> (x,fh')) $ mapParseResult (\header1 -> caster header1 init) res_header

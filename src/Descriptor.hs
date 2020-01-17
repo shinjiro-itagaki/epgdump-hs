@@ -1,61 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Descriptor (
-  module Descriptor.Common
-  -- module Descriptor.AVC_Timing_HRD,
-  -- module Descriptor.AVC_Video,
-  -- module Descriptor.AudioComponent,
-  -- module Descriptor.BoardInformation,
-  -- module Descriptor.BouquetName,
-  -- module Descriptor.BroadcasterName,
-  -- module Descriptor.CAIdentifier,
-  -- module Descriptor.CarouselCompatibleComposite,
-  -- module Descriptor.Component,
-  -- module Descriptor.ComponentControl,
-  -- module Descriptor.ComponentGroup,
-  -- module Descriptor.ConditionalAccess,
-  -- module Descriptor.ConditionalPlayback,
-  -- module Descriptor.ConnectedTransmission,
-  -- module Descriptor.Content,
-  -- module Descriptor.ContentAvailability,
-  -- module Descriptor.CountryAvailability,
-  -- module Descriptor.DataComponent,
-  -- module Descriptor.DataContents,
-  -- module Descriptor.DigitalCopyControl,
-  -- module Descriptor.EmergencyInformation,
-  -- module Descriptor.EventGroup,
-  -- module Descriptor.ExtendedBroadcaster,
-  -- module Descriptor.ExtendedEvent,
-  -- module Descriptor.HierarchicalTransmission,
-  -- module Descriptor.HyperLink,
-  -- module Descriptor.LDT_Link,
-  -- module Descriptor.Linkage,
-  -- module Descriptor.LocalTimeOffset,
-  -- module Descriptor.LogoTransmission,
-  -- module Descriptor.Mosaic,
-  -- module Descriptor.NVOD_Reference,
-  -- module Descriptor.NetworkName,
-  -- module Descriptor.ParentalRating,
-  -- module Descriptor.PartialReception,
-  -- module Descriptor.SI_Parameter,
-  -- module Descriptor.SI_Prime_TS,
-  -- module Descriptor.SatelliteDeliverySystem,
-  -- module Descriptor.Series,
-  -- module Descriptor.Service,
-  -- module Descriptor.ServiceGroup,
-  -- module Descriptor.ServiceList,
-  -- module Descriptor.ShortEvent,
-  -- module Descriptor.StreamIdentifier,
-  -- module Descriptor.Stuffing,
-  -- module Descriptor.SystemManagement,
-  -- module Descriptor.TS_Information,
-  -- module Descriptor.TargetRegion,
-  -- module Descriptor.TerrestrialDeliverySystem,
-  -- module Descriptor.TimeShiftedEvent,
-  -- module Descriptor.TimeShiftedService,
-  -- module Descriptor.VideoDecodeControl
-  ,Descriptor.Data(..)
-  ) where
+module Descriptor where
 
 import Descriptor.Common
 import Descriptor.AVC_Timing_HRD
@@ -114,10 +59,12 @@ import Descriptor.VideoDecodeControl
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 import qualified Data.ByteString as BS
-import Parser(HasParser(..),ParseResult(..))
+import Parser(HasParser(..),ParseResult(..),mapParseResult)
+import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..),BytesCounter(..))
 
 data Data =
-  ParseFailed
+  Null
+  | ParseFailed
   | AVC_Timing_HRD               Descriptor.AVC_Timing_HRD.Data
   | AVC_Video                    Descriptor.AVC_Video.Data
   | AudioComponent               Descriptor.AudioComponent.Data
@@ -171,6 +118,18 @@ data Data =
   | TimeShiftedService           Descriptor.TimeShiftedService.Data
   | VideoDecodeControl           Descriptor.VideoDecodeControl.Data
 
-  
---instance HasParser Descriptor.Data where
---  parse bs = (NotMatch,bs)
+instance EmptyExist Descriptor.Data where
+  mkEmpty = Null
+
+instance HasParser Descriptor.Data where
+--  parseIOFlow = flowStart
+
+gather :: (BytesHolderIO bh, HasParser b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
+gather appender restlen fh init
+  | restlen < 1 = return (Parsed init, fh)
+  | otherwise = do
+      res@(res_item,fh') <- parseIO fh
+      case res_item of
+        Parsed item -> gather appender (restlen - ((getBytesCounter fh') - (getBytesCounter fh))) fh' (appender init item)
+        _           -> return $ (\x -> (x,fh')) $ mapParseResult (\_ -> init) res_item
+

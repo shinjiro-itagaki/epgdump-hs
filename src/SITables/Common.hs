@@ -2,9 +2,7 @@
 
 module SITables.Common(
   HasDescriptors(..)
-  ,Schedule(..)
   ,SITableIDs(..)
-  ,SITableIDsData
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
 import Descriptor
@@ -14,10 +12,6 @@ import Common(PID,PIDs(..),TableID,(==|=),PID_And_TableID(..),matchPID)
 
 class HasDescriptors a where
   descriptors :: a -> [Descriptor.Data]
-
-class Schedule a where
-  start_time :: a -> Word64
-  duration   :: a -> Word32
 
 class SITableIDs a where
   pids      :: a -> PIDs
@@ -34,9 +28,3 @@ class SITableIDs a where
 
   (/=.==) :: (PID_And_TableID b) => b -> a -> Bool
   (/=.==) x y = not $ x =.== y
-
-data SITableIDsData = MkSITableIDsData PIDs [TableID]
-
-instance SITableIDs SITableIDsData where
-  pids      (MkSITableIDsData _pids _     ) = _pids
-  table_ids (MkSITableIDsData _ _table_ids) = _table_ids

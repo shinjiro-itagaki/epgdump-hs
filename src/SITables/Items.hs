@@ -11,8 +11,8 @@ import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
 import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),BytesLen,BytesCounter(getBytesCounter))
-import Descriptor(HasServiceID(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..))
+-- import Descriptor(HasServiceID(..))
+import Parser(HasParser(..),FromWord64(..),ParseResult(..),mapParseResult)
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty,snoc)
@@ -26,4 +26,4 @@ class (HasParser a) => Element a where
           res@(res_item,fh') <- parseIO fh
           case res_item of
             Parsed item -> gather appender (restlen - ((getBytesCounter fh') - (getBytesCounter fh))) fh' (appender init item)
-            _           -> return $ (\x -> (x,fh')) $ mapParseResult res_item init
+            _           -> return $ (\x -> (x,fh')) $ mapParseResult (\_ -> init) res_item

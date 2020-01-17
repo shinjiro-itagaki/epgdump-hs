@@ -33,11 +33,8 @@ instance EmptyExist Word16 where
   mkEmpty = 0  
 instance EmptyExist Word8  where
   mkEmpty = 0
-
---type Hoge a = (a,a)
---newtype HexRGBA = HexRGBA (Hoge Word32)
---color :: HexRGBA
---color = HexRGBA (0xFFFFFFFF,0xFFFFFFFF)
+instance EmptyExist (Bool,Bool) where
+  mkEmpty = (False,False)
 
 class BytesCounter a where
   getBytesCounter   :: a -> BytesLen
@@ -88,6 +85,14 @@ matchPID (MkExcludePIDs xs) y = xs /==|= y
 class PID_And_TableID a where
   pid      :: a -> PID
   table_id :: a -> TableID
+
+instance PID_And_TableID (PID,TableID) where
+  pid = fst
+  table_id = snd
+
+instance PID_And_TableID (TableID,PID) where
+  pid = snd
+  table_id = fst
 
 class HasServiceID a where
   service_id :: a -> Word16

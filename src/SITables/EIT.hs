@@ -12,14 +12,13 @@ import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
-import Descriptor(HasServiceID(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..))
+import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),HasServiceID(..))
+--import Descriptor(HasServiceID(..))
+import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty,snoc)
 import Data.Maybe(fromMaybe)
-
 import qualified SITables.EIT.Item as Item
 
 class (Base.Class a, HasOriginalNetworkID a, HasServiceID a) => Class a where
@@ -65,7 +64,6 @@ instance SITableIDs Data where
   table_ids _ = [0x4E,0x4F] ++ [0x50..0x5F] ++ [0x60..0x6F]
 
 instance Base.Class Data where
-  header1 = _header1
   footer  = Just . _footer
   parseIOFlowAfterHeader1 =
     flowStart
@@ -101,4 +99,4 @@ _parseIOFlow5_items bh init = Items.gather addItem' (Base.section_length_without
     addItem' :: Data -> Item.Data -> Data
     addItem' x item = x {_items = (snoc (_items x) item)  }
 
-instance HasParser Data
+instance HasParser Data where

@@ -4,18 +4,13 @@ module SITables.TDT (
   pids, table_ids  
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(HasDescriptors(..))
+import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
-import Common(HasOriginalNetworkID(..))
-import Descriptor(HasServiceID(..))
+import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,PIDs(..),BytesHolderIO(..))
 import qualified Descriptor
-
-pids :: [Word64]
-pids = [0x0014]
-
-table_ids :: [Word32]
-table_ids = [0x70]
+import qualified SITables.Base as Base
+import Parser(HasParser(..),ParseResult(..),FromWord64(..),flowStart)
 
 class (Header1.Class a) => Class a where
   jst_time :: a -> Word64
@@ -27,7 +22,29 @@ data Data = MkData {
   }
 
 instance Header1.Class Data where
+  setHeader1 x h = x { _header1 = h }
   header1 = _header1
   
 instance Class Data where
-  jst_time  = _jst_time 
+  jst_time = _jst_time 
+
+instance EmptyExist Data where
+  mkEmpty = MkData mkEmpty mkEmpty
+
+instance HasParser Data where
+  
+_parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow fh init = do
+  getBitsIO_M fh [
+    (40, (\(v,d) -> d { _jst_time = fromWord64 v}))
+    ] init
+  
+instance Base.Class Data where
+  footer _ = Nothing
+  parseIOFlowAfterHeader1 =
+    flowStart
+    |>>= _parseIOFlow
+ 
+instance SITableIDs Data where
+  pids      _ = MkPIDs [0x0014]
+  table_ids _ = [0x70]
