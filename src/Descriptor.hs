@@ -58,8 +58,9 @@ import Descriptor.VideoDecodeControl
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 import qualified Data.ByteString as BS
-import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
+import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
 import qualified Parser
+import qualified Parser.Result as Result
 import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..),BytesCounter(..))
 
 data Data =
@@ -126,10 +127,10 @@ instance Parser.Class Descriptor.Data where
 
 gather :: (BytesHolderIO bh, Parser.Class b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
 gather appender restlen fh init
-  | restlen < 1 = return (Parsed init, fh)
+  | restlen < 1 = return (Result.Parsed init, fh)
   | otherwise = do
       res@(res_item,fh') <- parseIO fh
       case res_item of
-        Parsed item -> gather appender (restlen - ((getBytesCounter fh') - (getBytesCounter fh))) fh' (appender init item)
+        Result.Parsed item -> gather appender (restlen - ((getBytesCounter fh') - (getBytesCounter fh))) fh' (appender init item)
         _           -> return $ (\x -> (x,fh')) $ mapParseResult (\_ -> init) res_item
 

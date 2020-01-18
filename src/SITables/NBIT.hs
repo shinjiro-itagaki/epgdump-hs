@@ -14,8 +14,9 @@ import qualified SITables.Base as Base
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.NBIT.Item as Item
-import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import qualified Parser
+import FromWord64 hiding (Class)
 
 class (Header1.Class a, Header2.Class a) => Class a where
   original_network_id :: a -> Word16

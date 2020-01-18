@@ -24,6 +24,7 @@ import Parser(ParseResult(..),mapParseResult)
 import Common(BytesHolder(..),BytesHolderIO(..))
 import qualified SITables.Header1 as Header1
 import Common(EmptyExist(..))
+import qualified Parser.Result as Result
 
 data Data =
   Other
@@ -71,7 +72,7 @@ cTOO = ConsTOT IsTOT
 parseIO :: (BytesHolderIO bh) => bh -> state -> [Constructor] -> (Data -> state -> IO state) -> IO (ParseResult bh,state)
 parseIO bh state conss hook = do
   (res_header1,bh2) <- Header1.parseIO bh
-  return (Parsed bh,state)
+  return (Result.Parsed bh,state)
 
 _parseIO :: (BytesHolderIO bh) => bh -> Constructor -> Header1.Data -> IO (ParseResult Data, bh)
 _parseIO bh cons header1 =

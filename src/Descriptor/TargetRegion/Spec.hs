@@ -9,7 +9,8 @@ import Common(ByteString)
 --import qualified Descriptor.Base as Base
 --import qualified Descriptor.Header as Header
 import Data.Bits(testBit)
-import Parser(FromWord64(..))
+import qualified FromWord64
+import FromWord64 hiding (Class)
 
 data TargetArea =
   EastHokkaido | WestHokkaido | Aomori | Iwate | Miyagi | Akita | Yamagata | Fukushima
@@ -28,7 +29,7 @@ data TargetArea =
 
 bitmaplen = Prelude.length [(minBound :: TargetArea) .. (maxBound :: TargetArea)]
 
-instance FromWord64 [TargetArea] where
+instance FromWord64.Class [TargetArea] where
   fromWord64 x = Prelude.filter (\ta -> (testBit x) $ ((bitmaplen-1) -) $ fromEnum ta ) [(minBound :: TargetArea) .. (maxBound :: TargetArea)]
 
 class Class a where

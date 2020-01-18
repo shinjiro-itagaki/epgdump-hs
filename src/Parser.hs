@@ -7,55 +7,21 @@ import Data.Int(Int64)
 import Data.Word(Word64, Word32, Word16, Word8)
 import Data.ByteString.Lazy(ByteString)
 import Data.ByteString.Lazy as BS
-import Data.Bits((.&.),(.|.),shiftL,shiftR,finiteBitSize)
-import Data.Char(chr)
 import Data.Maybe(fromMaybe)
 import Control.Applicative((<|>))
 import qualified Data.Vector as V
 import qualified TS.FileHandle as FileHandle
+import qualified Parser.Result as Result
+import qualified FromWord64
 
 instance EmptyExist Char where
   mkEmpty = '\0'
   
 instance EmptyExist Bool where
   mkEmpty = False
-  
-class FromWord64 a where
-  fromWord64 :: Word64 -> a
 
-instance FromWord64 Char where
-  fromWord64 x = chr $ fromInteger $ toInteger ((fromWord64 x) :: Word8)
-  
-instance FromWord64 Bool where
-  fromWord64 = (> 0) . (.&. 0x01)
-
-instance FromWord64 (Bool,Bool) where
-  fromWord64 x = ((x .&. 0x02 ) > 0,(x .&. 0x01) > 0)
-
-instance FromWord64 Word8 where
-  fromWord64 = fromInteger . toInteger . (.&. 0xFF)
-
-instance FromWord64 Word16 where
-  fromWord64 = fromInteger . toInteger . (.&. 0xFFFF)
-
-instance FromWord64 Word32 where
-  fromWord64 = fromInteger . toInteger . (.&. 0xFFFFFFFF)
-  
-instance FromWord64 Word64 where
-  fromWord64 x = x
-
-data ParseResult a =
-  Parsed a
-  | DataIsTooShort (Maybe BytesLen)-- 一致するデータがあったが、元データが不足している（続きのデータを追加して再実行すればうまくいくと思われる）。値は不足しているバイト数
-  | NotMatch       -- 一致するデータが存在しなかった
-  | UnknownReason  -- 原因不明の失敗
-
-mapParseResult :: (a -> b) -> ParseResult a -> ParseResult b
-mapParseResult f x = case x of
-  Parsed x         -> Parsed $ f x
-  DataIsTooShort i -> DataIsTooShort i
-  NotMatch         -> NotMatch 
-  UnknownReason    -> UnknownReason
+type ParseResult = Result.Data
+mapParseResult = Result.map
 
 data (BytesHolderIO bh, Class result) => ParseIOFlow bh result =
   MkFlowStart
@@ -92,27 +58,27 @@ class (EmptyExist a) => Class a where
   parseIO bh = execParseIOFlow bh mkEmpty parseIOFlow
 
   execParseIOFlow :: (BytesHolderIO bh) => bh -> a -> ParseIOFlow bh a -> IO (ParseResult a, bh)
-  execParseIOFlow bh init  MkFlowStart = return (Parsed init, bh) -- 何もせずそのまま成功として返す
-  execParseIOFlow bh init  MkFlowEnd   = return (Parsed init, bh)  
+  execParseIOFlow bh init  MkFlowStart = return (Result.Parsed init, bh) -- 何もせずそのまま成功として返す
+  execParseIOFlow bh init  MkFlowEnd   = return (Result.Parsed init, bh)  
   execParseIOFlow bh init (MkParseIOFlow f) = f bh init
   execParseIOFlow bh init (MkParseIOFlowPair MkFlowEnd _) = execParseIOFlow bh init MkFlowEnd -- 右側は実行せずに無視する
   execParseIOFlow bh init (MkParseIOFlowPair l r) = do
     lres@(res, bh2) <- execParseIOFlow bh init l
     case res of
-      Parsed init2 -> execParseIOFlow bh2 init2 r
+      Result.Parsed init2 -> execParseIOFlow bh2 init2 r
       x -> return lres
   -- 
   getBitsIO_M :: (BytesHolderIO bh) => bh -> [(BitsLen, (Word64,a) -> a)] -> a -> IO (ParseResult a, bh)
   getBitsIO_M fh conds init = do
-    Prelude.foldl each' (return (Parsed init,fh)) conds
+    Prelude.foldl each' (return (Result.Parsed init,fh)) conds
     where
       each' rtn (i,f) = do
         res@(res_d,fh') <- rtn
         case res_d of
-          Parsed d -> do
+          Result.Parsed d -> do
             (v,fh'') <- getBitsIO fh' i 
-            return (Parsed $ f (v,d), fh'')
-          DataIsTooShort mblen -> return $ (\x->(x,fh')) $ DataIsTooShort $ Just $ (+i) $ fromMaybe 0 mblen
+            return (Result.Parsed $ f (v,d), fh'')
+          Result.DataIsTooShort mblen -> return $ (\x->(x,fh')) $ Result.DataIsTooShort $ Just $ (+i) $ fromMaybe 0 mblen
           x -> return res
 
 parseFlow :: (BytesHolderIO bh, Class a, Class b) => (a -> b -> b) -> bh -> b -> IO (ParseResult b, bh)

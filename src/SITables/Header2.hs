@@ -3,7 +3,8 @@
 module SITables.Header2 where
 import Data.Word(Word64, Word32, Word16, Word8)
 import Common(EmptyExist(..),BitsLen,BytesHolderIO(..))
-import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
+import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
+import FromWord64 hiding (Class)
 import qualified Parser
 
 class Class a where
@@ -35,6 +36,7 @@ data Data = MkData {
 
 instance Class Data where
   header2              x = x
+  setHeader2         x y = y
   reserved2              = _reserved2
   version_number         = _version_number 
   current_next_indicator = _current_next_indicator

@@ -10,8 +10,9 @@ import qualified SITables.Header2 as Header2
 import Common(EmptyExist(..),PID,TableID,PIDs(..),BytesHolderIO(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import qualified Parser
+import FromWord64 hiding (Class)
 
 class (Header1.Class a) => Class a where
   jst_time :: a -> Word64

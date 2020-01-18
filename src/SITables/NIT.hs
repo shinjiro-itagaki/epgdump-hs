@@ -10,10 +10,13 @@ import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import qualified Parser
 import qualified SITables.NIT.Item as Item
 import Data.Vector(Vector,toList,empty,snoc)
+import FromWord64 hiding (Class)
+
+import qualified Parser.Result as Result
 
 class (Header1.Class a, Header2.Class a, HasDescriptors a) => Class a where
   network_id                   :: a -> Word16
@@ -93,7 +96,7 @@ _parseIOFlow2 fh init =
   ] init
 
 _parseIOFlow3 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow3 fh init = return (Parsed init, fh) -- todo descriptors
+_parseIOFlow3 fh init = return (Result.Parsed init, fh) -- todo descriptors
 
 _parseIOFlow4 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4 fh init = 
@@ -103,7 +106,7 @@ _parseIOFlow4 fh init =
   ] init
 
 _parseIOFlow5 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow5 fh init = return (Parsed init, fh) -- todo items
+_parseIOFlow5 fh init = return (Result.Parsed init, fh) -- todo items
 
 instance Base.Class Data where
   footer = Just . _footer

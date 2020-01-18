@@ -4,7 +4,8 @@ module SITables.Header1 where
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Common
 import Common(EmptyExist(..),BitsLen,BytesHolderIO(..),BytesLen,BytesCounter(..))
-import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
+import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
+import FromWord64 hiding (Class)
 import qualified Parser
 import SITables.Common()
 

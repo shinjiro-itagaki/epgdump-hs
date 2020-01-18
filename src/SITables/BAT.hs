@@ -12,8 +12,10 @@ import qualified Descriptor
 import qualified SITables.Base as Base
 import qualified SITables.BAT.Item as Item
 import Data.Vector(Vector,toList,empty,snoc)
-import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import FromWord64 hiding (Class)
 import qualified Parser
+import qualified Parser.Result as Result
 
 class (Base.Class a, Header2.Class a, Footer.Class a, HasDescriptors a) => Class a where
   bouquet_id                   :: a -> Word16
@@ -89,7 +91,7 @@ _parseIOFlow2 fh init =
   ] init
 
 _parseIOFlow3_descs :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow3_descs fh init = return (Parsed init, fh) -- todo descriptors
+_parseIOFlow3_descs fh init = return (Result.Parsed init, fh) -- todo descriptors
 
 _parseIOFlow4 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4 fh init = 
@@ -99,7 +101,7 @@ _parseIOFlow4 fh init =
   ] init
 
 _parseIOFlow5_items :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow5_items fh init = return (Parsed init, fh) -- todo items
+_parseIOFlow5_items fh init = return (Result.Parsed init, fh) -- todo items
   
   
 instance Base.Class Data where

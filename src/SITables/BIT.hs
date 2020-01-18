@@ -13,10 +13,11 @@ import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),BytesLen)
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import qualified Parser
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.BIT.Item as Item
+import FromWord64 hiding (Class)
 
 class (Base.Class a, Header2.Class a, Footer.Class a) => Class a where
   original_network_id      :: a -> Word16
