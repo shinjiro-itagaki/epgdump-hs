@@ -3,13 +3,14 @@
 module SITables.Base where
 import Common(BytesLen,EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),PID_And_TableID(..),Matcher(..))
 import SITables.Common(SITableIDs(..),(==.=))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),ParseIOFlow(..),(>>==))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Footer as Footer
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 
 -- header1は必須
 -- footerはないものもある
-class (Header1.Class a, SITableIDs a, HasParser a) => Class a where
+class (Header1.Class a, SITableIDs a, Parser.Class a) => Class a where
   footer                     :: a -> Maybe Footer.Data
   parseIOFlowAfterHeader1    :: (BytesHolderIO bh) => ParseIOFlow bh a
 

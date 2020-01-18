@@ -10,7 +10,8 @@ import qualified SITables.Header2 as Header2
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(HasParser(..),FromWord64(..),ParseResult(..))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 import qualified SITables.Footer as Footer
 import qualified SITables.SDT.Item as Item
 import Data.Vector(Vector,toList,empty,snoc)
@@ -55,7 +56,7 @@ instance Class Data where
   transport_stream_id = _transport_stream_id
   reserved_future_use = _reserved_future_use
 
-instance HasParser Data where
+instance Parser.Class Data where
 
 _parseIOFlow2 fh init =
   getBitsIO_M fh [

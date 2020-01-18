@@ -11,14 +11,16 @@ import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),BytesLen,BytesCounter(getBytesCounter))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),mapParseResult)
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
+import qualified Parser
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty,snoc)
 import Data.Maybe(fromMaybe)
 
-class (HasParser a) => Element a where
-  gather :: (BytesHolderIO bh, HasParser b) => (b -> a -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
+class (Parser.Class a) => Element a where
+  gather :: (BytesHolderIO bh, Parser.Class b) => (b -> a -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
   gather appender restlen fh init
       | restlen < 1 = return (Parsed init, fh)
       | otherwise = do

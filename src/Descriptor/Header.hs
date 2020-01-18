@@ -2,10 +2,10 @@ module Descriptor.Header (
   Class(..)
   ,Data
   ) where
---import Descriptor.Common(HasName(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Common(EmptyExist(..),BitsLen,BytesHolderIO(..),BytesLen,BytesCounter(..),ByteString)
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),mapParseResult,parseFlow)
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
+import qualified Parser
 
 class Class a where
   header            :: a -> Data
@@ -37,7 +37,7 @@ _parseIOFlow fh init = do
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty
 
-instance HasParser Data where
+instance Parser.Class Data where
   parseIOFlow = flowStart |>>= _parseIOFlow
 
 parseIO :: (BytesHolderIO bh) => bh -> IO (ParseResult Data, bh)

@@ -11,7 +11,8 @@ import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified Descriptor
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),ParseIOFlow(..),(>>==))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 import qualified SITables.Base as Base
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.RST.Item as Item
@@ -48,7 +49,7 @@ instance Base.Class Data where
     flowStart
     |>>= _parseIOFlow    
 
-instance HasParser Data where
+instance Parser.Class Data where
 
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty Data.Vector.empty

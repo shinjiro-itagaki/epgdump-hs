@@ -10,8 +10,9 @@ import Data.ByteString.Lazy.Char8(pack)
 import Data.Bits((.&.),(.|.),shiftL,shiftR,Bits)
 import Data.Char(intToDigit,digitToInt)
 import Data.Int(Int64)
-import Parser(HasParser(..))
 import qualified TS.FileHandle as FileHandle
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 
 import qualified SITables.BAT as BAT
 import qualified SITables.BIT as BIT

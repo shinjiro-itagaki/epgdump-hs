@@ -9,7 +9,8 @@ import Common(ByteString,PIDs(..),TableID,EmptyExist(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified Descriptor
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),ParseIOFlow(..),(>>==))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 import qualified SITables.Base as Base
 
 class (Base.Class a) => Class a where
@@ -34,7 +35,7 @@ instance Header1.Class Data where
   setHeader1 x header = x {_header1 = header}
   header1 = _header1
 
-instance HasParser Data where
+instance Parser.Class Data where
 
 instance EmptyExist Data where
   mkEmpty = MkData {

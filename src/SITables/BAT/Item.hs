@@ -8,7 +8,8 @@ module SITables.BAT.Item(
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)

@@ -9,7 +9,8 @@ import qualified Schedule
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import Data.Word(Word64, Word32, Word16, Word8)
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
@@ -67,7 +68,7 @@ _parseIOFlow fh init = do
     (12, (\(v,d) -> d { _schedule_description_length    = fromWord64 v}))
     ] init
 
-instance HasParser Data where
+instance Parser.Class Data where
   parseIOFlow = 
     flowStart |>>= _parseIOFlow
     

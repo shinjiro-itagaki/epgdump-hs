@@ -14,7 +14,8 @@ import qualified SITables.Base as Base
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.NBIT.Item as Item
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 
 class (Header1.Class a, Header2.Class a) => Class a where
   original_network_id :: a -> Word16
@@ -55,7 +56,7 @@ instance EmptyExist Data where
   _footer              = mkEmpty
   }
   
-instance HasParser Data where
+instance Parser.Class Data where
 
 _parseIOFlow2 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =

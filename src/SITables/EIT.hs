@@ -13,7 +13,8 @@ import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty,snoc)
@@ -97,4 +98,4 @@ _parseIOFlow5_items bh init = Items.gather addItem' (Base.section_length_without
     addItem' :: Data -> Item.Data -> Data
     addItem' x item = x {_items = (snoc (_items x) item)  }
 
-instance HasParser Data where
+instance Parser.Class Data where

@@ -58,7 +58,8 @@ import Descriptor.VideoDecodeControl
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Data.ByteString(ByteString)
 import qualified Data.ByteString as BS
-import Parser(HasParser(..),ParseResult(..),mapParseResult)
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
+import qualified Parser
 import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..),BytesCounter(..))
 
 data Data =
@@ -120,10 +121,10 @@ data Data =
 instance EmptyExist Descriptor.Data where
   mkEmpty = Null
 
-instance HasParser Descriptor.Data where
+instance Parser.Class Descriptor.Data where
 --  parseIOFlow = flowStart
 
-gather :: (BytesHolderIO bh, HasParser b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
+gather :: (BytesHolderIO bh, Parser.Class b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
 gather appender restlen fh init
   | restlen < 1 = return (Parsed init, fh)
   | otherwise = do

@@ -9,11 +9,12 @@ module SITables.SDT.Item(
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
 import SITables.Items(Element(..))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 
 class (HasDescriptors a) => Class a where
   service_id                 :: a -> Word16
@@ -66,7 +67,7 @@ _parseIOFlow fh init = do
     (12, (\(v,d) -> d { _descriptors_loop_length    = fromWord64 v}))
     ] init
 
-instance HasParser Data where
+instance Parser.Class Data where
   parseIOFlow = 
     flowStart
     |>>= _parseIOFlow

@@ -7,7 +7,6 @@ module SITables.Common(
 import Data.Word(Word64, Word32, Word16, Word8)
 import Descriptor
 import Common(EmptyExist(..))
-import Parser(HasParser(..))
 import Common(PID,PIDs(..),TableID,(==|=),PID_And_TableID(..),matchPID)
 
 class HasDescriptors a where

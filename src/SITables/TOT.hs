@@ -12,7 +12,8 @@ import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.TDT
 import qualified SITables.Base as Base
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 
 class (SITables.TDT.Class a, HasDescriptors a) => Class a where
 -- reserved
@@ -59,4 +60,4 @@ instance SITableIDs Data where
   pids      _ = MkPIDs [0x0014]
   table_ids _ = [0x73]
 
-instance HasParser Data
+instance Parser.Class Data

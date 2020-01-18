@@ -12,7 +12,8 @@ import qualified Descriptor
 import qualified SITables.Base as Base
 import qualified SITables.BAT.Item as Item
 import Data.Vector(Vector,toList,empty,snoc)
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 
 class (Base.Class a, Header2.Class a, Footer.Class a, HasDescriptors a) => Class a where
   bouquet_id                   :: a -> Word16
@@ -72,7 +73,7 @@ instance EmptyExist Data where
     _footer                       = mkEmpty
   }
 
-instance HasParser Data where
+instance Parser.Class Data where
 
 _parseIOFlow1 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow1 fh init =

@@ -10,7 +10,8 @@ import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 import qualified SITables.NIT.Item as Item
 import Data.Vector(Vector,toList,empty,snoc)
 
@@ -72,7 +73,7 @@ instance EmptyExist Data where
     _footer                       = mkEmpty
     }
 
-instance HasParser Data where
+instance Parser.Class Data where
 
 instance SITableIDs Data where
   pids      _ = MkPIDs [0x0010]

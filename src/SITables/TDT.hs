@@ -10,7 +10,8 @@ import qualified SITables.Header2 as Header2
 import Common(EmptyExist(..),PID,TableID,PIDs(..),BytesHolderIO(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(HasParser(..),ParseResult(..),FromWord64(..),flowStart)
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 
 class (Header1.Class a) => Class a where
   jst_time :: a -> Word64
@@ -31,7 +32,7 @@ instance Class Data where
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty
 
-instance HasParser Data where
+instance Parser.Class Data where
   
 _parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = do

@@ -11,7 +11,8 @@ import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.PCAT.Item as Item
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
@@ -63,7 +64,7 @@ instance SITableIDs Data where
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty mkEmpty
 
-instance HasParser Data where
+instance Parser.Class Data where
 
 _parseIOFlow1 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow1 fh init = do

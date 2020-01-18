@@ -1,15 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
-module Parser (
-  ParseResult(..)
-  ,HasParser(..)
-  ,FromWord64(..)
-  ,parseFlow
-  ,ParseIOFlow(..)
-  ,(>>==)
-  ,(==<<)
-  ,mapParseResult
-) where
+module Parser where
 
 import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..))
 import Data.Int(Int64)
@@ -66,21 +57,21 @@ mapParseResult f x = case x of
   NotMatch         -> NotMatch 
   UnknownReason    -> UnknownReason
 
-data (BytesHolderIO bh, HasParser result) => ParseIOFlow bh result =
+data (BytesHolderIO bh, Class result) => ParseIOFlow bh result =
   MkFlowStart
   | MkParseIOFlow (bh -> result -> IO (ParseResult result, bh))
   | MkParseIOFlowPair (ParseIOFlow bh result) (ParseIOFlow bh result)
   | MkFlowEnd
 
-(>>==) :: (BytesHolderIO bh, HasParser result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result
+(>>==) :: (BytesHolderIO bh, Class result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result
 (>>==) = MkParseIOFlowPair
 infixl 2 >>==
 
-(==<<) :: (BytesHolderIO bh, HasParser result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result  
+(==<<) :: (BytesHolderIO bh, Class result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result  
 (==<<) l r = r >>== l
 infixl 2 ==<<
   
-class (EmptyExist a) => HasParser a where
+class (EmptyExist a) => Class a where
   -- please implement if you need
   parseIOFlow :: (BytesHolderIO bh) => ParseIOFlow bh a
   parseIOFlow = flowStart
@@ -124,7 +115,7 @@ class (EmptyExist a) => HasParser a where
           DataIsTooShort mblen -> return $ (\x->(x,fh')) $ DataIsTooShort $ Just $ (+i) $ fromMaybe 0 mblen
           x -> return res
 
-parseFlow :: (BytesHolderIO bh, HasParser a, HasParser b) => (a -> b -> b) -> bh -> b -> IO (ParseResult b, bh)
+parseFlow :: (BytesHolderIO bh, Class a, Class b) => (a -> b -> b) -> bh -> b -> IO (ParseResult b, bh)
 parseFlow caster fh init = do
   (res_header,fh') <- parseIO fh
   return $ (\x -> (x,fh')) $ mapParseResult (\header1 -> caster header1 init) res_header

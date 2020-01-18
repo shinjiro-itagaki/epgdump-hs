@@ -13,7 +13,8 @@ import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),BytesLen)
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
+import qualified Parser
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.BIT.Item as Item
 
@@ -74,7 +75,7 @@ instance EmptyExist Data where
     _footer                   = mkEmpty
   }
 
-instance HasParser Data where
+instance Parser.Class Data where
 
 _parseIOFlow2 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =

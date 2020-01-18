@@ -69,7 +69,7 @@ instance Class Data where
   mkEOF = EOF
   mkOK h b = MkData h b
 
-class (EmptyExist a, Parser.HasParser a) => FromPackets a where
+class (EmptyExist a, Parser.Class a) => FromPackets a where
   table_ids :: (a -> b) -> [TableID]
   pids      :: (a -> b) -> [PID]
   

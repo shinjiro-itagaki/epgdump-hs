@@ -4,7 +4,8 @@ module SITables.Header1 where
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Common
 import Common(EmptyExist(..),BitsLen,BytesHolderIO(..),BytesLen,BytesCounter(..))
-import Parser(HasParser(..),FromWord64(..),ParseResult(..),mapParseResult,parseFlow)
+import Parser(FromWord64(..),ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
+import qualified Parser
 import SITables.Common()
 
 class Class a where
@@ -63,10 +64,10 @@ _parseIOFlow fh init = do
     ] init
   return (res, (resetBytesCounter fh2))
 
-instance HasParser Data where
+instance Parser.Class Data where
   parseIOFlow = flowStart |>>= _parseIOFlow
 
-parseFlow :: (BytesHolderIO bh, HasParser a, Class a) => bh -> a -> IO (ParseResult a, bh)
+parseFlow :: (BytesHolderIO bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
 parseFlow = Parser.parseFlow caster
   where
     caster :: (Class a) => Data -> a -> a
