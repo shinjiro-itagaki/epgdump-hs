@@ -5,10 +5,9 @@ module SITables.ST(
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(SITableIDs(..))
 import qualified SITables.Base as Base
-import Common(ByteString,HasOriginalNetworkID(..),PIDs(..),TableID,EmptyExist(..))
+import Common(ByteString,PIDs(..),TableID,EmptyExist(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
--- import Descriptor(HasServiceID(..),HasEventID(..))
 import qualified Descriptor
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),ParseIOFlow(..),(>>==))
 import qualified SITables.Base as Base

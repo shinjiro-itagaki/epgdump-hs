@@ -1,5 +1,4 @@
 module Descriptor.CarouselCompatibleComposite.SubDescriptor.Subdirectory where
-import Descriptor.Common(HasText(..),HasName(..),HasText(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Common(ByteString)
 import qualified Descriptor.Header as Header

@@ -7,19 +7,18 @@ module SITables.RST.Item(
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),HasServiceID(..))
---import Descriptor(HasServiceID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
 import SITables.Items(Element(..))
 
-class (HasOriginalNetworkID a, HasServiceID a) => Class a where
-  transport_stream_id :: a -> Word16
---  original_network_id :: a -> Word16
---  service_id          :: a -> Word16
-  event_id            :: a -> Word16
+import qualified Descriptor.Link.ServiceInfo as ServiceInfo
+import qualified Descriptor.Link.EventInfo as EventInfo
+import qualified Descriptor.EventInfo as Info
+
+class (EventInfo.Class a) => Class a where
   reserved_future_use :: a -> Word8 -- 5
   running_status      :: a -> Word8 -- 3
 
@@ -31,12 +30,19 @@ data Data = MkData {
   _reserved_future_use :: Word8, -- 5
   _running_status      :: Word8 -- 3
   }
+
+instance ServiceInfo.Class Data where
+  transport_stream_id = _transport_stream_id  
+  original_network_id = _original_network_id
+  service_id          = _service_id
+
+instance Info.Class Data where
+  service_id          = _service_id  
+  event_id            = _event_id
+  
+instance EventInfo.Class Data where
   
 instance Class Data where
-  transport_stream_id = _transport_stream_id
---  original_network_id = _original_network_id
---  service_id          = _service_id
-  event_id            = _event_id
   reserved_future_use = _reserved_future_use
   running_status      = _running_status
   
@@ -59,9 +65,3 @@ instance HasParser Data where
     flowStart |>>= _parseIOFlow
     
 instance Element Data where
-
-instance HasOriginalNetworkID Data where
-  original_network_id = _original_network_id
-
-instance HasServiceID Data where
-  service_id = _service_id

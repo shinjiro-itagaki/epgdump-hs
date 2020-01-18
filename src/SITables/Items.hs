@@ -10,8 +10,7 @@ import qualified SITables.Base as Base
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),BytesLen,BytesCounter(getBytesCounter))
--- import Descriptor(HasServiceID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),BytesLen,BytesCounter(getBytesCounter))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),mapParseResult)
 import qualified Descriptor
 import Data.ByteString(ByteString)

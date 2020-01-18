@@ -7,7 +7,7 @@ import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,PIDs(..),BytesHolderIO(..))
+import Common(EmptyExist(..),PID,TableID,PIDs(..),BytesHolderIO(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
 import Parser(HasParser(..),ParseResult(..),FromWord64(..),flowStart)

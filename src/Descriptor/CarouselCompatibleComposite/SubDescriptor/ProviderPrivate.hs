@@ -2,7 +2,6 @@ module Descriptor.CarouselCompatibleComposite.SubDescriptor.ProviderPrivate (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(HasText(..),HasName(..),HasText(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Common(ByteString)
 

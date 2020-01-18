@@ -12,8 +12,7 @@ import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),HasServiceID(..))
---import Descriptor(HasServiceID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
 import qualified Descriptor
 import Data.ByteString(ByteString)
@@ -21,8 +20,9 @@ import Data.Vector(Vector,toList,empty,snoc)
 import Data.Maybe(fromMaybe)
 import qualified SITables.EIT.Item as Item
 
-class (Base.Class a, HasOriginalNetworkID a, HasServiceID a) => Class a where
-  transport_stream_id         :: a -> Word16
+import qualified Descriptor.Link.ServiceInfo as ServiceInfo
+
+class (Base.Class a, ServiceInfo.Class a) => Class a where
   segment_last_section_number :: a -> Word8
   last_table_id               :: a -> Word8
 
@@ -37,6 +37,11 @@ data Data = MkData {
   _items                       :: Vector Item.Data, 
   _footer                      :: Footer.Data
   }
+
+instance ServiceInfo.Class Data where
+  original_network_id = _original_network_id
+  service_id          = _service_id
+  transport_stream_id = _transport_stream_id
 
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty empty mkEmpty
@@ -53,12 +58,6 @@ instance Footer.Class Data where
   footer = _footer
   setFooter x y = x {_footer = y}
 
-instance HasOriginalNetworkID Data where
-  original_network_id = _original_network_id
-
-instance HasServiceID Data where
-  service_id = _service_id
-
 instance SITableIDs Data where
   pids      _ = MkPIDs [0x0012,0x0026,0x0027]
   table_ids _ = [0x4E,0x4F] ++ [0x50..0x5F] ++ [0x60..0x6F]
@@ -74,7 +73,6 @@ instance Base.Class Data where
     |>>= Footer.parseFlow
 
 instance Class Data where
-  transport_stream_id         = _transport_stream_id
   segment_last_section_number = _segment_last_section_number
   last_table_id               = _last_table_id
 

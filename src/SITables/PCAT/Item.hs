@@ -8,8 +8,7 @@ module SITables.PCAT.Item(
 import qualified Schedule
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import Data.Word(Word64, Word32, Word16, Word8)
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..))
---import Descriptor(HasServiceID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)

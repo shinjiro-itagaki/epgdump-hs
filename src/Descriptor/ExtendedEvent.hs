@@ -8,17 +8,16 @@ import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import Data.Vector(Vector,empty,toList,snoc)
 import qualified Descriptor.ExtendedEvent.Item as Item
-import Descriptor.Common(HasText(..))
 import qualified Descriptor.LangCode as LangCode
 
-class (Base.Class a, HasText a) => Class a where
+class (Base.Class a) => Class a where
   descriptor_number       :: a -> Word8
   last_descriptor_number  :: a -> Word8
   iso_639_language_code   :: a -> LangCode.Data
   length_of_items         :: a -> Word8
   items                   :: a -> [Item.Data]
   text_length             :: a -> Word8
---  text :: a -> String
+  text                    :: a -> String
 
 data Data = MkData {
   _descriptor_number      :: Word8,
@@ -33,9 +32,6 @@ data Data = MkData {
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)
 
-instance HasText Data where
-  text = _text
-  
 instance Class Data where
   iso_639_language_code  = _iso_639_language_code  
   descriptor_number      = _descriptor_number
@@ -43,3 +39,4 @@ instance Class Data where
   length_of_items        = _length_of_items
   items                  = toList . _items
   text_length            = _text_length
+  text = _text

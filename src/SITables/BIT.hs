@@ -10,15 +10,15 @@ import qualified Schedule
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),BytesLen)
---import Descriptor(HasServiceID(..),HasEventID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),BytesLen)
 import qualified Descriptor
 import qualified SITables.Base as Base
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.BIT.Item as Item
 
-class (Base.Class a, Header2.Class a, Footer.Class a,  HasOriginalNetworkID a) => Class a where
+class (Base.Class a, Header2.Class a, Footer.Class a) => Class a where
+  original_network_id      :: a -> Word16
   reserved_future_use      :: a -> Word8 
   broadcast_view_propriety :: a -> Bool
   first_descriptors_length :: a -> BytesLen
@@ -49,10 +49,8 @@ instance Footer.Class Data where
   footer = _footer
   setFooter x y = x {_footer = y}
   
-instance HasOriginalNetworkID Data where
-  original_network_id = _original_network_id
-
 instance Class Data where
+  original_network_id      = _original_network_id  
   reserved_future_use      = _reserved_future_use
   broadcast_view_propriety = _broadcast_view_propriety 
   first_descriptors_length = _first_descriptors_length 

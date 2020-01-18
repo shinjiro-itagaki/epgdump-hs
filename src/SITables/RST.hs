@@ -6,11 +6,10 @@ module SITables.RST(
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(SITableIDs(..))
 import qualified SITables.Base as Base
-import Common(ByteString,HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
+import Common(ByteString,EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
---import Descriptor(HasServiceID(..),HasEventID(..))
 import qualified Descriptor
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),ParseIOFlow(..),(>>==))
 import qualified SITables.Base as Base

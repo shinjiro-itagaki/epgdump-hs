@@ -8,8 +8,7 @@ import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
---import Descriptor(HasServiceID(..),HasEventID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
@@ -17,7 +16,8 @@ import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.NBIT.Item as Item
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
 
-class (Header1.Class a, Header2.Class a, HasOriginalNetworkID a) => Class a where
+class (Header1.Class a, Header2.Class a) => Class a where
+  original_network_id :: a -> Word16
   
 data Data = MkData {
   _header1             :: Header1.Data,
@@ -43,10 +43,8 @@ instance Footer.Class Data where
   setFooter d x = d { _footer = x }  
   footer = _footer
 
-instance HasOriginalNetworkID Data where
-  original_network_id = _original_network_id
-
 instance Class Data where
+  original_network_id = _original_network_id  
 
 instance EmptyExist Data where
   mkEmpty = MkData {

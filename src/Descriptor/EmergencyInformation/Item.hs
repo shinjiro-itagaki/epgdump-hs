@@ -2,7 +2,6 @@ module Descriptor.EmergencyInformation.Item (
   Class(..)
   ,Data
   ) where
-import Common(HasOriginalNetworkID(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Common(ByteString)
 import qualified Descriptor.Base as Base

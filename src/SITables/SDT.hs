@@ -7,7 +7,7 @@ import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),HasServiceID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
 import Parser(HasParser(..),FromWord64(..),ParseResult(..))
@@ -16,7 +16,8 @@ import qualified SITables.SDT.Item as Item
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.Items as Items
 
-class (Header1.Class a, Header2.Class a, Footer.Class a, HasOriginalNetworkID a) => Class a where
+class (Header1.Class a, Header2.Class a, Footer.Class a) => Class a where
+  original_network_id :: a -> Word16
   transport_stream_id :: a -> Word16
   reserved_future_use :: a -> Word8
   
@@ -44,15 +45,13 @@ instance Header1.Class Data where
 instance Header2.Class Data where
   header2 = _header2
   setHeader2 x h = x {_header2 = h}
-  
-instance HasOriginalNetworkID Data where
-  original_network_id = _original_network_id
 
 instance Footer.Class Data where
   footer = _footer
   setFooter x y = x {_footer = y}
 
 instance Class Data where
+  original_network_id = _original_network_id
   transport_stream_id = _transport_stream_id
   reserved_future_use = _reserved_future_use
 

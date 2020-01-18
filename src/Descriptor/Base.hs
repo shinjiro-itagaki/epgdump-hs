@@ -7,6 +7,7 @@ import Parser(HasParser(..),FromWord64(..),ParseResult(..),mapParseResult,parseF
 
 class Class a where
   fromByteString :: ByteString -> (Maybe a,ByteString)
+  
 
 
 

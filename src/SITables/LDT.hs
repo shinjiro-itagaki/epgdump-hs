@@ -8,17 +8,18 @@ import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
---import Descriptor(HasServiceID(..),HasEventID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
 import qualified SITables.LDT.Item as Item
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
 import Data.Vector(Vector,toList,empty,snoc)
+import qualified Descriptor.Link.ServiceInfo as ServiceInfo
 
-class (Header1.Class a, Header2.Class a, HasOriginalNetworkID a) => Class a where
+class (Header1.Class a, Header2.Class a, ServiceInfo.Class a) => Class a where
+--  original_network_id :: a -> Word16
   original_service_id :: a -> Word16
-  transport_stream_id :: a -> Word16
+--  transport_stream_id :: a -> Word16
   
 data Data = MkData {
   _header1             :: Header1.Data,
@@ -42,12 +43,15 @@ instance Footer.Class Data where
   footer = _footer
   setFooter x y = x {_footer = y}
 
-instance HasOriginalNetworkID Data where
-  original_network_id = _original_network_id
+instance ServiceInfo.Class Data where
+  original_network_id = _original_network_id  
+  service_id          = _original_service_id
+  transport_stream_id = _transport_stream_id  
 
 instance Class Data where
+--  original_network_id = _original_network_id  
   original_service_id = _original_service_id
-  transport_stream_id = _transport_stream_id
+--  transport_stream_id = _transport_stream_id
 
 instance EmptyExist Data where
   mkEmpty = MkData {

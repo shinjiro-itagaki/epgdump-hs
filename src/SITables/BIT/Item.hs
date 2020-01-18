@@ -7,7 +7,7 @@ module SITables.BIT.Item(
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)

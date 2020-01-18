@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module SITables.Base where
-import Common(BytesLen,HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),PID_And_TableID(..),Matcher(..))
+import Common(BytesLen,EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..),PID_And_TableID(..),Matcher(..))
 import SITables.Common(SITableIDs(..),(==.=))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),ParseIOFlow(..),(>>==))
 import qualified SITables.Header1 as Header1

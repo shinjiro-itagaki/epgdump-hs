@@ -2,24 +2,23 @@ module SITables.PCAT (
   Data,
   Class(..)
   ) where
-import Common(HasServiceID(..))
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified Schedule
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
---import Descriptor(HasServiceID(..),HasEventID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
 import Parser(HasParser(..),FromWord64(..),ParseResult(..),flowStart,(|>>=))
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.PCAT.Item as Item
+import qualified Descriptor.Link.ServiceInfo as ServiceInfo
+import qualified Descriptor.Link.ContentInfo as ContentInfo
 
-class (Header1.Class a, Header2.Class a, HasServiceID a, HasOriginalNetworkID a) => Class a where
-  transport_stream_id :: a -> Word16
-  content_id          :: a -> Word32
+
+class (Header1.Class a, Header2.Class a, ContentInfo.Class a) => Class a where
   num_of_content_version :: a -> Word8
 
 data Data = MkData {
@@ -46,15 +45,15 @@ instance Footer.Class Data where
   footer = _footer
   setFooter x y = x {_footer = y}
 
-instance HasOriginalNetworkID Data where
+instance ServiceInfo.Class Data where
   original_network_id = _original_network_id
+  service_id          = _service_id
+  transport_stream_id = _transport_stream_id
 
-instance HasServiceID Data where
-  service_id = _service_id
-
+instance ContentInfo.Class Data where  
+  content_id          = _content_id
+  
 instance Class Data where
-  transport_stream_id    = _transport_stream_id
-  content_id             = _content_id
   num_of_content_version = _num_of_content_version
 
 instance SITableIDs Data where

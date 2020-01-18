@@ -18,9 +18,6 @@ type TableID = Word32
 
 data PIDs = MkPIDs [PID] | MkExcludePIDs [PID] deriving (Eq)
 
-class HasOriginalNetworkID a where
-  original_network_id :: a -> Word16
-  
 class EmptyExist a where
   mkEmpty :: a
 instance EmptyExist ByteString where
@@ -93,6 +90,3 @@ instance PID_And_TableID (PID,TableID) where
 instance PID_And_TableID (TableID,PID) where
   pid = snd
   table_id = fst
-
-class HasServiceID a where
-  service_id :: a -> Word16

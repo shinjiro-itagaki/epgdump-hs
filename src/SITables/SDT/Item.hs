@@ -8,15 +8,15 @@ module SITables.SDT.Item(
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),HasServiceID(..))
--- import Descriptor(HasServiceID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
 import SITables.Items(Element(..))
 
-class (Common.HasServiceID a, HasDescriptors a) => Class a where
+class (HasDescriptors a) => Class a where
+  service_id                 :: a -> Word16
   reserved_future_use        :: a -> Word8
   eit_user_defined_flags     :: a -> Word8
   eit_schedule_flag          :: a -> Bool
@@ -37,13 +37,11 @@ data Data = MkData {
   _descriptors                :: Vector Descriptor.Data
   }
 
-instance HasServiceID Data where
-  service_id = _service_id
-
 instance HasDescriptors Data where
   descriptors = toList . _descriptors
 
 instance Class Data where
+  service_id = _service_id  
   reserved_future_use        = _reserved_future_use
   eit_user_defined_flags     = _eit_user_defined_flags     
   eit_schedule_flag          = _eit_schedule_flag

@@ -7,8 +7,7 @@ module SITables.NIT.Item(
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..))
---import Descriptor(HasServiceID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..))
 import Parser(HasParser(..),FromWord64(..),ParseResult(..))
 import qualified Descriptor
 import Data.ByteString(ByteString)
@@ -31,9 +30,6 @@ data Data = MkData {
 
 instance HasDescriptors Data where
   descriptors = toList . _descriptors
-
-instance HasOriginalNetworkID Data where
-  original_network_id = _original_network_id
 
 instance Class Data where
   transport_stream_id          = _transport_stream_id

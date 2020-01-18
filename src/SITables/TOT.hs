@@ -8,8 +8,7 @@ import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(HasOriginalNetworkID(..),EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
--- import Descriptor(HasServiceID(..))
+import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
 import qualified Descriptor
 import qualified SITables.TDT
 import qualified SITables.Base as Base
