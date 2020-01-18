@@ -61,7 +61,8 @@ import qualified Data.ByteString as BS
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
 import qualified Parser
 import qualified Parser.Result as Result
-import Common(EmptyExist(..),BytesLen,BitsLen,BytesHolderIO(..),BytesCounter(..))
+import Common(EmptyExist(..),BytesLen,BitsLen)
+import BytesReader(Holder(..),HolderIO(..),Counter(..))
 
 data Data =
   Null
@@ -125,7 +126,7 @@ instance EmptyExist Descriptor.Data where
 instance Parser.Class Descriptor.Data where
 --  parseIOFlow = flowStart
 
-gather :: (BytesHolderIO bh, Parser.Class b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
+gather :: (HolderIO bh, Parser.Class b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
 gather appender restlen fh init
   | restlen < 1 = return (Result.Parsed init, fh)
   | otherwise = do

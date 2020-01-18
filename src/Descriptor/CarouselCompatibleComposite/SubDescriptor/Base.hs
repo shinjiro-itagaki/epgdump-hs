@@ -1,7 +1,7 @@
 module Descriptor.CarouselCompatibleComposite.SubDescriptor.Base where
 
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Common(EmptyExist(..),BitsLen,BytesHolderIO(..),BytesLen,BytesCounter(..),ByteString)
+import Common(EmptyExist(..),BitsLen,BytesLen,ByteString)
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
 import qualified Parser
 

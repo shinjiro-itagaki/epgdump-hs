@@ -6,7 +6,8 @@ import Data.ByteString.Lazy(hGet,ByteString,head,last)
 import qualified Data.ByteString.Lazy as BS
 import System.IO(Handle,hIsEOF,SeekMode(..),hSeek,hFileSize,openFile, IOMode(ReadMode))
 import Data.Vector(Vector,empty,toList)
-import Common(BytesLen,BytesHolderIO(..),BytesCounter(..))
+import Common(BytesLen)
+import BytesReader(HolderIO(..),Counter(..))
 import Data.Ratio(Ratio)
 import Data.Bits(shiftL,shiftR,(.|.),(.&.))
 
@@ -85,7 +86,7 @@ shipStockedBitsResult rest n val
     in (val' `shiftR` slen', toEnum $ slen')
 
 
-class (ReadonlyInfo a, BytesHolderIO a) => Class a where
+class (ReadonlyInfo a, HolderIO a) => Class a where
   -- please implement
   syncByte  :: a -> Word8
   new       :: String -> IO a
@@ -129,7 +130,7 @@ data Data = MkData {
   _bytesCounter :: BytesLen
   }
 
-instance BytesCounter Data where
+instance Counter Data where
   getBytesCounter     = _bytesCounter 
   resetBytesCounter x = x {_bytesCounter = 0 }
 
@@ -148,7 +149,7 @@ class ToWord64 a where
 instance ToWord64 Word8 where
   toWord64 = fromInteger . toInteger
 
-instance BytesHolderIO Data where
+instance HolderIO Data where
   getBytesIO = getBytes
   getBitsIO = getBits
   isEOF = hIsEOF . _handle  

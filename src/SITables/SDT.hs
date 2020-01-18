@@ -7,7 +7,8 @@ import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
-import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
+import Common(EmptyExist(..),PID,TableID,TableID,PID,PIDs(..))
+import BytesReader(Holder(..),HolderIO(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
@@ -70,7 +71,7 @@ _parseIOFlow3 fh init =
   ( 8, (\(v,d) -> d { _reserved_future_use = fromWord64 v}))
   ] init  
 
-_parseIOFlow4_items :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow4_items :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4_items bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
   where
     addItem' :: Data -> Item.Data -> Data

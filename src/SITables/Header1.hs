@@ -3,7 +3,8 @@
 module SITables.Header1 where
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Common
-import Common(EmptyExist(..),BitsLen,BytesHolderIO(..),BytesLen,BytesCounter(..))
+import Common(EmptyExist(..),BitsLen,BytesLen)
+import BytesReader(Holder(..),HolderIO(..),Counter(..))
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
 import FromWord64 hiding (Class)
 import qualified Parser
@@ -54,7 +55,7 @@ instance EmptyExist Data where
     _section_length           = mkEmpty
     }
 
-_parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = do
   (res,fh2) <- getBitsIO_M fh [
     (8 , (\(v,d) -> d { _table_id                 = fromWord64 v})),
@@ -68,11 +69,11 @@ _parseIOFlow fh init = do
 instance Parser.Class Data where
   parseIOFlow = flowStart |>>= _parseIOFlow
 
-parseFlow :: (BytesHolderIO bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
+parseFlow :: (HolderIO bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
 parseFlow = Parser.parseFlow caster
   where
     caster :: (Class a) => Data -> a -> a
     caster header1 d = setHeader1 d header1
 
-parseIO :: (BytesHolderIO bh) => bh -> IO (ParseResult Data, bh)
+parseIO :: (HolderIO bh) => bh -> IO (ParseResult Data, bh)
 parseIO = Parser.parseIO

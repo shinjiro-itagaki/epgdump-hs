@@ -10,7 +10,8 @@ import qualified SITables.Base as Base
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),BytesLen,BytesCounter(getBytesCounter))
+import Common(EmptyExist(..),PID,TableID,BytesLen)
+import BytesReader(HolderIO(..),Counter(getBytesCounter))
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import FromWord64 hiding (Class)
 import qualified Parser
@@ -21,7 +22,7 @@ import Data.Vector(Vector,toList,empty,snoc)
 import Data.Maybe(fromMaybe)
 
 class (Parser.Class a) => Element a where
-  gather :: (BytesHolderIO bh, Parser.Class b) => (b -> a -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
+  gather :: (HolderIO bh, Parser.Class b) => (b -> a -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
   gather appender restlen fh init
       | restlen < 1 = return (Result.Parsed init, fh)
       | otherwise = do

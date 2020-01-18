@@ -7,7 +7,8 @@ import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
+import Common(EmptyExist(..),PID,TableID,TableID,PID,PIDs(..))
+import BytesReader(Holder(..),HolderIO(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
 import qualified SITables.BAT.Item as Item
@@ -77,30 +78,30 @@ instance EmptyExist Data where
 
 instance Parser.Class Data where
 
-_parseIOFlow1 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow1 :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow1 fh init =
   getBitsIO_M fh [
   (16, (\(v,d) -> d { _bouquet_id = fromWord64 v}))
   ] init
 
-_parseIOFlow2 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow2 :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =
   getBitsIO_M fh [
   ( 4, (\(v,d) -> d { _reserved_future_use1       = fromWord64 v})),
   (12, (\(v,d) -> d { _bouquet_descriptors_length = fromWord64 v}))
   ] init
 
-_parseIOFlow3_descs :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow3_descs :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow3_descs fh init = return (Result.Parsed init, fh) -- todo descriptors
 
-_parseIOFlow4 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow4 :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4 fh init = 
   getBitsIO_M fh [
   ( 4, (\(v,d) -> d { _reserved_future_use2         = fromWord64 v})),
   (12, (\(v,d) -> d { _transport_stream_loop_length = fromWord64 v}))
   ] init
 
-_parseIOFlow5_items :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow5_items :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow5_items fh init = return (Result.Parsed init, fh) -- todo items
   
   

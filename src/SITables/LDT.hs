@@ -8,7 +8,8 @@ import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(EmptyExist(..),PID,TableID,BytesHolderIO(..),TableID,PID,PIDs(..))
+import Common(EmptyExist(..),PID,TableID,TableID,PID,PIDs(..))
+import BytesReader(Holder(..),HolderIO(..))
 import qualified Descriptor
 import qualified SITables.Base as Base
 import qualified SITables.LDT.Item as Item
@@ -68,20 +69,20 @@ instance EmptyExist Data where
 
 instance Parser.Class Data where
 
-_parseIOFlow2 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow2 :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =
   getBitsIO_M fh [
   (16, (\(v,d) -> d { _original_network_id = fromWord64 v}))
   ] init
 
-_parseIOFlow4 :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow4 :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4 fh init = do
   getBitsIO_M fh [
     (16, (\(v,d) -> d { _transport_stream_id = fromWord64 v})),
     (16, (\(v,d) -> d { _original_network_id = fromWord64 v}))
     ] init
 
-_parseIOFlow5_items :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow5_items :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow5_items bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
   where
     addItem' :: Data -> Item.Data -> Data

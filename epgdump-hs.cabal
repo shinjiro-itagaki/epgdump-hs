@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1eba7d527161a1edc2e28fc2ee46c260b2264a491bd23a6bcf51fa153ba182da
+-- hash: 4631677f19bb5bf155f87a28c9168b42ee3712a27417324c4a02d2b9a6db48fe
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      BytesReader
       Common
       Descriptor
       Descriptor.AreaCode
@@ -118,6 +119,7 @@ library
       Descriptor.TimeShiftedService
       Descriptor.TS_Information
       Descriptor.VideoDecodeControl
+      FromWord64
       Lib
       Parser
       Parser.Result

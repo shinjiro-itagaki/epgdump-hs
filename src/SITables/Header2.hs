@@ -2,7 +2,8 @@
 
 module SITables.Header2 where
 import Data.Word(Word64, Word32, Word16, Word8)
-import Common(EmptyExist(..),BitsLen,BytesHolderIO(..))
+import Common(EmptyExist(..),BitsLen)
+import BytesReader(Holder(..),HolderIO(..))
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
 import FromWord64 hiding (Class)
 import qualified Parser
@@ -53,7 +54,7 @@ instance EmptyExist Data where
     _last_section_number      = mkEmpty
     }
 
-_parseIOFlow :: (BytesHolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = getBitsIO_M fh [
     (2 , (\(v,d) -> d { _reserved2              = fromWord64 v})),
     (5 , (\(v,d) -> d { _version_number         = fromWord64 v})),
@@ -65,7 +66,7 @@ _parseIOFlow fh init = getBitsIO_M fh [
 instance Parser.Class Data where
   parseIOFlow = flowStart |>>= _parseIOFlow  
 
-parseFlow :: (BytesHolderIO bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
+parseFlow :: (HolderIO bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
 parseFlow = Parser.parseFlow caster
   where
     caster :: (Class a) => Data -> a -> a
