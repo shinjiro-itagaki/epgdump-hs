@@ -1,34 +1,34 @@
+-- 6.2.45
 module Descriptor.ContentAvailability (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
+import Common(ByteString)
+import qualified Descriptor.Base as Base
+import qualified Descriptor.Header as Header
+import qualified Descriptor.CountryCode as CountryCode
+import Data.Vector(Vector,empty,toList,snoc)
 
-class Base a => Class a where
+class Base.Class a => Class a where
   copy_restriction_mode  :: a -> Bool
   image_constraint_token :: a -> Bool
   retention_mode         :: a -> Bool
   retention_state        :: a -> Word8
   encryption_mode        :: a -> Bool
--- reserved_future_use N  
+  reserved_future_uses   :: a -> [Word8] -- 8 * N  
 
 data Data = MkData {
-  _descriptor_tag         :: Word8,
-  _descriptor_length      :: Word8,
+  _header                 :: Header.Data, 
   _copy_restriction_mode  :: Bool,
   _image_constraint_token :: Bool,
   _retention_mode         :: Bool,
   _retention_state        :: Word8,
-  _encryption_mode        :: Bool
+  _encryption_mode        :: Bool,
+  _reserved_future_uses   :: Vector Word8
   }
 
-instance Descriptor Data where
-  descriptor_tag    = _descriptor_tag
-  descriptor_length = _descriptor_length
-
-instance Base Data where
+instance Base.Class Data where
   fromByteString bs = (Nothing, bs)
 
 instance Class Data where
@@ -37,3 +37,4 @@ instance Class Data where
   retention_mode         = _retention_mode
   retention_state        = _retention_state
   encryption_mode        = _encryption_mode
+  reserved_future_uses   = toList . _reserved_future_uses

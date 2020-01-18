@@ -3,63 +3,54 @@ module Descriptor.EventGroup (
   ,Data
   ) where
 import Common(HasOriginalNetworkID(..))
-import Descriptor.Common(Base(..),HasMaybePrivateDataBytes(..),TOS(..),HasEventID(..),HasServiceID(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
+import Common(ByteString)
+import qualified Descriptor.Base as Base
+import qualified Descriptor.Header as Header
+import Data.Vector(Vector,empty,toList,snoc)
+import qualified Descriptor.EventInfo as EventInfo
+import qualified Descriptor.Link.EventInfo as LinkEventInfo
 
-class (Base a, HasMaybePrivateDataBytes a) => Class a where
-  group_type       :: a -> Word8
-  event_count      :: a -> Word8
-  maybe_event      :: a -> Maybe [Info]
-  maybe_group_data :: a -> Maybe [GroupInfo]
---  maybe_private_data_bytes :: a -> Maybe [Word8]  
+class (Base.Class a) => Class a where
+  group_type  :: a -> GroupType
+  event_count :: a -> Word8
+  events      :: a -> [EventInfo.Data]
+  groups      :: a -> [GroupInfo]
 
 data Data = MkData {
-  _descriptor_tag    :: Word8,
-  _descriptor_length :: Word8,
-  _group_type        :: Word8,
-  _event_count       :: Word8,
-  _maybe_event       :: Maybe [Info],
-  _maybe_group_data  :: Maybe [GroupInfo],
-  _maybe_private_data_bytes :: Maybe [Word8]
+  _group_type  :: Word8,
+  _event_count :: Word8,
+  _events      :: [EventInfo.Data],
+  _groups      :: Vector GroupInfo
 }
 
-instance Descriptor Data where
-  descriptor_tag    = _descriptor_tag
-  descriptor_length = _descriptor_length
+data GroupType =
+  Undefined --0x0 or 0x6 - 0xF,
+  | Common -- 0x1
+  | Relay -- -0x2
+  | Movement -- 0x3
+  | RelayToOtherNetworks -- 0x4
+  | MovementFromOtherNetworks -- 0x5  
 
-instance Base Data where
-  fromByteString bs = (Nothing, bs)
+fromNum :: (Num a,Eq a) => a -> GroupType
+fromNum i
+  | i == 0x1 = Common
+  | i == 0x2 = Relay
+  | i == 0x3 = Movement
+  | i == 0x4 = RelayToOtherNetworks
+  | i == 0x5 = MovementFromOtherNetworks
+  | otherwise = Undefined
 
-instance HasMaybePrivateDataBytes Data where
-  maybe_private_data_bytes = _maybe_private_data_bytes
+instance Base.Class Data where
+--  fromByteString bs = (Nothing, bs)
 
 instance Class Data where
-  group_type       = _group_type
-  event_count      = _event_count
-  maybe_event      = _maybe_event
-  maybe_group_data = _maybe_group_data
+  group_type  = fromNum . _group_type
+  event_count = _event_count
+  events      = _events
+  groups      = toList . _groups
 
-data Info = MkInfo {
-  __service_id :: Word16,
-  __event_id   :: Word16
-  }
-  
-data GroupInfo = MkGroupInfo {
-  _original_network_id :: Word16,
-  _transport_stream_id :: Word16,
-  _service_id          :: Word16,
-  _event_id            :: Word16
-  }
-
-instance HasOriginalNetworkID GroupInfo where
-  original_network_id = _original_network_id
-
-instance TOS GroupInfo where
-  transport_stream_id = _transport_stream_id
-  
-instance HasServiceID GroupInfo where
-  service_id = _service_id
-
-instance HasEventID GroupInfo where
-  event_id = _event_id
+data GroupInfo =
+  Others       ByteString
+  | RelayTo      LinkEventInfo.Data
+  | MovementFrom LinkEventInfo.Data

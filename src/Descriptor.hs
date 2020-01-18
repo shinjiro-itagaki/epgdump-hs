@@ -29,7 +29,7 @@ import Descriptor.ExtendedBroadcaster
 import Descriptor.ExtendedEvent
 import Descriptor.HierarchicalTransmission
 import Descriptor.HyperLink
-import Descriptor.LDT_Link
+import Descriptor.LDT_Linkage
 import Descriptor.Linkage
 import Descriptor.LocalTimeOffset
 import Descriptor.LogoTransmission
@@ -91,7 +91,7 @@ data Data =
   | ExtendedEvent                Descriptor.ExtendedEvent.Data
   | HierarchicalTransmission     Descriptor.HierarchicalTransmission.Data
   | HyperLink                    Descriptor.HyperLink.Data
-  | LDT_Link                     Descriptor.LDT_Link.Data
+  | LDT_Linkage                  Descriptor.LDT_Linkage.Data
   | Linkage                      Descriptor.Linkage.Data
   | LocalTimeOffset              Descriptor.LocalTimeOffset.Data
   | LogoTransmission             Descriptor.LogoTransmission.Data

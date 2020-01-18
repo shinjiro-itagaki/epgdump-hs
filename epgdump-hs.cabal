@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c5604305ca16858c0ee649a81fcb16d404ed249a08acd5cd4132db3fb77a552e
+-- hash: c90c7e9380607711c03f83c8e7eafdb67c4818d39edfb0e56430f08327c8aec2
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -29,55 +29,83 @@ library
   exposed-modules:
       Common
       Descriptor
+      Descriptor.AreaCode
       Descriptor.AudioComponent
       Descriptor.AVC_Timing_HRD
       Descriptor.AVC_Video
+      Descriptor.Base
       Descriptor.BoardInformation
       Descriptor.BouquetName
       Descriptor.BroadcasterName
       Descriptor.CAIdentifier
       Descriptor.CarouselCompatibleComposite
-      Descriptor.CarouselCompatibleComposite.Common
-      Descriptor.CarouselCompatibleComposite.Expire
-      Descriptor.CarouselCompatibleComposite.Name
-      Descriptor.CarouselCompatibleComposite.ProviderPrivate
-      Descriptor.CarouselCompatibleComposite.StoreRoot
-      Descriptor.CarouselCompatibleComposite.Subdirectory
-      Descriptor.CarouselCompatibleComposite.Title
-      Descriptor.CarouselCompatibleComposite.Type
+      Descriptor.CarouselCompatibleComposite.SubDescriptor
+      Descriptor.CarouselCompatibleComposite.SubDescriptor.Base
+      Descriptor.CarouselCompatibleComposite.SubDescriptor.Expire
+      Descriptor.CarouselCompatibleComposite.SubDescriptor.Name
+      Descriptor.CarouselCompatibleComposite.SubDescriptor.ProviderPrivate
+      Descriptor.CarouselCompatibleComposite.SubDescriptor.StoreRoot
+      Descriptor.CarouselCompatibleComposite.SubDescriptor.Subdirectory
+      Descriptor.CarouselCompatibleComposite.SubDescriptor.Title
+      Descriptor.CarouselCompatibleComposite.SubDescriptor.Type
       Descriptor.Common
       Descriptor.Component
       Descriptor.ComponentControl
       Descriptor.ComponentGroup
+      Descriptor.ComponentGroup.CA_Unit
+      Descriptor.ComponentGroup.Item
       Descriptor.ConditionalAccess
       Descriptor.ConditionalPlayback
       Descriptor.ConnectedTransmission
       Descriptor.Content
+      Descriptor.Content.Item
       Descriptor.ContentAvailability
       Descriptor.CountryAvailability
+      Descriptor.CountryCode
       Descriptor.DataComponent
       Descriptor.DataContents
       Descriptor.DigitalCopyControl
       Descriptor.EmergencyInformation
+      Descriptor.EmergencyInformation.Item
       Descriptor.EventGroup
+      Descriptor.EventInfo
       Descriptor.ExtendedBroadcaster
       Descriptor.ExtendedEvent
+      Descriptor.ExtendedEvent.Broadcaster
+      Descriptor.ExtendedEvent.Item
+      Descriptor.Header
       Descriptor.HierarchicalTransmission
       Descriptor.HyperLink
-      Descriptor.LDT_Link
+      Descriptor.LangCode
+      Descriptor.LDT_Linkage
+      Descriptor.LDT_Linkage.Item
+      Descriptor.Link.ContentInfo
+      Descriptor.Link.ContentModuleInfo
+      Descriptor.Link.ErtNodeInfo
+      Descriptor.Link.EventInfo
+      Descriptor.Link.ModuleInfo
+      Descriptor.Link.ServiceInfo
+      Descriptor.Link.StoredContentInfo
       Descriptor.Linkage
       Descriptor.LocalTimeOffset
+      Descriptor.LocalTimeOffset.Item
       Descriptor.LogoTransmission
       Descriptor.Mosaic
+      Descriptor.Mosaic.CellLinkageInfo
+      Descriptor.Mosaic.ElementaryCellField
+      Descriptor.Mosaic.Item
       Descriptor.NetworkName
       Descriptor.NVOD_Reference
       Descriptor.ParentalRating
+      Descriptor.ParentalRating.Item
       Descriptor.PartialReception
       Descriptor.SatelliteDeliverySystem
+      Descriptor.Selector
       Descriptor.Series
       Descriptor.Service
       Descriptor.ServiceGroup
       Descriptor.ServiceList
+      Descriptor.ServiceList.Info
       Descriptor.ShortEvent
       Descriptor.SI_Parameter
       Descriptor.SI_Prime_TS
@@ -85,6 +113,7 @@ library
       Descriptor.Stuffing
       Descriptor.SystemManagement
       Descriptor.TargetRegion
+      Descriptor.TargetRegion.Spec
       Descriptor.TerrestrialDeliverySystem
       Descriptor.TimeShiftedEvent
       Descriptor.TimeShiftedService

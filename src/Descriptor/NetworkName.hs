@@ -2,25 +2,21 @@ module Descriptor.NetworkName (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),Descriptor(..),HasName(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
+import Common(ByteString)
+import Descriptor.Common(HasName(..))
+import qualified Descriptor.Base as Base
+import qualified Descriptor.Header as Header
+import Data.Vector(Vector,empty,toList,snoc)
 
-class (Base a, HasName a) => Class a where
+class (Base.Class a, HasName a) => Class a where
 
 data Data = MkData {
-  _descriptor_tag    :: Word8,
-  _descriptor_length :: Word8,
-  _name              :: String
+  _name :: String
   }
 
-  
-instance Descriptor Data where
-  descriptor_tag    = _descriptor_tag
-  descriptor_length = _descriptor_length
-
-instance Base Data where
-  fromByteString bs = (Nothing, bs)
+instance Base.Class Data where
+--  fromByteString bs = (Nothing, bs)
 
 instance HasName Data where
   name = _name

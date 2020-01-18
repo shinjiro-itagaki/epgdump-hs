@@ -2,11 +2,13 @@ module Descriptor.TS_Information (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
+import Common(ByteString)
+import qualified Descriptor.Base as Base
+import qualified Descriptor.Header as Header
 
-class Base a => Class a where
+
+class Base.Class a => Class a where
   remote_control_key_id   :: a -> Word8
   length_of_ts_name       :: a -> Word8
   transmission_type_count :: a -> Word8
@@ -14,8 +16,7 @@ class Base a => Class a where
   transmission_types      :: a -> [TransmissionType]
 
 data Data = MkData {
-  _descriptor_tag          :: Word8,
-  _descriptor_length       :: Word8,
+  _header                  :: Header.Data, 
   _remote_control_key_id   :: Word8,
   _length_of_ts_name       :: Word8,
   _transmission_type_count :: Word8,
@@ -29,11 +30,7 @@ data TransmissionType = MkTransmissionType {
   services :: [Word16]
   }
 
-instance Descriptor Data where
-  descriptor_tag    = _descriptor_tag
-  descriptor_length = _descriptor_length
-
-instance Base Data where
+instance Base.Class Data where
 
 instance Class Data where
   remote_control_key_id    = _remote_control_key_id

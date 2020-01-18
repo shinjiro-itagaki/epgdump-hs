@@ -2,37 +2,44 @@ module Descriptor.LogoTransmission (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),Descriptor(..))
-import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
+import Data.Word(Word64, Word32, Word16, Word8)
+import Common(ByteString)
+import qualified Descriptor.Base as Base
+import qualified Descriptor.Header as Header
+import Data.Vector(Vector,empty,toList,snoc)
 
-class Base a => Class a where
+data LogoTransmission =
+  Type1 { -- 0x01
+  reserved_future_use1 :: Word8, -- 7
+  logo_id              :: Word16, -- 9
+  reserved_future_use2 :: Word8, -- 4
+  logo_version         :: Word16, -- 12
+  download_data_id     :: Word16 -- 16
+  }
+  | Type2 { -- 0x02
+      reserved_future_use1 :: Word8, -- 7
+      logo_id              :: Word16 -- 9      
+      }
+  | Type3 { -- 0x03
+      logo_char            :: String  -- [8]
+      }
+  | TypeExcept { -- others
+      reserved_future_uses :: [Word8] -- [8]
+      }
+
+class Base.Class a => Class a where
   logo_transmission_type :: a -> Word8
-  logo_id                :: a -> Maybe Word16
-  logo_version           :: a -> Maybe Word16
-  download_data_id       :: a -> Maybe Word16
-  logo_char              :: a -> Maybe String
+  logo_transmission      :: a -> LogoTransmission
 
 data Data = MkData {
-  _descriptor_tag         :: Word8,
-  _descriptor_length      :: Word8,
+  _header                 :: Header.Data,
   _logo_transmission_type :: Word8,
-  _logo_id                :: Maybe Word16,
-  _logo_version           :: Maybe Word16,
-  _download_data_id       :: Maybe Word16,
-  _logo_char              :: Maybe String
+  _logo_transmission      :: LogoTransmission
   }
 
-instance Descriptor Data where
-  descriptor_tag    = _descriptor_tag
-  descriptor_length = _descriptor_length
-
-instance Base Data where
-  fromByteString bs = (Nothing, bs)
+instance Base.Class Data where
+--  fromByteString bs = (Nothing, bs)
 
 instance Class Data where
-  logo_transmission_type = _logo_transmission_type 
-  logo_id                = _logo_id
-  logo_version           = _logo_version
-  download_data_id       = _download_data_id
-  logo_char              = _logo_char
+  logo_transmission_type = _logo_transmission_type
+  logo_transmission      = _logo_transmission

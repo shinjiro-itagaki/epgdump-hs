@@ -2,13 +2,14 @@ module Descriptor.SI_Prime_TS (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),Descriptor(..))
 import Descriptor.SI_Parameter(TableDescription)
 import qualified Descriptor.SI_Parameter as SI_Parameter
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
+import Common(ByteString)
+import qualified Descriptor.Base as Base
+import qualified Descriptor.Header as Header
 
-class (Base a, SI_Parameter.Class a) => Class a where
+class (Base.Class a, SI_Parameter.Class a) => Class a where
 --  parameter_version :: a -> Word8
 --  update_time :: a -> Word16
   si_prime_ts_network_id       :: a -> Word16
@@ -16,8 +17,7 @@ class (Base a, SI_Parameter.Class a) => Class a where
 --  table_descriptions :: [SI_TableDescription]
 
 data Data = MkData {
-  _descriptor_tag               :: Word8,
-  _descriptor_length            :: Word8,
+  _header                       :: Header.Data,
   _parameter_version            :: Word8,
   _update_time                  :: Word16,
   _si_prime_ts_network_id       :: Word16,
@@ -25,12 +25,8 @@ data Data = MkData {
   _table_descriptions           :: [TableDescription]
   }
 
-instance Descriptor Data where
-  descriptor_tag    = _descriptor_tag
-  descriptor_length = _descriptor_length
-
-instance Base Data where
-  fromByteString bs = (Nothing, bs)
+instance Base.Class Data where
+--  fromByteString bs = (Nothing, bs)
 
 instance SI_Parameter.Class Data where
   parameter_version  = _parameter_version

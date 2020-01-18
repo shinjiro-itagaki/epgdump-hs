@@ -2,26 +2,24 @@ module Descriptor.BroadcasterName (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),HasName(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
+import Common(ByteString)
+import qualified Descriptor.Base as Base
+import qualified Descriptor.Header as Header
+import qualified Descriptor.CountryCode as CountryCode
+import qualified Descriptor.LangCode as LangCode
+import Data.Vector(Vector,empty,toList,snoc)
 
-class (Base a, HasName a) => Class a where
-  
+class (Base.Class a) => Class a where
+  name :: a -> String
+
 data Data = MkData {
-  _descriptor_tag    :: Word8,
-  _descriptor_length :: Word8,
-  _name              :: String
+  _name :: String
   }
 
-instance Descriptor Data where
-  descriptor_tag    = _descriptor_tag
-  descriptor_length = _descriptor_length
-
-instance Base Data where
-  fromByteString bs = (Nothing, bs)
-
-instance HasName Data where
-  name = _name
+instance Base.Class Data where
+  
 
 instance Class Data where
+  name = _name
+

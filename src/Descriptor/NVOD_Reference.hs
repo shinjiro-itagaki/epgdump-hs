@@ -2,25 +2,23 @@ module Descriptor.NVOD_Reference (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),TOSData(..),Descriptor(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
+import Common(ByteString)
+import Descriptor.Common(HasName(..))
+import qualified Descriptor.Base as Base
+import qualified Descriptor.Header as Header
+import Data.Vector(Vector,empty,toList,snoc)
+import qualified Descriptor.Link.ServiceInfo as ServiceInfo
 
-class Base a => Class a where
-  references :: a -> [TOSData]
+class Base.Class a => Class a where
+  references :: a -> [ServiceInfo.Data]
 
 data Data = MkData {
-  _descriptor_tag    :: Word8,
-  _descriptor_length :: Word8,
-  _references        :: [TOSData]
+  _references :: Vector ServiceInfo.Data
   }
 
-instance Descriptor Data where
-  descriptor_tag    = _descriptor_tag
-  descriptor_length = _descriptor_length
-
-instance Base Data where
-  fromByteString bs = (Nothing, bs)
+instance Base.Class Data where
+--  fromByteString bs = (Nothing, bs)
 
 instance Class Data where
-  references = _references
+  references = toList . _references

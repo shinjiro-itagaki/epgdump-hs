@@ -2,11 +2,12 @@ module Descriptor.Series (
   Class(..)
   ,Data
   ) where
-import Descriptor.Common(Base(..),Descriptor(..),AreaCode)
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
-  
-class Base a => Class a where
+import Common(ByteString)
+import qualified Descriptor.Base as Base
+import qualified Descriptor.Header as Header
+
+class Base.Class a => Class a where
   series_id              :: a -> Word16
   repeat_label           :: a -> Word8
   program_pattern        :: a -> Word8
@@ -17,8 +18,7 @@ class Base a => Class a where
   series_name            :: a -> String
 
 data Data = MkData {
-  _descriptor_tag         :: Word8,
-  _descriptor_length      :: Word8,
+  _header                 :: Header.Data, 
   _series_id              :: Word16,
   _repeat_label           :: Word8,
   _program_pattern        :: Word8,
@@ -29,12 +29,8 @@ data Data = MkData {
   _series_name            :: String
   }
 
-instance Descriptor Data where
-  descriptor_tag    = _descriptor_tag
-  descriptor_length = _descriptor_length
-
-instance Base Data where
-  fromByteString bs = (Nothing, bs)
+instance Base.Class Data where
+--  fromByteString bs = (Nothing, bs)
 
 instance Class Data where
   series_id              = _series_id
