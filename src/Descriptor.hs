@@ -2,7 +2,6 @@
 
 module Descriptor where
 
-import Descriptor.Common
 import Descriptor.AVC_Timing_HRD
 import Descriptor.AVC_Video
 import Descriptor.AudioComponent

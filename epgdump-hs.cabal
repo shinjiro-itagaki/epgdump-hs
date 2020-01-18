@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c90c7e9380607711c03f83c8e7eafdb67c4818d39edfb0e56430f08327c8aec2
+-- hash: 6165af432044338340c12ca28e6dbc9071dad79abe051b556ca525fe7ad44148
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -48,7 +48,6 @@ library
       Descriptor.CarouselCompatibleComposite.SubDescriptor.Subdirectory
       Descriptor.CarouselCompatibleComposite.SubDescriptor.Title
       Descriptor.CarouselCompatibleComposite.SubDescriptor.Type
-      Descriptor.Common
       Descriptor.Component
       Descriptor.ComponentControl
       Descriptor.ComponentGroup
