@@ -8,27 +8,28 @@ import qualified BytesReader
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Data.ByteString.Lazy as BS
-import Common(BytesLen,EmptyExist(..),PID,TableID)
+import Common(BytesLen,EmptyExist(..),PID,TableID,ByteString)
 import qualified Parser
 import qualified Data.Vector as V
 import Data.Int(Int64)
 import qualified BytesReader.HolderIO as HolderIO
 import qualified TS.FileHandle as FH
 import qualified TS.Packet.AdaptationField as AdaptationField
+import qualified Parser.Result as Result
 
 -- sync byteを含めた長さ
 bytesLen :: BytesLen
 bytesLen = 188
 
-type BodyData = BS.ByteString
+type Payload = ByteString
 
 class (Header.Class t) => Class t where
   -- please implement
   mkEOF :: t
-  mkOK  :: Header.Data -> BodyData -> t
+  mkOK  :: Header.Data -> Maybe AdaptationField.Data -> Payload -> t
   isEOF :: t -> Bool
   isOK  :: t -> Bool
-  body_data :: t -> BS.ByteString
+  body_data :: t -> ByteString
   (===) :: t -> t -> Bool
   duplicated :: t -> Bool
   setDuplicated :: t -> t
@@ -37,24 +38,18 @@ class (Header.Class t) => Class t where
   header :: t -> Header.Data
   header = Header.header
   
-  -- todo not impl
   adaptation_field :: t -> Maybe AdaptationField.Data
-  adaptation_field x =
-    if Header.has_adaptation_field (header x)
-    then Nothing
-    else Nothing
+  payload          :: t -> ByteString
+  -- payload x = BS.drop (payloadlen x) $ body_data x
   
-  payload :: t -> BS.ByteString
-  payload x = BS.drop (payloadlen x) $ body_data x
-  
-  payloadlen :: (Num b) => t -> b
-  payloadlen x = if Header.has_payload header' then selflen - adlen else 0
-    where
-      header' =  header x
-      selflen = fromInteger $ toInteger $ BS.length $ body_data x -- 自身の長さ
-      adlen = case adaptation_field x of
-                Just af -> AdaptationField.adaptation_field_length af
-                Nothing -> 0
+  -- payloadlen :: (Num b) => t -> b
+  -- payloadlen x = if Header.has_payload header' then selflen - adlen else 0
+  --   where
+  --     header' = header x
+  --     selflen = fromInteger $ toInteger $ BS.length $ body_data x -- 自身の長さ
+  --     adlen = case adaptation_field x of
+  --               Just af -> AdaptationField.adaptation_field_length af
+  --               Nothing -> 0
 
 
   -- 重複は一度だけ許可される
@@ -70,42 +65,51 @@ class (Header.Class t) => Class t where
                 else Just x
 
   -- 引数のByteStringは同期用の先頭バイトは削られているものを想定している
-  fromByteString :: BS.ByteString -> t
+  fromByteString :: ByteString -> Result.Data t
   fromByteString bytes =
     let plen'     = toInteger $ bytesLen - 1    :: Integer
         plen''    = fromInteger plen'           :: Int64
         byteslen' = toInteger $ BS.length bytes :: Integer
         bytes'    = BS.take plen'' bytes
         header    = Header.parse $ BS.take 3 bytes'
-        body      = BS.drop 3 bytes'
+        (res,rest) = AdaptationField.parse $ BS.unpack $ BS.drop 3 bytes'
+        body      = BS.pack rest
     in
       if byteslen' < plen'
-      then mkEOF
-      else mkOK header body
+      then Result.DataIsTooShort $ Just $ fromInteger $ (plen' - byteslen')
+      else case res of
+        Result.Parsed af        -> Result.Parsed $ mkOK header (Just af) body
+        Result.DataIsTooShort i -> Result.DataIsTooShort i
+        Result.NotMatch         -> Result.NotMatch
+        Result.SumCheckError    -> Result.SumCheckError
+        Result.UnknownReason    -> Result.UnknownReason
 
-  read :: (FH.Class fh) => fh -> IO (t,(BS.ByteString,fh))
+  read :: (FH.Class fh) => fh -> IO (Result.Data t,(BS.ByteString,fh))
   read h = do
     h' <- FH.syncIO h
     res@(bytes,h'') <- FH.getBytesIO h' (bytesLen - 1)
     return (fromByteString bytes,res)
 
-data Data = MkData Header.Data BodyData | EOF | ContinuityCounterError
+data Data = MkData Header.Data (Maybe AdaptationField.Data) Payload | EOF | ContinuityCounterError
 
 instance EmptyExist Data where
-  mkEmpty = MkData mkEmpty mkEmpty
+  mkEmpty = MkData mkEmpty (Just AdaptationField.mkEmpty) mkEmpty
 
 instance Header.Class Data where
-  header (MkData h _) = h
-  header  _           = mkEmpty :: Header.Data  
+  header (MkData h _ _) = h
+  header  _             = mkEmpty :: Header.Data  
   
 instance Class Data where
-  body_data (MkData h b) = b
-  body_data _            = BS.empty
+  body_data (MkData _ _ b) = b
+  body_data _              = BS.empty
+
+  adaptation_field (MkData _ af _) = af
+  adaptation_field _ = Nothing
   
   isEOF EOF = True
   isEOF _   = False
-  isOK (MkData h _) = True
-  isOK _            = False
+  isOK (MkData _ _ _) = True
+  isOK _              = False
 
   mkEOF = EOF
-  mkOK h b = MkData h b
+  mkOK h af b = MkData h af b

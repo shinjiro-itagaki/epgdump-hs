@@ -17,3 +17,8 @@ map f x = case x of
   NotMatch         -> NotMatch
   SumCheckError    -> SumCheckError
   UnknownReason    -> UnknownReason
+
+(>>==) :: (Data a, b) -> (a -> b -> (Data a,b)) -> (Data a,b)
+(>>==) ((Parsed x),y) f = f x y
+(>>==) x              _ = x
+

@@ -49,6 +49,7 @@ import qualified TS.Packet as Packet
 import qualified Data.Map.Lazy as Map
 import Common(PID)
 import qualified TS.Packet.Header as Header
+import qualified Parser.Result as Result
 
 -- type FileHandle = FileHandle.Data
 
@@ -60,19 +61,20 @@ each path something act = do
 
 _each :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> Map.Map PID Packet.Data -> IO a
 _each fh something act countermap = do
-  (p,(bytes,fh')) <- Packet.read fh
-  if Packet.isEOF p
-    then return something
-    else if Packet.isOK p then -- 
-           case Packet.continuityChecked p (Map.lookup (Header.pid p) countermap) of
-             Nothing -> _each fh' something act (Map.insert (Header.pid p) p countermap)
-             Just x -> 
-               act p something (FileHandle.getReadonlyInfo fh') bytes
-               >>= (\(continue,something') ->
-                      if continue
-                      then _each fh' something' act (Map.insert (Header.pid p) p countermap)
-                      else return something'
-                   )
-         else
-           _each fh' something act countermap
-
+  (resp,(bytes,fh')) <- Packet.read fh
+  case resp of
+    Result.Parsed p -> if Packet.isEOF p
+      then return something
+      else if Packet.isOK p then -- 
+             case Packet.continuityChecked p (Map.lookup (Header.pid p) countermap) of
+               Nothing -> _each fh' something act countermap -- 重複しているので何もせず捨てて処理を続行
+               Just x -> 
+                 act p something (FileHandle.getReadonlyInfo fh') bytes
+                 >>= (\(continue,something') ->
+                        if continue
+                        then _each fh' something' act (Map.insert (Header.pid p) p countermap)
+                        else return something'
+                     )
+           else
+             _each fh' something act countermap
+    _ -> _each fh' something act countermap -- パース失敗でスキップ
