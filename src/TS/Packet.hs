@@ -59,13 +59,13 @@ class (Header.Class t) => Class t where
         byteslen' = toInteger $ BS.length bytes :: Integer
         bytes'    = BS.take plen'' bytes
         header    = Header.parse $ BS.take 3 bytes'
-        (res,rest) = AdaptationField.parse $ BS.unpack $ BS.drop 3 bytes'
+        (res,rest) = AdaptationField.parse header $ BS.unpack $ BS.drop 3 bytes'
         body      = BS.pack rest
     in
       if byteslen' < plen'
       then Result.DataIsTooShort $ Just $ fromInteger $ (plen' - byteslen')
       else case res of
-        Result.Parsed af        -> Result.Parsed $ mkOK header (Just af) body
+        Result.Parsed maf       -> Result.Parsed $ mkOK header maf body
         Result.DataIsTooShort i -> Result.DataIsTooShort i
         Result.NotMatch         -> Result.NotMatch
         Result.SumCheckError    -> Result.SumCheckError

@@ -10,6 +10,7 @@ import qualified TS.Packet
 import qualified TS.FileHandle as FileHandle
 import Data.Word(Word64,Word8)
 import Data.Bits(shiftL,shiftR)
+import qualified TS.Packet.AdaptationField as AdaptationField
 
 --_KB = 2 ^ 10
 --_MB = _KB ^ 2
@@ -23,8 +24,6 @@ main = do
   args <- getArgs
   let filepath =  args !! 0
       counter = 0 :: BytesLen
---  fh <- FileHandle.new filepath   
---  test fh 0 >>= putStrLn . show
   TS.each filepath counter action >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)
 
 action :: TS.Packet.Data -> BytesLen -> FileHandle.ReadonlyData -> BS.ByteString -> IO (Bool,BytesLen)

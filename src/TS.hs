@@ -51,9 +51,6 @@ import Common(PID)
 import qualified TS.Packet.Header as Header
 import qualified Parser.Result as Result
 
--- type FileHandle = FileHandle.Data
-
-
 each :: String -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
 each path something act = do
   fh <- FileHandle.new path

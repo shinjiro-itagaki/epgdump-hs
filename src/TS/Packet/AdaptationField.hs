@@ -4,6 +4,7 @@ module TS.Packet.AdaptationField where
 import Data.Word(Word64, Word32, Word16, Word8)
 import Data.Bits(Bits(..))
 import Common(ByteString)
+import qualified TS.Packet.Header as Header
 import qualified TS.Packet.AdaptationField.OptionalFields as OptionalFields
 import qualified Data.ByteString.Lazy as BS
 import qualified Parser.Result as Result
@@ -19,7 +20,7 @@ class Class a where
   flags5                               :: a -> Flags5 -- 5
   optional_fields                      :: a -> OptionalFields.Data 
   stuffing_bytes                       :: a -> ByteString -- ?? (rest bytes)
-  parse                                :: [Word8] -> (Result.Data a,[Word8])
+  parse                                :: Header.Data -> [Word8] -> (Result.Data (Maybe a),[Word8])
 
 data Data = MkData {
   _adaptation_field_length              :: Word8, -- 8
@@ -45,7 +46,7 @@ mkEmpty = MkData {
 flow1 :: Data -> [Word8] -> (Result.Data Data, [Word8])
 flow1 d (x:xs)
   | toInteger (Prelude.length xs) < (toInteger x) = (Result.DataIsTooShort $ Just $ fromInteger $ toInteger $ ((x -) $ fromInteger $ toInteger $ Prelude.length xs), [])
-  | otherwise = (Result.Parsed (d {_adaptation_field_length = x}), Prelude.drop (fromInteger $ toInteger x) xs)
+  | otherwise = (Result.Parsed $ (d {_adaptation_field_length = x}), Prelude.drop (fromInteger $ toInteger x) xs)
 
 instance Class Data where
   adaptation_field_length              = fromInteger . toInteger . _adaptation_field_length
@@ -55,6 +56,9 @@ instance Class Data where
   flags5                               = _flags5
   optional_fields                      = _optional_fields
   stuffing_bytes                       = _stuffing_bytes
-  parse (x:xs) =
-    (Result.Parsed mkEmpty,xs)
-    >>== flow1
+  parse h y@(x:xs) =
+    if Header.has_adaptation_field h then
+      (\(a,b) -> ((Result.map Just a),b)) $ ((Result.Parsed $ mkEmpty,xs)
+      >>== flow1)
+    else
+      (Result.Parsed Nothing, y)
