@@ -29,7 +29,8 @@ class (Header.Class t) => Class t where
   mkOK  :: Header.Data -> Maybe AdaptationField.Data -> Payload -> t
   isEOF :: t -> Bool
   isOK  :: t -> Bool
-  body_data :: t -> ByteString
+  adaptation_field :: t -> Maybe AdaptationField.Data
+  payload          :: t -> ByteString
   (===) :: t -> t -> Bool
   duplicated :: t -> Bool
   setDuplicated :: t -> t
@@ -37,20 +38,6 @@ class (Header.Class t) => Class t where
 
   header :: t -> Header.Data
   header = Header.header
-  
-  adaptation_field :: t -> Maybe AdaptationField.Data
-  payload          :: t -> ByteString
-  -- payload x = BS.drop (payloadlen x) $ body_data x
-  
-  -- payloadlen :: (Num b) => t -> b
-  -- payloadlen x = if Header.has_payload header' then selflen - adlen else 0
-  --   where
-  --     header' = header x
-  --     selflen = fromInteger $ toInteger $ BS.length $ body_data x -- 自身の長さ
-  --     adlen = case adaptation_field x of
-  --               Just af -> AdaptationField.adaptation_field_length af
-  --               Nothing -> 0
-
 
   -- 重複は一度だけ許可される
   -- body の discontinuity indicatorがtrueの場合は不連続でもよい
@@ -87,29 +74,49 @@ class (Header.Class t) => Class t where
   read :: (FH.Class fh) => fh -> IO (Result.Data t,(BS.ByteString,fh))
   read h = do
     h' <- FH.syncIO h
-    res@(bytes,h'') <- FH.getBytesIO h' (bytesLen - 1)
-    return (fromByteString bytes,res)
+    isEOF' <- HolderIO.isEOF h'
+    if isEOF'
+      then return (Result.Parsed mkEOF, (BS.empty,h'))
+      else do
+      res@(bytes,h'') <- FH.getBytesIO h' (bytesLen - 1)
+      return (fromByteString bytes,res)
+      
 
-data Data = MkData Header.Data (Maybe AdaptationField.Data) Payload | EOF | ContinuityCounterError
+data Data = MkData {
+  _header  :: Header.Data,
+  _maf     :: Maybe AdaptationField.Data,
+  _payload :: Payload,
+  _duplicated :: Bool
+  } | EOF | ContinuityCounterError deriving(Eq)
 
 instance EmptyExist Data where
-  mkEmpty = MkData mkEmpty (Just AdaptationField.mkEmpty) mkEmpty
+  mkEmpty = MkData mkEmpty (Just AdaptationField.mkEmpty) mkEmpty False
 
 instance Header.Class Data where
-  header (MkData h _ _) = h
+  header x@(MkData _ _ _ _) = _header x
   header  _             = mkEmpty :: Header.Data  
   
 instance Class Data where
-  body_data (MkData _ _ b) = b
-  body_data _              = BS.empty
+  (===) x y = x == y
+  
+  adaptation_field x@(MkData _ _ _ _) = _maf x
+  adaptation_field _                  = Nothing
 
-  adaptation_field (MkData _ af _) = af
-  adaptation_field _ = Nothing
+  payload x@(MkData _ _ _ _) = _payload x
+  payload _                  = BS.empty
   
   isEOF EOF = True
   isEOF _   = False
-  isOK (MkData _ _ _) = True
-  isOK _              = False
+  
+  isOK (MkData _ _ _ _) = True
+  isOK _                = False
 
   mkEOF = EOF
-  mkOK h af b = MkData h af b
+  mkOK h af b = MkData h af b False
+
+  duplicated x@(MkData _ _ _ _) = _duplicated x
+  duplicated _                  = False
+
+  setDuplicated (MkData a b c d) = (MkData a b c True)
+  setDuplicated x                = x
+  

@@ -128,7 +128,7 @@ instance (Handler.Class h) => Class (Data h) where
     | otherwise = 
       let i1 = (fromInteger $ toInteger i) :: Int
           i2 = (fromInteger $ toInteger i) :: Word64
-      in Handler.hGet (_handle x) i1  >>= (\bytes -> return (bytes, _addPos (x {_cache = (snoc (_cache x) bytes), _loaded = BS.last bytes, _stockedBitsLen = StockedBitsLen.Zero}) i2))
+      in Handler.hGet (_handle x) i1  >>= (\bytes -> return $ if BS.null bytes then (BS.empty, x) else (bytes, _addPos (x {_cache = (snoc (_cache x) bytes), _loaded = BS.last bytes, _stockedBitsLen = StockedBitsLen.Zero}) i2))
 
   getBits fh bitslen
     | bitslen < 1 = return (0,fh)
