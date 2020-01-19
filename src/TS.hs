@@ -58,13 +58,21 @@ each path something act = do
   fh <- FileHandle.new path
   _each fh something act Map.empty
 
-_each :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> Map.Map PID Header.ContinuityCounter -> IO a
+_each :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> Map.Map PID Packet.Data -> IO a
 _each fh something act countermap = do
   (p,(bytes,fh')) <- Packet.read fh
   if Packet.isEOF p
     then return something
-    else if Packet.isOK p (`Map.lookup` countermap) then
-           act p something (FileHandle.getReadonlyInfo fh') bytes >>= (\(continue,something') -> if continue then _each fh' something' act (Map.insert (Header.pid p) (Header.continuity_counter p) countermap) else return something' )
+    else if Packet.isOK p then -- 
+           case Packet.continuityChecked p (Map.lookup (Header.pid p) countermap) of
+             Nothing -> _each fh' something act (Map.insert (Header.pid p) p countermap)
+             Just x -> 
+               act p something (FileHandle.getReadonlyInfo fh') bytes
+               >>= (\(continue,something') ->
+                      if continue
+                      then _each fh' something' act (Map.insert (Header.pid p) p countermap)
+                      else return something'
+                   )
          else
            _each fh' something act countermap
 

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 14703a03a577128e0e87d613dd6b6ce98c4dbf2689941b5c01e9c7148b966c86
+-- hash: 31b43ea036e743a50fa720e3ec1957021d81c25fc72c0b00be98a92ab501a056
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -163,7 +163,6 @@ library
       TS.Packet.AdaptationField
       TS.Packet.AdaptationField.OptionalFields1
       TS.Packet.AdaptationField.OptionalFields2
-      TS.Packet.Body
       TS.Packet.Header
   other-modules:
       Paths_epgdump_hs
