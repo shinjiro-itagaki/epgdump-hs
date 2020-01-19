@@ -11,25 +11,39 @@ import qualified TS.FileHandle as FileHandle
 import Data.Word(Word64,Word8)
 import Data.Bits(shiftL,shiftR)
 import qualified TS.Packet.AdaptationField as AdaptationField
+import qualified TS.Packet.Header as Header
 
 --_KB = 2 ^ 10
 --_MB = _KB ^ 2
 
 data Counter = MkCounter {
-  
-                         }
+  _total          :: Word64,
+  _has_adaptation :: Word64,
+  _no_adaptation  :: Word64
+  } deriving (Show)
+
+newCounter = MkCounter {
+  _total          = 0,
+  _has_adaptation = 0,
+  _no_adaptation  = 0
+  }
+
+addToCounter :: Counter -> TS.Packet.Data -> Counter
+addToCounter c p
+  | Header.has_adaptation_field p = c {_total = (_total c) + 1, _has_adaptation = (_has_adaptation c) + 1}
+  | otherwise                     = c {_total = (_total c) + 1, _no_adaptation  = (_no_adaptation  c) + 1}
 
 main :: IO ()
 main = do
   args <- getArgs
   let filepath =  args !! 0
       counter = 0 :: BytesLen
-  TS.each filepath counter action >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)
+  TS.each filepath newCounter action >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)
 
-action :: TS.Packet.Data -> BytesLen -> FileHandle.ReadonlyData -> BS.ByteString -> IO (Bool,BytesLen)
-action _ x info _ = do
-  let newx = x+1
-  if newx `mod` 20000 == 0
+action :: TS.Packet.Data -> Counter -> FileHandle.ReadonlyData -> BS.ByteString -> IO (Bool,Counter)
+action p x info _ = do
+  let newx = addToCounter x p
+  if (_total newx) `mod` 20000 == 0
     then putStrLn $ show $ FileHandle.progress_percent info
     else return ()
   return (True,newx)
