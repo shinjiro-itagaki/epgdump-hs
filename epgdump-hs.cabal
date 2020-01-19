@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cb1f6381a64e3e056706234880e4f5e4aa40583e22382e42a467490e0f3a11c4
+-- hash: e685fac28c6aadf604da20460059959792e2246b6238bf2eb7857719985de6c0
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -172,8 +172,7 @@ library
   build-depends:
       base >=4.7 && <5
     , bytestring
-    , io-streams
-    , random
+    , digest
     , vector
   default-language: Haskell2010
 
@@ -187,9 +186,8 @@ executable epgdump-hs-exe
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , digest
     , epgdump-hs
-    , io-streams
-    , random
     , vector
   default-language: Haskell2010
 
@@ -204,8 +202,7 @@ test-suite epgdump-hs-test
   build-depends:
       base >=4.7 && <5
     , bytestring
+    , digest
     , epgdump-hs
-    , io-streams
-    , random
     , vector
   default-language: Haskell2010

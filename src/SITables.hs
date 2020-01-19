@@ -19,7 +19,7 @@ import qualified SITables.TOT
 
 import Data.ByteString(ByteString)
 import qualified TS.Packet as Packet
-import TS.Packet(FromPackets(..))
+--import TS.Packet(FromPackets(..))
 import Parser(ParseResult(..),mapParseResult)
 import qualified BytesReader.HolderIO as HolderIO
 import qualified SITables.Header1 as Header1

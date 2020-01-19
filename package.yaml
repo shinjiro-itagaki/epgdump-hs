@@ -21,10 +21,9 @@ description:         Please see the README on GitHub at <https://github.com/shin
 
 dependencies:
 - base >= 4.7 && < 5
-- io-streams
-- random
 - bytestring
 - vector
+- digest
 
 library:
   source-dirs: src

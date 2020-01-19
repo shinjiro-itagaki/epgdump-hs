@@ -16,10 +16,6 @@ import Data.Int(Int64)
 import qualified BytesReader.HolderIO as HolderIO
 import qualified TS.FileHandle as FH
 
-type FileHandle = FH.Data
-
---type FileHandle = FH.Data
-
 -- sync byteを含めた長さ
 bytesLen :: BytesLen
 bytesLen = 188
@@ -32,7 +28,7 @@ class (Header.Class t, Body.Class t) => Class t where
   isOK  :: t -> Bool
   ----------
 
-  -- 引数のByteStringは同期用の先頭バイトは削られているもの
+  -- 引数のByteStringは同期用の先頭バイトは削られているものを想定している
   fromByteString :: BS.ByteString -> t
   fromByteString bytes =
     let plen'     = toInteger $ bytesLen - 1    :: Integer
@@ -46,7 +42,7 @@ class (Header.Class t, Body.Class t) => Class t where
       then mkEOF
       else mkOK header body
 
-  read :: FileHandle -> IO (t,(BS.ByteString,FileHandle))
+  read :: (FH.Class fh) => fh -> IO (t,(BS.ByteString,fh))
   read h = do
     h' <- FH.syncIO h
     res@(bytes,h'') <- FH.getBytesIO h' (bytesLen - 1)
@@ -75,17 +71,17 @@ instance Class Data where
   mkEOF = EOF
   mkOK h b = MkData h b
 
-class (EmptyExist a, Parser.Class a) => FromPackets a where
-  table_ids :: (a -> b) -> [TableID]
-  pids      :: (a -> b) -> [PID]
+-- class (EmptyExist a, Parser.Class a) => FromPackets a where
+--   table_ids :: (a -> b) -> [TableID]
+--   pids      :: (a -> b) -> [PID]
   
-  isMatch :: (a -> b) -> Data -> Bool
-  isMatch f packet = let pid = Header.pid packet in any (==pid) (pids f)
+--   isMatch :: (a -> b) -> Data -> Bool
+--   isMatch f packet = let pid = Header.pid packet in any (==pid) (pids f)
   
---  fromPackets :: (a -> b) -> V.Vector Data -> V.Vector a
---  fromPackets f = 
---    let table_ids' = table_ids f
---    in fst . Parser.parseMulti . (V.foldl BS.append BS.empty) . (V.map Body.payload) . V.filter (isMatch f)
+--   fromPackets :: (a -> b) -> V.Vector Data -> V.Vector a
+--   fromPackets f = 
+--     let table_ids' = table_ids f
+--     in fst . Parser.parseMulti . (V.foldl BS.append BS.empty) . (V.map Body.payload) . V.filter (isMatch f)
 
-class Holder a where
-  get :: a -> [Data]
+-- class Holder a where
+--   get :: a -> [Data]
