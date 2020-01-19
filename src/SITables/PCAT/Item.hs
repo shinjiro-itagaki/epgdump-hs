@@ -9,7 +9,7 @@ import qualified Schedule
 import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import Data.Word(Word64, Word32, Word16, Word8)
 import Common(EmptyExist(..),PID,TableID)
-import BytesReader(Holder(..),HolderIO(..))
+import qualified BytesReader.HolderIO as HolderIO
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import FromWord64 hiding (Class)
 import qualified Parser
@@ -58,7 +58,7 @@ instance Class Data where
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty Data.Vector.empty
 
-_parseIOFlow :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = do
   getBitsIO_M fh [
     (16, (\(v,d) -> d { _content_version                = fromWord64 v})),

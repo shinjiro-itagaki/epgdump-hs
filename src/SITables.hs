@@ -21,7 +21,7 @@ import Data.ByteString(ByteString)
 import qualified TS.Packet as Packet
 import TS.Packet(FromPackets(..))
 import Parser(ParseResult(..),mapParseResult)
-import BytesReader(Holder(..),HolderIO(..))
+import qualified BytesReader.HolderIO as HolderIO
 import qualified SITables.Header1 as Header1
 import Common(EmptyExist(..))
 import qualified Parser.Result as Result
@@ -69,12 +69,12 @@ cST  = ConsST IsST
 cTDT = ConsTDT IsTDT
 cTOO = ConsTOT IsTOT
 
-parseIO :: (HolderIO bh) => bh -> state -> [Constructor] -> (Data -> state -> IO state) -> IO (ParseResult bh,state)
+parseIO :: (HolderIO.Class bh) => bh -> state -> [Constructor] -> (Data -> state -> IO state) -> IO (ParseResult bh,state)
 parseIO bh state conss hook = do
   (res_header1,bh2) <- Header1.parseIO bh
   return (Result.Parsed bh,state)
 
-_parseIO :: (HolderIO bh) => bh -> Constructor -> Header1.Data -> IO (ParseResult Data, bh)
+_parseIO :: (HolderIO.Class bh) => bh -> Constructor -> Header1.Data -> IO (ParseResult Data, bh)
 _parseIO bh cons header1 =
   case cons of
     ConsBAT  f -> impl' f

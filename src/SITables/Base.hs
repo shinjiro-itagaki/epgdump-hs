@@ -2,7 +2,7 @@
 
 module SITables.Base where
 import Common(BytesLen,EmptyExist(..),PID,TableID,TableID,PID,PIDs(..),PID_And_TableID(..),Matcher(..))
-import BytesReader(Holder(..),HolderIO(..))
+import qualified BytesReader.HolderIO as HolderIO
 import SITables.Common(SITableIDs(..),(==.=))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Footer as Footer
@@ -15,9 +15,9 @@ import qualified Parser.Result as Result
 -- footerはないものもある
 class (Header1.Class a, SITableIDs a, Parser.Class a) => Class a where
   footer                     :: a -> Maybe Footer.Data
-  parseIOFlowAfterHeader1    :: (HolderIO bh) => ParseIOFlow bh a
+  parseIOFlowAfterHeader1    :: (HolderIO.Class bh) => ParseIOFlow bh a
 
-  parseIO :: (HolderIO bh) => a -> Header1.Data -> bh -> IO (ParseResult a, bh)
+  parseIO :: (HolderIO.Class bh) => a -> Header1.Data -> bh -> IO (ParseResult a, bh)
   parseIO init header1 bh =
     if (Header1.table_id header1) =|== (table_ids init)
       then execParseIOFlow bh (Header1.setHeader1 init header1) parseIOFlowAfterHeader1

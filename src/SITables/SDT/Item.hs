@@ -9,7 +9,7 @@ module SITables.SDT.Item(
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
 import Common(EmptyExist(..),PID,TableID)
-import BytesReader(Holder(..),HolderIO(..))
+import qualified BytesReader.HolderIO as HolderIO
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
@@ -56,7 +56,7 @@ instance Class Data where
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty
 
-_parseIOFlow :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = do
   getBitsIO_M fh [
     (16, (\(v,d) -> d { _service_id                 = fromWord64 v})),

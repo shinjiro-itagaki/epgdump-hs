@@ -5,7 +5,8 @@ module Descriptor.Header (
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Common(EmptyExist(..),BitsLen,BytesLen,ByteString)
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
-import BytesReader(Holder(..),HolderIO(..),Counter(..))
+import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Counter as Counter
 import qualified Parser
 import FromWord64 hiding (Class)
 
@@ -28,13 +29,13 @@ instance Class Data where
   descriptor_tag    = _descriptor_tag
   descriptor_length = _descriptor_length
 
-_parseIOFlow :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = do
   (res,fh2) <- getBitsIO_M fh [
     (8 , (\(v,d) -> d { _descriptor_tag    = fromWord64 v})),
     (8 , (\(v,d) -> d { _descriptor_length = fromWord64 v}))
     ] init
-  return (res, (resetBytesCounter fh2))
+  return (res, (Counter.resetBytesCounter fh2))
 
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty
@@ -42,5 +43,5 @@ instance EmptyExist Data where
 instance Parser.Class Data where
   parseIOFlow = flowStart |>>= _parseIOFlow
 
-parseIO :: (HolderIO bh) => bh -> IO (ParseResult Data, bh)
+parseIO :: (HolderIO.Class bh) => bh -> IO (ParseResult Data, bh)
 parseIO = Parser.parseIO

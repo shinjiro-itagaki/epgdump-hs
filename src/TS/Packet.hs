@@ -3,7 +3,9 @@ module TS.Packet where
 
 import qualified TS.Packet.Header as Header
 import qualified TS.Packet.Body   as Body
-import qualified TS.FileHandle    as FH
+--import qualified TS.FileHandle    as FH
+
+import qualified BytesReader
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Data.ByteString.Lazy as BS
@@ -11,8 +13,12 @@ import Common(BytesLen,EmptyExist(..),PID,TableID)
 import qualified Parser
 import qualified Data.Vector as V
 import Data.Int(Int64)
+import qualified BytesReader.HolderIO as HolderIO
+import qualified TS.FileHandle as FH
 
 type FileHandle = FH.Data
+
+--type FileHandle = FH.Data
 
 -- sync byteを含めた長さ
 bytesLen :: BytesLen
@@ -43,7 +49,7 @@ class (Header.Class t, Body.Class t) => Class t where
   read :: FileHandle -> IO (t,(BS.ByteString,FileHandle))
   read h = do
     h' <- FH.syncIO h
-    res@(bytes,h'') <- FH.getBytes h' (bytesLen - 1)
+    res@(bytes,h'') <- FH.getBytesIO h' (bytesLen - 1)
     return (fromByteString bytes,res)
   
 data Data = MkData Header.Data Body.Data | EOF | Broken

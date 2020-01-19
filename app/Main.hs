@@ -38,7 +38,7 @@ action _ x info _ = do
 test :: FileHandle.Data -> Word64 -> IO Word64
 test fh i = do
   fh2 <- FileHandle.syncIO fh
-  (bs,fh3) <- FileHandle.hGet fh2 187
+  (bs,fh3) <- FileHandle.getBytesIO fh2 187
   if BS.length bs < 1
     then return i
     else do

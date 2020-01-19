@@ -62,7 +62,9 @@ import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseRes
 import qualified Parser
 import qualified Parser.Result as Result
 import Common(EmptyExist(..),BytesLen,BitsLen)
-import BytesReader(Holder(..),HolderIO(..),Counter(..))
+import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Counter as Counter
+
 
 data Data =
   Null
@@ -126,12 +128,12 @@ instance EmptyExist Descriptor.Data where
 instance Parser.Class Descriptor.Data where
 --  parseIOFlow = flowStart
 
-gather :: (HolderIO bh, Parser.Class b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
+gather :: (HolderIO.Class bh, Parser.Class b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
 gather appender restlen fh init
   | restlen < 1 = return (Result.Parsed init, fh)
   | otherwise = do
       res@(res_item,fh') <- parseIO fh
       case res_item of
-        Result.Parsed item -> gather appender (restlen - ((getBytesCounter fh') - (getBytesCounter fh))) fh' (appender init item)
+        Result.Parsed item -> gather appender (restlen - ((Counter.getBytesCounter fh') - (Counter.getBytesCounter fh))) fh' (appender init item)
         _           -> return $ (\x -> (x,fh')) $ mapParseResult (\_ -> init) res_item
 

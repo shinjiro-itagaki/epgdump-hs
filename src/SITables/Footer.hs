@@ -3,7 +3,7 @@
 module SITables.Footer where
 import Data.Word(Word64, Word32, Word16, Word8)
 import Common(EmptyExist(..),BitsLen,BytesLen,BitsLen)
-import BytesReader(Holder(..),HolderIO(..),Counter(..))
+import qualified BytesReader.HolderIO as HolderIO
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
 import FromWord64 hiding (Class)
 import qualified Parser
@@ -36,7 +36,7 @@ instance EmptyExist Data where
     _crc_32 = mkEmpty
     }
 
-_parseIOFlow :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = getBitsIO_M fh [
     (crc_32_bitslen init , (\(v,d) -> d { _crc_32 = fromWord64 v}))
     ] init
@@ -44,7 +44,7 @@ _parseIOFlow fh init = getBitsIO_M fh [
 instance Parser.Class Data where
   parseIOFlow = flowStart |>>= _parseIOFlow
 
-parseFlow :: (HolderIO bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
+parseFlow :: (HolderIO.Class bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
 parseFlow = Parser.parseFlow caster
   where
     caster :: (Class a) => Data -> a -> a

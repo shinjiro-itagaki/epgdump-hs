@@ -8,7 +8,7 @@ module SITables.NBIT.Item(
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
 import Common(EmptyExist(..),PID,TableID)
-import BytesReader(Holder(..),HolderIO(..))
+import qualified BytesReader.HolderIO as HolderIO
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import FromWord64 hiding (Class)
 import qualified Parser
@@ -60,7 +60,7 @@ instance HasDescriptors Data where
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty mkEmpty mkEmpty Data.Vector.empty
 
-_parseIOFlow1 :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow1 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow1 fh init = do
   getBitsIO_M fh [
     (16, (\(v,d) -> d { _information_id            = fromWord64 v})),
@@ -71,13 +71,13 @@ _parseIOFlow1 fh init = do
     ( 8, (\(v,d) -> d { _number_of_keys            = fromWord64 v}))
     ] init
     
-_parseIOFlow2 :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow2 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =
   let n = number_of_keys init
       list = map (\_ -> (16, (\(v,d) -> d { _keys = snoc (_keys d) $ fromWord64 v})) ) [1 .. n]
   in getBitsIO_M fh list init
 
-_parseIOFlow3 :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow3 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow3 fh init = do
   getBitsIO_M fh [  
     ( 4, (\(v,d) -> d { _reserved_future_use2      = fromWord64 v})),

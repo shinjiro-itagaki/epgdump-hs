@@ -3,7 +3,7 @@
 module Parser where
 
 import Common(EmptyExist(..),BytesLen,BitsLen)
-import BytesReader(HolderIO(..))
+import qualified BytesReader.HolderIO as HolderIO
 import Data.Int(Int64)
 import Data.Word(Word64, Word32, Word16, Word8)
 import Data.ByteString.Lazy(ByteString)
@@ -24,41 +24,41 @@ instance EmptyExist Bool where
 type ParseResult = Result.Data
 mapParseResult = Result.map
 
-data (HolderIO bh, Class result) => ParseIOFlow bh result =
+data (HolderIO.Class bh, Class result) => ParseIOFlow bh result =
   MkFlowStart
   | MkParseIOFlow (bh -> result -> IO (ParseResult result, bh))
   | MkParseIOFlowPair (ParseIOFlow bh result) (ParseIOFlow bh result)
   | MkFlowEnd
 
-(>>==) :: (HolderIO bh, Class result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result
+(>>==) :: (HolderIO.Class bh, Class result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result
 (>>==) = MkParseIOFlowPair
 infixl 2 >>==
 
-(==<<) :: (HolderIO bh, Class result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result  
+(==<<) :: (HolderIO.Class bh, Class result) => ParseIOFlow bh result -> ParseIOFlow bh result -> ParseIOFlow bh result  
 (==<<) l r = r >>== l
 infixl 2 ==<<
   
 class (EmptyExist a) => Class a where
   -- please implement if you need
-  parseIOFlow :: (HolderIO bh) => ParseIOFlow bh a
+  parseIOFlow :: (HolderIO.Class bh) => ParseIOFlow bh a
   parseIOFlow = flowStart
   -----
 
-  (|>>=) :: (HolderIO bh) => ParseIOFlow bh a -> (bh -> a -> IO (ParseResult a, bh)) -> ParseIOFlow bh a
+  (|>>=) :: (HolderIO.Class bh) => ParseIOFlow bh a -> (bh -> a -> IO (ParseResult a, bh)) -> ParseIOFlow bh a
   (|>>=) flow func = MkParseIOFlowPair flow (MkParseIOFlow func)
   infixl 4 |>>=
     
-  (=<<|) :: (HolderIO bh) => (bh -> a -> IO (ParseResult a, bh)) -> ParseIOFlow bh a -> ParseIOFlow bh a
+  (=<<|) :: (HolderIO.Class bh) => (bh -> a -> IO (ParseResult a, bh)) -> ParseIOFlow bh a -> ParseIOFlow bh a
   (=<<|) func flow = flow |>>= func
   infixr 3 =<<|
 
   flowStart :: ParseIOFlow bh a
   flowStart = MkFlowStart
 
-  parseIO :: (HolderIO bh) => bh -> IO (ParseResult a, bh)
+  parseIO :: (HolderIO.Class bh) => bh -> IO (ParseResult a, bh)
   parseIO bh = execParseIOFlow bh mkEmpty parseIOFlow
 
-  execParseIOFlow :: (HolderIO bh) => bh -> a -> ParseIOFlow bh a -> IO (ParseResult a, bh)
+  execParseIOFlow :: (HolderIO.Class bh) => bh -> a -> ParseIOFlow bh a -> IO (ParseResult a, bh)
   execParseIOFlow bh init  MkFlowStart = return (Result.Parsed init, bh) -- 何もせずそのまま成功として返す
   execParseIOFlow bh init  MkFlowEnd   = return (Result.Parsed init, bh)  
   execParseIOFlow bh init (MkParseIOFlow f) = f bh init
@@ -69,7 +69,7 @@ class (EmptyExist a) => Class a where
       Result.Parsed init2 -> execParseIOFlow bh2 init2 r
       x -> return lres
   -- 
-  getBitsIO_M :: (HolderIO bh) => bh -> [(BitsLen, (Word64,a) -> a)] -> a -> IO (ParseResult a, bh)
+  getBitsIO_M :: (HolderIO.Class bh) => bh -> [(BitsLen, (Word64,a) -> a)] -> a -> IO (ParseResult a, bh)
   getBitsIO_M fh conds init = do
     Prelude.foldl each' (return (Result.Parsed init,fh)) conds
     where
@@ -77,12 +77,12 @@ class (EmptyExist a) => Class a where
         res@(res_d,fh') <- rtn
         case res_d of
           Result.Parsed d -> do
-            (v,fh'') <- getBitsIO fh' i 
+            (v,fh'') <- HolderIO.getBitsIO fh' i 
             return (Result.Parsed $ f (v,d), fh'')
           Result.DataIsTooShort mblen -> return $ (\x->(x,fh')) $ Result.DataIsTooShort $ Just $ (+i) $ fromMaybe 0 mblen
           x -> return res
 
-parseFlow :: (HolderIO bh, Class a, Class b) => (a -> b -> b) -> bh -> b -> IO (ParseResult b, bh)
+parseFlow :: (HolderIO.Class bh, Class a, Class b) => (a -> b -> b) -> bh -> b -> IO (ParseResult b, bh)
 parseFlow caster fh init = do
   (res_header,fh') <- parseIO fh
   return $ (\x -> (x,fh')) $ mapParseResult (\header1 -> caster header1 init) res_header

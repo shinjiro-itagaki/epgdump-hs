@@ -8,7 +8,7 @@ import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import Common(EmptyExist(..),PID,TableID,PIDs(..))
-import BytesReader(Holder(..),HolderIO(..))
+import qualified BytesReader.HolderIO as HolderIO
 import qualified Descriptor
 import qualified SITables.Base as Base
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
@@ -36,7 +36,7 @@ instance EmptyExist Data where
 
 instance Parser.Class Data where
   
-_parseIOFlow :: (HolderIO bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = do
   getBitsIO_M fh [
     (40, (\(v,d) -> d { _jst_time = fromWord64 v}))
