@@ -24,6 +24,7 @@ dependencies:
 - bytestring
 - vector
 - digest
+- containers
 
 library:
   source-dirs: src

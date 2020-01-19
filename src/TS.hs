@@ -16,7 +16,6 @@ import qualified Parser
 
 import qualified SITables.BAT as BAT
 import qualified SITables.BIT as BIT
--- import qualified SITables.Common 
 import qualified SITables.EIT as EIT
 import qualified SITables.LDT as LDT
 import qualified SITables.NBIT as NBIT
@@ -47,17 +46,25 @@ CDT（Common Data Table）（地上D）
 -}
 
 import qualified TS.Packet as Packet
+import qualified Data.Map.Lazy as Map
+import Common(PID)
+import qualified TS.Packet.Header as Header
 
--- type FileHandle = FileHandle.Data 
+-- type FileHandle = FileHandle.Data
+
 
 each :: String -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
 each path something act = do
   fh <- FileHandle.new path
-  _each fh something act
+  _each fh something act Map.empty
 
-_each :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
-_each fh something act = do
+_each :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> Map.Map PID Header.ContinuityCounter -> IO a
+_each fh something act countermap = do
   (p,(bytes,fh')) <- Packet.read fh
   if Packet.isEOF p
     then return something
-    else act p something (FileHandle.getReadonlyInfo fh') bytes >>= (\(continue,something') -> if continue then _each fh' something' act else return something' )
+    else if Packet.isOK p (`Map.lookup` countermap) then
+           act p something (FileHandle.getReadonlyInfo fh') bytes >>= (\(continue,something') -> if continue then _each fh' something' act (Map.insert (Header.pid p) (Header.continuity_counter p) countermap) else return something' )
+         else
+           _each fh' something act countermap
+

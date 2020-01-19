@@ -25,7 +25,7 @@ class (Header.Class t, Body.Class t) => Class t where
   mkEOF :: t
   mkOK  :: Header.Data -> Body.Data -> t
   isEOF :: t -> Bool
-  isOK  :: t -> Bool
+  isOK  :: t -> (PID -> Maybe Header.ContinuityCounter) -> Bool
   ----------
 
   -- 引数のByteStringは同期用の先頭バイトは削られているものを想定している
@@ -65,23 +65,8 @@ instance Body.Class Data where
 instance Class Data where
   isEOF EOF = True
   isEOF _   = False
-  isOK (MkData _ _) = True
-  isOK _            = False
+  isOK (MkData h _) f = Header.continuity_ok h (f $ Header.pid h)
+  isOK _            _ = False
 
   mkEOF = EOF
   mkOK h b = MkData h b
-
--- class (EmptyExist a, Parser.Class a) => FromPackets a where
---   table_ids :: (a -> b) -> [TableID]
---   pids      :: (a -> b) -> [PID]
-  
---   isMatch :: (a -> b) -> Data -> Bool
---   isMatch f packet = let pid = Header.pid packet in any (==pid) (pids f)
-  
---   fromPackets :: (a -> b) -> V.Vector Data -> V.Vector a
---   fromPackets f = 
---     let table_ids' = table_ids f
---     in fst . Parser.parseMulti . (V.foldl BS.append BS.empty) . (V.map Body.payload) . V.filter (isMatch f)
-
--- class Holder a where
---   get :: a -> [Data]
