@@ -26,11 +26,31 @@ class (HolderIO.Class a, Status.Class a) => Class a where
   -- please implement
   loaded   :: a -> Word8
   stockedBitsLen :: a -> StockedBitsLen.Data
-  getBits  :: (Integral i) => a -> i -> IO (Word64, a)
   getBytes :: (Integral i) => a -> i -> IO (ByteString, a)
   pos      :: a -> BytesLen
   size     :: a -> BytesLen
+  updateStockedBitsLen :: a -> StockedBitsLen.Data -> a
   -----
+
+  getBits  :: (Integral i) => a -> i -> IO (Word64, a)
+  getBits fh bitslen
+    | bitslen < 1 = return (0,fh)
+    | otherwise =
+        let bitslen'           = toInteger bitslen                :: Integer
+            stockedlen         = toInteger (stockedBitsNumLen fh) :: Integer
+            curr               = (stockedValue fh)                :: Word8
+            (needloadlen,rest) = if bitslen' > stockedlen then ((bitslen' - stockedlen + 8) `divMod` 8) else (0,stockedlen - bitslen') :: (Integer,Integer)
+            load_for_rest_len  = if needloadlen > 0 && rest > 0 then 1 else 0 :: Integer
+            first_load_len     = needloadlen - load_for_rest_len :: Integer
+            rest'              = fromInteger rest
+        in
+          do
+            (v2,fh2) <- addBytes fh first_load_len $ toWord64 curr
+            (_ ,fh3) <- getBytes fh load_for_rest_len
+            fh4 <- return $ updateStockedBitsLen fh3 $ StockedBitsLen.numToStockedBitsLen $ fromInteger rest
+            v4  <- return $ (v2 `shiftL` rest') .|. (toWord64 $ stockedValue fh4)
+            return (v4,fh4)
+
   
   hSeek :: (Integral i) => a -> i -> IO a
   hSeek x i =  return . snd =<< BytesReader.getBytes x i
@@ -123,27 +143,10 @@ instance (Handler.Class h) => Class (Data h) where
   size           = _size
   loaded         = _loaded
   stockedBitsLen = _stockedBitsLen
+  updateStockedBitsLen x bitslen = x {_stockedBitsLen = bitslen }
   getBytes x i
     | i < 1 = return (BS.empty, x)
     | otherwise = 
       let i1 = (fromInteger $ toInteger i) :: Int
           i2 = (fromInteger $ toInteger i) :: Word64
       in Handler.hGet (_handle x) i1  >>= (\bytes -> return $ if BS.null bytes then (BS.empty, x) else (bytes, _addPos (x {_cache = (snoc (_cache x) bytes), _loaded = BS.last bytes, _stockedBitsLen = StockedBitsLen.Zero}) i2))
-
-  getBits fh bitslen
-    | bitslen < 1 = return (0,fh)
-    | otherwise =
-        let bitslen'           = toInteger bitslen                :: Integer
-            stockedlen         = toInteger (stockedBitsNumLen fh) :: Integer
-            curr               = (stockedValue fh)                :: Word8
-            (needloadlen,rest) = if bitslen' > stockedlen then ((bitslen' - stockedlen + 8) `divMod` 8) else (0,stockedlen - bitslen') :: (Integer,Integer)
-            load_for_rest_len  = if needloadlen > 0 && rest > 0 then 1 else 0 :: Integer
-            first_load_len     = needloadlen - load_for_rest_len :: Integer
-            rest'              = fromInteger rest
-        in
-          do
-            (v2,fh2) <- addBytes fh first_load_len $ toWord64 curr
-            (_ ,fh3) <- getBytes fh load_for_rest_len
-            fh4 <- return $ fh3 { _stockedBitsLen = StockedBitsLen.numToStockedBitsLen $ fromInteger rest }
-            v4  <- return $ (v2 `shiftL` rest') .|. (toWord64 $ stockedValue fh4)
-            return (v4,fh4)
