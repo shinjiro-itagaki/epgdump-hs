@@ -25,6 +25,7 @@ import qualified BytesReader.HolderIO as HolderIO
 import qualified SITables.Header1 as Header1
 import Common(EmptyExist(..))
 import qualified Parser.Result as Result
+import Parser.Result((>>===))
 
 data Data =
   Other
@@ -69,10 +70,14 @@ cST  = ConsST IsST
 cTDT = ConsTDT IsTDT
 cTOO = ConsTOT IsTOT
 
-parseIO :: (HolderIO.Class bh) => bh -> state -> [Constructor] -> (Data -> state -> IO state) -> IO (ParseResult bh,state)
-parseIO bh state conss hook = do
-  (res_header1,bh2) <- Header1.parseIO bh
-  return (Result.Parsed bh,state)
+parseIO :: (HolderIO.Class bh) => bh -> [Constructor] -> IO (ParseResult Data, bh)
+parseIO bh []     = return (Result.NotMatch, bh)
+parseIO bh (x:xs) = do
+  rtn@(res,bh2) <- (Header1.parseIO bh >>=== (\(header1,bh2) -> _parseIO bh2 x header1))
+  case res of
+    Result.Parsed x -> return rtn -- 終了
+    Result.NotMatch -> parseIO bh2 xs -- マッチなしで次に進む
+    _               -> parseIO bh2 xs -- パースエラーにつきデータは破棄して終了
 
 _parseIO :: (HolderIO.Class bh) => bh -> Constructor -> Header1.Data -> IO (ParseResult Data, bh)
 _parseIO bh cons header1 =

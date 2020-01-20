@@ -18,7 +18,21 @@ map f x = case x of
   SumCheckError    -> SumCheckError
   UnknownReason    -> UnknownReason
 
-(>>==) :: (Data a, b) -> (a -> b -> (Data a,b)) -> (Data a,b)
-(>>==) ((Parsed x),y) f = f x y
-(>>==) x              _ = x
+(>>==) :: (Data a, b) -> (a -> b -> (Data c,b)) -> (Data c,b)
+(>>==) (Parsed x        ,y) f = f x y
+(>>==) (DataIsTooShort i,y) f = (DataIsTooShort i,y)
+(>>==) (NotMatch        ,y) f = (NotMatch        ,y)
+(>>==) (SumCheckError   ,y) f = (SumCheckError   ,y)
+(>>==) (UnknownReason   ,y) f = (UnknownReason   ,y)
 
+(>>===) :: IO (Data a, b) -> ((a,b) -> IO (Data c,b)) -> IO (Data c,b)
+(>>===) io f = do
+  res <- io
+  case res of
+    (Parsed x        ,y) -> f (x,y)
+    (DataIsTooShort i,y) -> return (DataIsTooShort i,y)
+    (NotMatch        ,y) -> return (NotMatch        ,y)
+    (SumCheckError   ,y) -> return (SumCheckError   ,y)
+    (UnknownReason   ,y) -> return (UnknownReason   ,y)
+    
+infixl 3 >>===
