@@ -47,7 +47,7 @@ data Callbacks state = MkCallbacks {
   _cb_TOT  :: Maybe (Callback SITables.TOT.Data  state )
   }
   
-matchPID :: (EmptyExist state) => PID -> Callbacks state -> Bool
+matchPID :: PID -> Callbacks state -> Bool
 matchPID pid callbacks =
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}
@@ -64,11 +64,10 @@ matchPID pid callbacks =
     (MkCallbacks {_cb_TOT = Just f}) -> impl' f $ callbacks{_cb_TOT = Nothing}
     _                                -> False
   where
-    impl' :: (Base.Class d, EmptyExist state) => (d -> state -> IO state) -> Callbacks state -> Bool
+    impl' :: (Base.Class d) => (d -> state -> IO state) -> Callbacks state -> Bool
     impl' callback callbacks2 =
-      let empstate = mkEmpty
-          empdata = mkEmpty
-          res_callback = callback empdata empstate -- empdata の型を推論できるようにするための記述で、実行はされない
+      let empdata = mkEmpty
+          _ = callback empdata -- empdata の型を推論できるようにするための記述で、実行はされない
       in (pids empdata) `Common.matchPID` pid
       
 

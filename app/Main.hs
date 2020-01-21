@@ -38,7 +38,7 @@ main = do
   args <- getArgs
   let filepath =  args !! 0
       counter = 0 :: BytesLen
-  TS.each filepath newCounter action >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)
+  TS.eachPacket filepath newCounter action >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)
 
 action :: TS.Packet.Data -> Counter -> FileHandle.ReadonlyData -> BS.ByteString -> IO (Bool,Counter)
 action p x info _ = do

@@ -164,7 +164,7 @@ _fireCallback callbacks state (True, cache) = --  return (cache,state)
                               _fireCallback callbacks2 state2 (True,cache2) -- パース成功した場合はコールバックを呼び出して次に移動
         _               -> return (cache2,state) -- 失敗したので終了
           
-_appendPacketAndFireCallback :: (EmptyExist state) => PacketCache -> Callbacks state -> state -> Packet.Data -> IO (PacketCache,state)
+_appendPacketAndFireCallback :: PacketCache -> Callbacks state -> state -> Packet.Data -> IO (PacketCache,state)
 _appendPacketAndFireCallback cache callbacks state packet =
   let pid = Header.pid packet
       indicator = Header.payload_unit_start_indicator packet -- ペイロードの開始地点のパケットかどうか
@@ -175,7 +175,7 @@ _appendPacketAndFireCallback cache callbacks state packet =
      else
        (False, cache) -- 取得すべきpidではないのでパケットを追加しない
   
-eachTable :: (EmptyExist state) => FileHandle.Data -> Callbacks state -> state -> IO state
+eachTable :: FileHandle.Data -> Callbacks state -> state -> IO state
 eachTable fh callbacks state = do
   (cache,state') <- _each fh (C.empty,state) impl' --  ::
   return state'

@@ -1,7 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module TS (
-  each
+  eachPacket
+  ,eachTable
   ) where
 
 import Data.ByteString.Lazy(hGet,length, ByteString,unpack, take, pack, append,map, head)
@@ -52,4 +53,5 @@ import qualified TS.Packet.Header as Header
 import qualified Parser.Result as Result
 import qualified TS.Reader as Reader
 
-each = Reader.each
+eachPacket = Reader.each
+eachTable = Reader.eachTable
