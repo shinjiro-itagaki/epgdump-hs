@@ -23,9 +23,11 @@ import qualified TS.Packet as Packet
 import Parser(ParseResult(..),mapParseResult)
 import qualified BytesReader.HolderIO as HolderIO
 import qualified SITables.Header1 as Header1
-import Common(EmptyExist(..))
+import Common(EmptyExist(..),PID,matchPID)
 import qualified Parser.Result as Result
 -- import Parser.Result((>>===))
+
+import SITables.Common(SITableIDs(..),(==.=))
 
 type Callback d state = (d -> state -> IO state)
 
@@ -43,7 +45,33 @@ data Callbacks state = MkCallbacks {
   _cb_TDT  :: Maybe (Callback SITables.TDT.Data  state ),
   _cb_TOT  :: Maybe (Callback SITables.TOT.Data  state )
   }
+  
+matchPID :: (EmptyExist state) => PID -> Callbacks state -> Bool
+matchPID pid callbacks =
+  case callbacks of
+    (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}
+    (MkCallbacks {_cb_BIT = Just f}) -> impl' f $ callbacks{_cb_BIT = Nothing}
+    (MkCallbacks {_cb_EIT = Just f}) -> impl' f $ callbacks{_cb_EIT = Nothing}
+    (MkCallbacks {_cb_LDT = Just f}) -> impl' f $ callbacks{_cb_LDT = Nothing}
+    (MkCallbacks {_cb_NBIT= Just f}) -> impl' f $ callbacks{_cb_NBIT= Nothing}
+    (MkCallbacks {_cb_NIT = Just f}) -> impl' f $ callbacks{_cb_NIT = Nothing}
+    (MkCallbacks {_cb_PCAT= Just f}) -> impl' f $ callbacks{_cb_PCAT= Nothing}
+    (MkCallbacks {_cb_RST = Just f}) -> impl' f $ callbacks{_cb_RST = Nothing}
+    (MkCallbacks {_cb_SDT = Just f}) -> impl' f $ callbacks{_cb_SDT = Nothing}
+    (MkCallbacks {_cb_ST  = Just f}) -> impl' f $ callbacks{_cb_ST  = Nothing}
+    (MkCallbacks {_cb_TDT = Just f}) -> impl' f $ callbacks{_cb_TDT = Nothing}
+    (MkCallbacks {_cb_TOT = Just f}) -> impl' f $ callbacks{_cb_TOT = Nothing}
+    _                                -> False
+  where
+    impl' :: (Base.Class d, EmptyExist state) => (d -> state -> IO state) -> Callbacks state -> Bool
+    impl' callback callbacks2 =
+      let empstate = mkEmpty
+          empdata = mkEmpty
+          res_callback = callback empdata empstate -- empdata の型を推論できるようにするための記述で、実行はされない
+      in (pids empdata) `Common.matchPID` pid
+      
 
+      
 parseIO :: (HolderIO.Class bh) => bh -> state -> Callbacks state -> IO state
 parseIO bh state callbacks = do
   (res_header1,bh2) <- Header1.parseIO bh
@@ -76,17 +104,18 @@ _parseIO bh header1 state callbacks =
         Result.NotMatch -> _parseIO bh2 header1 state callbacks2 -- マッチしなかったので次に進む
         _               -> return state -- エラー発生につき終了
 
-emptyCallbacks = MkCallbacks {
-  _cb_BAT  = Nothing,
-  _cb_BIT  = Nothing,
-  _cb_EIT  = Nothing,
-  _cb_LDT  = Nothing,
-  _cb_NBIT = Nothing,
-  _cb_NIT  = Nothing,
-  _cb_PCAT = Nothing,
-  _cb_RST  = Nothing,
-  _cb_SDT  = Nothing,
-  _cb_ST   = Nothing,
-  _cb_TDT  = Nothing,
-  _cb_TOT  = Nothing
-  }
+instance EmptyExist (Callbacks a) where
+  mkEmpty = MkCallbacks {
+    _cb_BAT  = Nothing,
+    _cb_BIT  = Nothing,
+    _cb_EIT  = Nothing,
+    _cb_LDT  = Nothing,
+    _cb_NBIT = Nothing,
+    _cb_NIT  = Nothing,
+    _cb_PCAT = Nothing,
+    _cb_RST  = Nothing,
+    _cb_SDT  = Nothing,
+    _cb_ST   = Nothing,
+    _cb_TDT  = Nothing,
+    _cb_TOT  = Nothing
+    }
