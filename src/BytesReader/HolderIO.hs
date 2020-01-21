@@ -10,4 +10,3 @@ class (Counter.Class a) => Class a where
   isEOF      :: a -> IO Bool
   cache      :: a -> ByteString
   clearCache :: a -> a
-

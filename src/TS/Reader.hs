@@ -1,7 +1,8 @@
 module TS.Reader where
 -- import Data.ByteString.Lazy(hGet,length, unpack, take, pack, append,map, head, empty)
+import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Data.ByteString.Lazy as BS
-import Common(ByteString,PID,EmptyExist(..))
+import Common(ByteString,PID,EmptyExist(..),BytesLen)
 import Data.ByteString.Lazy.Char8(pack)
 import Data.Bits((.&.),(.|.),shiftL,shiftR,Bits)
 import Data.Char(intToDigit,digitToInt)
@@ -11,6 +12,7 @@ import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseRes
 import qualified Parser
 import qualified BytesReader
 import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Counter as Counter
 
 import qualified SITables
 import qualified SITables.Base as Base
@@ -39,42 +41,12 @@ import qualified Parser.Result as Result
 import SITables(Callback,Callbacks(..),parseIO)
 import SITables.Common(SITableIDs(..))
 import Data.Maybe(fromMaybe)
+import qualified BytesReader.StockedBitsLen as StockedBitsLen
+import qualified BytesReader.Status as Status
 
 class (BytesReader.Class a) => Class a where
 
--- _each :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
--- _readTS_And_Caching :: SymSITable -> Data -> IO Data
--- _readTS_And_Caching sym d =
---   let stocker = _stocker d
---   in do
---     stocker2 <- (_each (_handle d) stocker impl')
---   where
---     impl' packet' stocker' _ _ =
-      
--- _getBytesIO :: (Integral i) => SymSITable -> Data -> i -> IO (ByteString, Data)
--- _getBytesIO sym d i =
---   let i' = toInteger i
---       stock = fromMaybe Data.ByteString.empty $ Map.lookup sym $ _stocker d
---       (stocked, rest) = BS.splitAt i stock
---   in if i' < (toInteger BS.length stock)
---      then 
-
--- Header.payload_unit_start_indicator
-
--- new :: FileHandle.Data -> [SymSITable] -> Data
--- new fh syms =
---   MkData {
---   _handle  = fh,
---   _stocker = Map.empty,
---   _syms    = syms,
---   _cur_sym = SymNone
---   }
-
--- hoge
---
-
 type PacketCache = C.Seq Packet.Data
-
 
 splitByFirstBlock :: PacketCache -> (PacketCache, PacketCache)
 splitByFirstBlock cache =
@@ -89,19 +61,79 @@ splitByFirstBlock cache =
   in
     -- 連番チェックが必要 -- hoge
     (oneset',others')
-  
-_parseFromCache :: (Base.Class d) => PacketCache -> IO (Maybe (d,PacketCache))
+
+data ByteStringHolder = MkByteStringHolder {
+  _data           :: ByteString,
+  _pos            :: Word64, -- bits
+  _size           :: BytesLen,
+  _loaded         :: Word8,
+  _stockedBitsLen :: StockedBitsLen.Data,
+  _bytesCounter   :: BytesLen,
+  _cache          :: C.Seq ByteString
+  }
+
+toByteStringHolder :: ByteString -> ByteStringHolder
+toByteStringHolder bs = MkByteStringHolder {
+  _data           = bs,
+  _pos            = 0,
+  _size           = fromInteger $ toInteger $ BS.length bs,
+  _loaded         = 0,
+  _stockedBitsLen = StockedBitsLen.Zero,
+  _bytesCounter   = 0,
+  _cache          = C.empty
+  }
+
+instance Status.Class ByteStringHolder where
+  pos = _pos
+  size = _size
+
+instance Counter.Class ByteStringHolder where
+  getBytesCounter     = _bytesCounter 
+  resetBytesCounter x = x {_bytesCounter = 0 }
+
+instance HolderIO.Class ByteStringHolder where
+  isEOF        = return . BS.null . _data
+  getBytesIO   = BytesReader.getBytes
+  getBitsIO    = BytesReader.getBits
+  cache        = (foldl BS.append BS.empty) . _cache
+  clearCache x = x { _cache = C.empty }
+
+instance BytesReader.Class ByteStringHolder where
+  pos            = _pos
+  size           = _size
+  loaded         = _loaded
+  stockedBitsLen = _stockedBitsLen
+  updateStockedBitsLen x bitslen = x {_stockedBitsLen = bitslen }
+  getBytes x i
+    | i < 1             = return (BS.empty, x)
+    | BS.null $ _data x = return (BS.empty, x)
+    | otherwise = 
+      let i1 = (fromInteger $ toInteger i) :: Int64
+          (bytes,rest) = BS.splitAt i1 $ _data x
+          i2 = (fromInteger $ toInteger $ BS.length bytes) :: Word64
+      in 
+        return $ if BS.null bytes
+        then (BS.empty, x)
+        else (bytes, x {
+                 _data           = rest,
+                 _pos            = (_pos x) + i2,
+                 _cache          = ((_cache x) C.|> bytes),
+                 _loaded         = BS.last bytes,
+                 _bytesCounter   = (_bytesCounter x) + i2,
+                 _stockedBitsLen = StockedBitsLen.Zero
+                 }
+             )
+             
+_parseFromCache :: (Base.Class d) => PacketCache -> IO (Result.Data d,PacketCache)
 _parseFromCache cache =
   let emptable = mkEmpty
       pids' = pids emptable
       (matched',others') = C.partition (\p -> pids' `Common.matchPID` (Header.pid p)) cache
       (block', rest') = splitByFirstBlock matched'
+      payload' = toByteStringHolder $ foldl (\res p -> BS.append res (Packet.payload p)) BS.empty block'
   in do
---    parseres <- parseIO
-    return $ if C.null block' then
-      Just (emptable,cache) -- hoge
-    else
-      Just (emptable,cache)
+    (res,_) <- SITables.parseIO_simple payload' (Just emptable)
+    return (res,rest')
   
 _fireCallback ::  Callbacks state -> state -> (Bool, PacketCache) -> IO (PacketCache, state)
 _fireCallback callbacks state (False,cache) = return (cache,state) -- fireを実施しない
@@ -123,13 +155,12 @@ _fireCallback callbacks state (True, cache) = --  return (cache,state)
   where
 --    impl' :: (Base.Class d) => (d -> state -> IO state) -> Callbacks state -> IO (Vector PacketCache,state)
     impl' callback callbacks2 = do
-      res <- _parseFromCache cache
+      (res,cache2) <- _parseFromCache cache
       case res of
-        Nothing         -> _fireCallback callbacks2 state (True,cache) -- パースを試みたがテーブルが得られなかった場合は次の候補に移動
-        Just (d,cache2) -> do  -- テーブルを作成できたのでコールバックを呼び出し
-          state2 <- callback d state
-          -- _fireCallback callbacks2 state2 (True,cache2) -- 次に移動
-          return (cache2,state2) -- 終了（他にテーブルを作成できる場合もあるけど、いったんここで終了）
+        Result.NotMatch -> _fireCallback callbacks2 state (True,cache) -- テーブルがマッチしていない場合は次に移動
+        Result.Parsed d -> do state2 <- callback d state
+                              _fireCallback callbacks2 state2 (True,cache2) -- パース成功した場合はコールバックを呼び出して次に移動
+        _               -> return (cache2,state) -- 失敗したので終了
           
 _appendPacketAndFireCallback :: (EmptyExist state) => PacketCache -> Callbacks state -> state -> Packet.Data -> IO (PacketCache,state)
 _appendPacketAndFireCallback cache callbacks state packet =

@@ -25,7 +25,8 @@ import qualified BytesReader.HolderIO as HolderIO
 import qualified SITables.Header1 as Header1
 import Common(EmptyExist(..),PID,matchPID)
 import qualified Parser.Result as Result
--- import Parser.Result((>>===))
+import Parser.Result((>>===))
+import Data.Maybe(fromMaybe)
 
 import SITables.Common(SITableIDs(..),(==.=))
 
@@ -71,7 +72,9 @@ matchPID pid callbacks =
       in (pids empdata) `Common.matchPID` pid
       
 
-      
+parseIO_simple :: (HolderIO.Class bh, Base.Class d) => bh -> Maybe d -> IO (Result.Data d,bh)
+parseIO_simple bh init = Header1.parseIO bh >>=== (\(h,bh2) -> Base.parseIO (fromMaybe mkEmpty init) h bh2)
+
 parseIO :: (HolderIO.Class bh) => bh -> state -> Callbacks state -> IO state
 parseIO bh state callbacks = do
   (res_header1,bh2) <- Header1.parseIO bh
