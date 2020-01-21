@@ -40,9 +40,10 @@ import qualified Data.Map.Lazy as MapL
 import qualified Parser.Result as Result
 import SITables(Callback,Callbacks(..),parseIO)
 import SITables.Common(SITableIDs(..))
-import Data.Maybe(fromMaybe)
+import Data.Maybe(fromMaybe,isJust)
 import qualified BytesReader.StockedBitsLen as StockedBitsLen
 import qualified BytesReader.Status as Status
+import Data.Foldable(toList)
 
 class (BytesReader.Class a) => Class a where
 
@@ -55,12 +56,13 @@ splitByFirstBlock cache =
       rest'   = C.drop 1 $ synced' -- xxxxxHxxx...
       tail'   = C.takeWhileL (not . Header.payload_unit_start_indicator) $ rest' -- 先頭パケットの次から次のスタート地点までを取得 xxxxxHxxx... => xxxxx
       others' = C.dropWhileL (not . Header.payload_unit_start_indicator) $ rest' -- 次の先頭以降を取得  xxxxxHxxx... => Hxxx...
-      oneset' = case mfst' of
+      oneset' = C.fromList $ Packet.continuityChecked $ toList $ case mfst' of
                   Nothing   -> C.empty
                   Just fst' -> fst' C.<| tail'
   in
-    -- 連番チェックが必要 -- hoge
-    (oneset',others')
+    if C.null oneset' && isJust mfst' -- パケット欠損があった場合
+    then splitByFirstBlock others'
+    else (oneset', others')
 
 data ByteStringHolder = MkByteStringHolder {
   _data           :: ByteString,
