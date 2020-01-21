@@ -16,12 +16,13 @@ import qualified BytesReader.HolderIO as HolderIO
 import qualified TS.FileHandle as FH
 import qualified TS.Packet.AdaptationField as AdaptationField
 import qualified Parser.Result as Result
-
 -- sync byteを含めた長さ
 bytesLen :: BytesLen
 bytesLen = 188
 
 type Payload = ByteString
+
+data ContinuityType = Continuous | Duplicated | ContinuousErr
 
 class (Header.Class t) => Class t where
   -- please implement
@@ -32,24 +33,39 @@ class (Header.Class t) => Class t where
   adaptation_field :: t -> Maybe AdaptationField.Data
   payload          :: t -> ByteString
   (===) :: t -> t -> Bool
-  duplicated :: t -> Bool
-  setDuplicated :: t -> t
   --
 
   header :: t -> Header.Data
   header = Header.header
 
-  -- 重複は一度だけ許可される
-  -- body の discontinuity indicatorがtrueの場合は不連続でもよい
-  continuityChecked :: t -> Maybe t -> Maybe t
-  continuityChecked x my =
-    case my of
-      Nothing -> Just x
-      Just y -> if x === y -- 同じパケットなので重複の可能性あり
-                then if duplicated y -- 既に重複済みのものの場合
-                     then Nothing -- ２回目の重複なので許可されない
-                     else Just $ setDuplicated x -- 重複済みフラグを設定
-                else Just x
+  continuous :: t -> t -> Bool
+  continuous x y =
+    let res = (Header.next $ Header.continuity_counter x) == (Header.continuity_counter y)
+    in case adaptation_field y of
+      Just af -> if AdaptationField.discontinuity_indicator af
+                 then True -- 不連続を許可するので常にtrue
+                 else res
+      Nothing -> res
+
+  continuityChecked :: [t] -> [t]
+  continuityChecked []       = []
+  continuityChecked l@(x:xs) = if Header.payload_unit_start_indicator x then impl' [] l False else []
+    where
+      check' x y dup =
+        if continuous x y then Continuous -- 問題なし
+        else -- パケットの欠損が疑われる場合
+          if x === y  -- 同じパケットなので重複の可能性あり
+          then if dup
+               then ContinuousErr -- ２回目の重複なので連続エラー
+               else Duplicated -- 1回目の重複なので許可される
+          else ContinuousErr -- 連続エラー
+          
+      impl' pre (x:[]) dup = pre ++ [x]
+      impl' pre (x:(y:ys)) dup =
+        case check' x y dup of
+          Continuous    -> impl' (pre ++ [x]) (y:ys) False
+          Duplicated    -> impl' (pre ++ [x]) ys     True -- 重複しているものは削除
+          ContinuousErr -> []
 
   -- 引数のByteStringは同期用の先頭バイトは削られているものを想定している
   fromByteString :: ByteString -> Result.Data t
@@ -113,10 +129,3 @@ instance Class Data where
 
   mkEOF = EOF
   mkOK h af b = MkData h af b False
-
-  duplicated x@(MkData _ _ _ _) = _duplicated x
-  duplicated _                  = False
-
-  setDuplicated (MkData a b c d) = (MkData a b c True)
-  setDuplicated x                = x
-  
