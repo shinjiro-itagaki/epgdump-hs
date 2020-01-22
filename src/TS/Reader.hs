@@ -178,26 +178,25 @@ _appendPacketAndFireCallback cache callbacks state packet =
      else
        (False, cache) -- 取得すべきpidではないのでパケットを追加しない
 
--- Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> 
-eachTable :: String -> Callbacks state -> state -> IO state
-eachTable path callbacks state {- m_eachpackethook_and_init-} = do
+eachTable :: String -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
+eachTable path callbacks state mx = do
   fh <- FileHandle.new path
-  _eachTable fh callbacks state {- m_eachpackethook_and_init -}
+  _eachTable fh callbacks state mx
 
---  Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) ->  
-_eachTable :: FileHandle.Data -> Callbacks state -> state -> IO state
-_eachTable fh callbacks state {- m_eachpackethook -} = do
-  (cache,state') <- _each fh (C.empty,state) impl'
+_eachTable :: FileHandle.Data -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
+_eachTable fh callbacks state mx = do
+  (cache,state',mx') <- _each fh (C.empty,state,mx) impl'
   return state'
   where
-    -- Packet.Data -> cache -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,cache)
-    impl' packet' (cache',state') fhd' _ = do
-      cache_and_state <- _appendPacketAndFireCallback cache' callbacks state' packet'
-      return (True, cache_and_state)
-      -- case m_eachpackethook of
-      --   Just (f,state2) -> do res <- f packet' state' fhd'
-      --                         return (fst res, (fst cache_and_state, snd res))
-      --   Nothing -> return (True, cache_and_state)
+    -- Packet.Data -> state -> FileHandle.ReadonlyData -> IO (Bool,state)
+    impl' packet' (cache',state',mx') fhd' _ = do
+      (cache'',state'') <- _appendPacketAndFireCallback cache' callbacks state' packet'
+      (mx'',continue'') <-
+        case mx' of
+          Just (f,state2) -> do (continue',state2') <- f packet' state2 fhd'
+                                return (Just (f,state2'),continue')
+          Nothing -> return (mx',True)
+      return (continue'', (cache'',state'',mx'))
 
 each :: String -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
 each path something act = do

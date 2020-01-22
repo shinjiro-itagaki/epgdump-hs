@@ -115,9 +115,9 @@ main = do
   let filepath =  args !! 0
       counter = 0 :: BytesLen
       -- action_count_packets :: TS.Packet.Data -> PacketCounter -> FileHandle.ReadonlyData -> BS.ByteString -> IO (Bool,PacketCounter)
-      action_count_packets' = Just (\ p c fhrd _ -> action_count_packets p c fhrd)
+      action_count_packets' = Just ( (\x y z ->  action_count_packets x y z mkEmpty ) , mkEmpty :: PacketCounter)
 --  TS.eachPacket filepath mkEmpty action_count_packets >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)
-  TS.eachTable filepath mkTableCounterCallbacks mkEmpty {- action_count_packets' -} >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)  
+  TS.eachTable filepath mkTableCounterCallbacks mkEmpty action_count_packets' >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)  
 
 action_count_tables :: TableCounter -> IO (Bool,TableCounter)
 action_count_tables x = do
