@@ -69,7 +69,8 @@ class (EmptyExist a) => Class a where
   transport_scrambling_control :: a -> ScrambleControl -- 2 bits
   transport_scrambling_control = transport_scrambling_control . header
 
-  adaptation_field_control     :: a -> Word8 -- 2 bits
+  -- (has_adaptation_field, has_payload)
+  adaptation_field_control :: a -> (Bool,Bool) -- 2 bits
   adaptation_field_control = adaptation_field_control . header
   
   continuity_counter :: a -> ContinuityCounter -- 4 bits
@@ -79,14 +80,12 @@ class (EmptyExist a) => Class a where
   continuity_ok x Nothing  = True
   continuity_ok x (Just c) = (next c) == continuity_counter x
 
-  -- '10' or '11'
   has_adaptation_field         :: a -> Bool
-  has_adaptation_field         = (> 0) . (.&. 0x02) . adaptation_field_control
-
-  -- '01' or '11'
+  has_adaptation_field = fst . adaptation_field_control
+  
   has_payload                  :: a -> Bool
-  has_payload                  = (> 0) . (.&. 0x01) . adaptation_field_control
-
+  has_payload = snd . adaptation_field_control
+  
   transport_scrambling_control_raw :: a -> Word8
   transport_scrambling_control_raw = transport_scrambling_control_raw . header
   
@@ -97,7 +96,7 @@ data Data = MkData {
   _transport_priority           :: Bool,
   _pid                          :: PID,
   _transport_scrambling_control :: ScrambleControl,
-  _adaptation_field_control     :: Word8,
+  _adaptation_field_control     :: (Bool,Bool),
   _continuity_counter           :: ContinuityCounter
   } deriving (Show,Eq)
 
@@ -108,7 +107,7 @@ instance EmptyExist Data where
     _transport_priority           = False,
     _pid                          = 0,
     _transport_scrambling_control = UndefScramble,
-    _adaptation_field_control     = 0,
+    _adaptation_field_control     = (False,False),
     _continuity_counter           = C0
   }
 
@@ -137,7 +136,7 @@ parse bs =
     _transport_priority           = (> 0) $ (.&. 0x200000) x, -- 1 00100000 00000000 00000000 
     _pid                          = fromInteger $ toInteger $ (`shiftR` 8) $ (.&. 0x1FFF00) x, -- 13 00011111 11111111 00000000
     _transport_scrambling_control = tsc, --  2 00000000 00000000 11000000
-    _adaptation_field_control     = fromInteger $ toInteger $ (`shiftR` 4) $ (.&. 0x000030) x, --  2 00000000 00000000 00110000
+    _adaptation_field_control     = let y = (`shiftR` 4) $ (.&. 0x000030) x in ((> 0) $ (y .&. 0x02), (> 0) $ (y .&. 0x01)), --  2 00000000 00000000 00110000
     _continuity_counter           = toContinuityCounter                    $ (.&. 0x00000F) x --  4 00000000 00000000 00001111
     }
 
