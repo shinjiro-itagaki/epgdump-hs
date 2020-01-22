@@ -13,7 +13,7 @@ import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,TableID,PID,PIDs(..))
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import FromWord64 hiding (Class)
 import qualified Parser
@@ -79,13 +79,13 @@ instance Class Data where
   segment_last_section_number = _segment_last_section_number
   last_table_id               = _last_table_id
 
-_parseIOFlow2 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =
   getBitsIO_M fh [
   (16, (\(v,d) -> d { _service_id = fromWord64 v}))
   ] init
 
-_parseIOFlow4 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow4 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4 fh init = do
   getBitsIO_M fh [
     (16, (\(v,d) -> d { _transport_stream_id         = fromWord64 v})),
@@ -94,7 +94,7 @@ _parseIOFlow4 fh init = do
     ( 8, (\(v,d) -> d { _last_table_id               = fromWord64 v}))
     ] init
 
-_parseIOFlow5_items :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow5_items :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow5_items bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
   where
     addItem' :: Data -> Item.Data -> Data

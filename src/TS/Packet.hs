@@ -5,14 +5,14 @@ import qualified TS.Packet.Header as Header
 --import qualified TS.FileHandle    as FH
 
 import qualified BytesReader
-
+import qualified Data.ByteString.Lazy as BS
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Data.ByteString.Lazy as BS
 import Common(BytesLen,EmptyExist(..),PID,TableID,ByteString)
 import qualified Parser
 import qualified Data.Vector as V
 import Data.Int(Int64)
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import qualified TS.FileHandle as FH
 import qualified TS.Packet.AdaptationField as AdaptationField
 import qualified Parser.Result as Result
@@ -90,11 +90,14 @@ class (Header.Class t, Show t) => Class t where
   read :: (FH.Class fh) => fh -> IO (Result.Data t,(BS.ByteString,fh))
   read h = do
     h' <- FH.syncIO h
-    isEOF' <- HolderIO.isEOF h'
+    isEOF' <- BytesReaderBase.isEOF h'
     if isEOF'
       then return (Result.Parsed mkEOF, (BS.empty,h'))
       else do
-      res@(bytes,h'') <- FH.getBytesIO h' (bytesLen - 1)
+      res@(bytes,h'') <- BytesReaderBase.getBytesIO h' (bytesLen - 1)
+      putStrLn "====="
+      putStrLn $ show $ BytesReader.loaded h''
+      putStrLn $ show $ BS.unpack $ bytes
       return (fromByteString bytes,res)
       
 

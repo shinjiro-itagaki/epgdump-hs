@@ -15,6 +15,7 @@ import qualified TS.Packet.Header as Header
 import Common(EmptyExist(..))
 import SITables(Callbacks(..))
 import qualified BytesReader.Status as Status
+import qualified BytesReader.Base as BytesReaderBase
 
 --_KB = 2 ^ 10
 --_MB = _KB ^ 2
@@ -145,7 +146,7 @@ action_count_packets p x info _ = do
 test :: FileHandle.Data -> Word64 -> IO Word64
 test fh i = do
   fh2 <- FileHandle.syncIO fh
-  (bs,fh3) <- FileHandle.getBytesIO fh2 187
+  (bs,fh3) <- BytesReaderBase.getBytesIO fh2 187
   if BS.length bs < 1
     then return i
     else do

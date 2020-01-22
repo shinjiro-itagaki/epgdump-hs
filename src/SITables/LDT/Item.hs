@@ -8,7 +8,7 @@ module SITables.LDT.Item(
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
 import Common(EmptyExist(..),PID,TableID)
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import FromWord64 hiding (Class)
 import qualified Parser
@@ -40,7 +40,7 @@ instance Class Data where
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty Data.Vector.empty
 
-_parseIOFlow1 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow1 fh init = do
   getBitsIO_M fh [
     (16, (\(v,d) -> d { _description_id          = fromWord64 v})),

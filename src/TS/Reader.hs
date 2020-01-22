@@ -11,7 +11,7 @@ import qualified TS.FileHandle as FileHandle
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import qualified Parser
 import qualified BytesReader
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import qualified BytesReader.Counter as Counter
 
 import qualified SITables
@@ -93,20 +93,10 @@ instance Counter.Class ByteStringHolder where
   getBytesCounter     = _bytesCounter 
   resetBytesCounter x = x {_bytesCounter = 0 }
 
-instance HolderIO.Class ByteStringHolder where
+instance BytesReaderBase.Class ByteStringHolder where
   isEOF        = return . BS.null . _data
-  getBytesIO   = BytesReader.getBytes
-  getBitsIO    = BytesReader.getBits
-  cache        = (foldl BS.append BS.empty) . _cache
-  clearCache x = x { _cache = C.empty }
-
-instance BytesReader.Class ByteStringHolder where
-  pos            = _pos
-  size           = _size
-  loaded         = _loaded
-  stockedBitsLen = _stockedBitsLen
-  updateStockedBitsLen x bitslen = x {_stockedBitsLen = bitslen }
-  getBytes x i
+--  getBytesIO   = BytesReader.getBytes
+  getBytesIO x i
     | i < 1             = return (BS.empty, x)
     | BS.null $ _data x = return (BS.empty, x)
     | otherwise = 
@@ -125,7 +115,18 @@ instance BytesReader.Class ByteStringHolder where
                  _stockedBitsLen = StockedBitsLen.Zero
                  }
              )
-             
+
+--  getBitsIO    = BytesReader.getBits
+  cache        = (foldl BS.append BS.empty) . _cache
+  clearCache x = x { _cache = C.empty }
+
+instance BytesReader.Class ByteStringHolder where
+  pos            = _pos
+  size           = _size
+  loaded         = _loaded
+  stockedBitsLen = _stockedBitsLen
+  updateStockedBitsLen x bitslen = x {_stockedBitsLen = bitslen }
+            
 _parseFromCache :: (Base.Class d) => PacketCache -> IO (Result.Data d,PacketCache)
 _parseFromCache cache =
   let emptable = mkEmpty
@@ -234,7 +235,7 @@ _eachPacket fh something act = do
     _ -> _eachPacket fh' something act -- パース失敗でスキップ
 
   
--- instance HolderIO.Class Data where
+-- instance BytesReaderBase.Class Data where
 --   -- getBytesIO :: (Integral i) => a -> i -> IO (ByteString, a)
 --   getBytesIO d i = _getBytesIO (_cur_sym d) d i
 --   -- isEOF      :: a -> IO Bool

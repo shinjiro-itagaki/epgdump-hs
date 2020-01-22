@@ -8,7 +8,7 @@ module SITables.BIT.Item(
 import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(HasDescriptors(..))
 import Common(EmptyExist(..),PID,TableID)
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
 import FromWord64 hiding (Class)
 import qualified Parser
@@ -46,7 +46,7 @@ instance EmptyExist Data where
   _descriptors                    = Data.Vector.empty
   }
 
-_parseIOFlow :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = do
   getBitsIO_M fh [
     ( 8, (\(v,d) -> d { _broadcaster_id = fromWord64 v})),

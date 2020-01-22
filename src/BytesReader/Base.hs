@@ -1,4 +1,4 @@
-module BytesReader.HolderIO where
+module BytesReader.Base where
 
 import qualified BytesReader.Counter as Counter
 import Data.Word(Word64, Word32, Word16, Word8)

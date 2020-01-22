@@ -8,7 +8,7 @@ import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,TableID,PID,PIDs(..))
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import qualified Descriptor
 import qualified SITables.Base as Base
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
@@ -83,30 +83,30 @@ instance SITableIDs Data where
   pids      _ = MkPIDs [0x0010]
   table_ids _ = [0x40,0x41]
 
-_parseIOFlow1 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow1 fh init =
   getBitsIO_M fh [
   (16, (\(v,d) -> d { _network_id = fromWord64 v}))
   ] init
 
-_parseIOFlow2 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =
   getBitsIO_M fh [
   ( 4, (\(v,d) -> d { _reserved_future_use1       = fromWord64 v})),
   (12, (\(v,d) -> d { _network_descriptors_length = fromWord64 v}))
   ] init
 
-_parseIOFlow3 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow3 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow3 fh init = return (Result.Parsed init, fh) -- todo descriptors
 
-_parseIOFlow4 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow4 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4 fh init = 
   getBitsIO_M fh [
   ( 4, (\(v,d) -> d { _reserved_future_use2         = fromWord64 v})),
   (12, (\(v,d) -> d { _transport_stream_loop_length = fromWord64 v}))
   ] init
 
-_parseIOFlow5 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow5 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow5 fh init = return (Result.Parsed init, fh) -- todo items
 
 instance Base.Class Data where

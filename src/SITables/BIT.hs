@@ -11,7 +11,7 @@ import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
 import Common(EmptyExist(..),PID,TableID,TableID,PID,PIDs(..),BytesLen)
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import qualified Descriptor
 import qualified SITables.Base as Base
 import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
@@ -79,13 +79,13 @@ instance EmptyExist Data where
 
 instance Parser.Class Data where
 
-_parseIOFlow2 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow2 fh init =
   getBitsIO_M fh [
   (16, (\(v,d) -> d { _original_network_id = fromWord64 v}))
   ] init
 
-_parseIOFlow4 :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow4 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4 fh init = do
   getBitsIO_M fh [
     ( 8, (\(v,d) -> d { _reserved_future_use      = fromWord64 v})),
@@ -93,7 +93,7 @@ _parseIOFlow4 fh init = do
     ( 1, (\(v,d) -> d { _first_descriptors_length = fromWord64 v}))
     ] init
 
-_parseIOFlow5_descs :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow5_descs :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow5_descs bh init = Descriptor.gather addItem' (first_descriptors_length init) bh init
   where
     addItem' :: Data -> Descriptor.Data -> Data

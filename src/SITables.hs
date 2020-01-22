@@ -21,7 +21,7 @@ import Data.ByteString(ByteString)
 import qualified TS.Packet as Packet
 --import TS.Packet(FromPackets(..))
 import Parser(ParseResult(..),mapParseResult)
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import qualified SITables.Header1 as Header1
 import Common(EmptyExist(..),PID,matchPID)
 import qualified Parser.Result as Result
@@ -73,10 +73,10 @@ matchPID pid callbacks =
       in (pids empdata) `Common.matchPID` pid
       
 
-parseIO_simple :: (HolderIO.Class bh, Base.Class d, Show d) => bh -> Maybe d -> IO (Result.Data d,bh)
+parseIO_simple :: (BytesReaderBase.Class bh, Base.Class d, Show d) => bh -> Maybe d -> IO (Result.Data d,bh)
 parseIO_simple bh init = Header1.parseIO bh >>=== (\(h,bh2) -> Base.parseIO (fromMaybe mkEmpty init) h bh2)
 
-parseIO :: (HolderIO.Class bh, Show state) => bh -> state -> Callbacks state -> IO (Bool,state)
+parseIO :: (BytesReaderBase.Class bh, Show state) => bh -> state -> Callbacks state -> IO (Bool,state)
 parseIO bh state callbacks = do
   (res_header1,bh2) <- Header1.parseIO bh
   case res_header1 of
@@ -86,7 +86,7 @@ parseIO bh state callbacks = do
                          Nothing -> return (True,state)  
 
 
-_parseIO :: (HolderIO.Class bh, Show state) => bh -> Header1.Data -> state -> Callbacks state -> IO (Bool,state)
+_parseIO :: (BytesReaderBase.Class bh, Show state) => bh -> Header1.Data -> state -> Callbacks state -> IO (Bool,state)
 _parseIO bh header1 state callbacks =
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}

@@ -7,7 +7,7 @@ import Data.Word(Word64, Word32, Word16, Word8)
 import SITables.Common(SITableIDs(..))
 import qualified SITables.Base as Base
 import Common(ByteString,EmptyExist(..),PID,TableID,TableID,PID,PIDs(..))
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
@@ -38,7 +38,7 @@ instance Header1.Class Data where
 instance Class Data where
   items = toList . _items
 
-_parseIOFlow :: (HolderIO.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
+_parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
   where
     addItem' :: Data -> Item.Data -> Data

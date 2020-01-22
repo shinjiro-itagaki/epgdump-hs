@@ -16,7 +16,6 @@ import Common(BytesLen)
 import qualified BytesReader
 import qualified BytesReader.Handler as Handler
 import qualified BytesReader.Counter as Counter
-import qualified BytesReader.HolderIO as HolderIO
 import Data.Ratio(Ratio)
 import Data.Bits(shiftL,shiftR,(.|.),(.&.))
 import qualified BytesReader
@@ -28,10 +27,6 @@ class (BytesReader.Class a) => Class a where
   new       :: String -> IO a
   syncIO    :: a -> IO a
   -----
-  getBitsIO  :: (Integral i) => a -> i -> IO (Word64, a)
-  getBitsIO = HolderIO.getBitsIO
-  getBytesIO :: (Integral i) => a -> i -> IO (ByteString, a)
-  getBytesIO = HolderIO.getBytesIO
   getBytesCounter   :: a -> BytesLen
   getBytesCounter = Counter.getBytesCounter
   resetBytesCounter :: a -> a

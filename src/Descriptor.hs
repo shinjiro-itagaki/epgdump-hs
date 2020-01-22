@@ -62,7 +62,7 @@ import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseRes
 import qualified Parser
 import qualified Parser.Result as Result
 import Common(EmptyExist(..),BytesLen,BitsLen)
-import qualified BytesReader.HolderIO as HolderIO
+import qualified BytesReader.Base as BytesReaderBase
 import qualified BytesReader.Counter as Counter
 
 
@@ -129,7 +129,7 @@ instance EmptyExist Descriptor.Data where
 instance Parser.Class Descriptor.Data where
 --  parseIOFlow = flowStart
 
-gather :: (HolderIO.Class bh, Parser.Class b, Show b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
+gather :: (BytesReaderBase.Class bh, Parser.Class b, Show b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
 gather appender restlen fh init
   | restlen < 1 = return (Result.Parsed init, fh)
   | otherwise = do
