@@ -133,7 +133,8 @@ _parseFromCache cache pid =
       payload' = toByteStringHolder bytes' 
   in do
 --    putStrLn $ show block'
---    putStrLn $ show "---"    
+    putStrLn $ show "---"    
+    putStrLn $ show $ block'
 --    putStrLn $ show $ BS.unpack bytes'
     (res,_) <- SITables.parseIO_simple payload' (Just emptable)
     case res of

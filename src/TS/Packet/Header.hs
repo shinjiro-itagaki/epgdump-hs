@@ -11,7 +11,7 @@ data ScrambleControl =
   | UndefScramble -- '01' 
   | EvenKey -- '10'
   | OddKey -- '11'
-  deriving (Show)
+  deriving (Show,Eq)
 
 data ContinuityCounter = C0 | C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | C10 | C11 | C12 | C13 | C14 | C15 deriving (Enum,Eq,Ord,Show)
 
@@ -67,13 +67,7 @@ class (EmptyExist a) => Class a where
 
   -- TSパケットのペイロードのスクランブルモードを識別するのに使用する領域
   transport_scrambling_control :: a -> ScrambleControl -- 2 bits
-  transport_scrambling_control x =
-    case transport_scrambling_control_raw $ header x of
-      0 -> NoScramble
-      1 -> UndefScramble
-      2 -> EvenKey
-      3 -> OddKey
-      otherwise -> UndefScramble
+  transport_scrambling_control = transport_scrambling_control . header
 
   adaptation_field_control     :: a -> Word8 -- 2 bits
   adaptation_field_control = adaptation_field_control . header
@@ -97,24 +91,60 @@ class (EmptyExist a) => Class a where
   transport_scrambling_control_raw = transport_scrambling_control_raw . header
   
                                    
-type Data = Word32
+data Data = MkData {
+  _transport_error_indicator    :: Bool,
+  _payload_unit_start_indicator :: Bool,
+  _transport_priority           :: Bool,
+  _pid                          :: PID,
+  _transport_scrambling_control :: ScrambleControl,
+  _adaptation_field_control     :: Word8,
+  _continuity_counter           :: ContinuityCounter
+  } deriving (Show,Eq)
+
+instance EmptyExist Data where
+  mkEmpty = MkData {
+    _transport_error_indicator    = False,
+    _payload_unit_start_indicator = False,
+    _transport_priority           = False,
+    _pid                          = 0,
+    _transport_scrambling_control = UndefScramble,
+    _adaptation_field_control     = 0,
+    _continuity_counter           = C0
+  }
 
 instance Class Data where
   header x = x
-  transport_error_indicator    = (> 0) . (.&. 0x800000) -- 1 10000000 00000000 00000000 
-  payload_unit_start_indicator = (> 0) . (.&. 0x400000) -- 1 01000000 00000000 00000000 
-  transport_priority           = (> 0) . (.&. 0x200000) -- 1 00100000 00000000 00000000 
-  pid                              = fromInteger . toInteger . (`shiftR` 8) . (.&. 0x1FFF00) -- 13 00011111 11111111 00000000
-  transport_scrambling_control_raw = fromInteger . toInteger . (`shiftR` 6) . (.&. 0x0000C0) --  2 00000000 00000000 11000000
-  adaptation_field_control         = fromInteger . toInteger . (`shiftR` 4) . (.&. 0x000030) --  2 00000000 00000000 00110000
-  continuity_counter               = toContinuityCounter                    . (.&. 0x00000F) --  4 00000000 00000000 00001111
+  transport_error_indicator    = _transport_error_indicator
+  payload_unit_start_indicator = _payload_unit_start_indicator
+  transport_priority           = _transport_priority 
+  pid                          = _pid
+  transport_scrambling_control = _transport_scrambling_control
+  adaptation_field_control     = _adaptation_field_control
+  continuity_counter           = _continuity_counter
 
 parse :: ByteString -> Data
-parse = parseFromWord8 . unpack
+parse bs =
+  let x = toWord24 $ unpack bs
+      tsc = case fromInteger $ toInteger $ (`shiftR` 6) $ (.&. 0x0000C0) x of
+              0 -> NoScramble
+              1 -> UndefScramble
+              2 -> EvenKey
+              3 -> OddKey
+              otherwise -> UndefScramble
+  in MkData {
+    _transport_error_indicator    = (> 0) $ (.&. 0x800000) x, -- 1 10000000 00000000 00000000 
+    _payload_unit_start_indicator = (> 0) $ (.&. 0x400000) x, -- 1 01000000 00000000 00000000 
+    _transport_priority           = (> 0) $ (.&. 0x200000) x, -- 1 00100000 00000000 00000000 
+    _pid                          = fromInteger $ toInteger $ (`shiftR` 8) $ (.&. 0x1FFF00) x, -- 13 00011111 11111111 00000000
+    _transport_scrambling_control = tsc, --  2 00000000 00000000 11000000
+    _adaptation_field_control     = fromInteger $ toInteger $ (`shiftR` 4) $ (.&. 0x000030) x, --  2 00000000 00000000 00110000
+    _continuity_counter           = toContinuityCounter                    $ (.&. 0x00000F) x --  4 00000000 00000000 00001111
+    }
 
-parseFromWord8 :: [Word8] -> Data
-parseFromWord8 []             = mkEmpty
-parseFromWord8 (x:[])         = ((`shiftL` 16) $ ((fromInteger $ toInteger x) :: Word32))
-parseFromWord8 (x:(y:[]))     = ((`shiftL` 16) $ ((fromInteger $ toInteger x) :: Word32)) .|. ((`shiftL` 8) $ ((fromInteger $ toInteger y) :: Word32))
-parseFromWord8 (x:(y:(z:zs))) = ((`shiftL` 16) $ ((fromInteger $ toInteger x) :: Word32)) .|. ((`shiftL` 8) $ ((fromInteger $ toInteger y) :: Word32)) .|. ((fromInteger $ toInteger z) :: Word32)
--- parseFromWord8 (x:(y:(z:zs))) = 1
+
+toWord24 :: [Word8] -> Word32
+toWord24 []             = mkEmpty
+toWord24 (x:[])         = ((`shiftL` 16) $ ((fromInteger $ toInteger x) :: Word32))
+toWord24 (x:(y:[]))     = ((`shiftL` 16) $ ((fromInteger $ toInteger x) :: Word32)) .|. ((`shiftL` 8) $ ((fromInteger $ toInteger y) :: Word32))
+toWord24 (x:(y:(z:zs))) = ((`shiftL` 16) $ ((fromInteger $ toInteger x) :: Word32)) .|. ((`shiftL` 8) $ ((fromInteger $ toInteger y) :: Word32)) .|. ((fromInteger $ toInteger z) :: Word32)
+
