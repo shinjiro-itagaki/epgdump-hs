@@ -160,8 +160,11 @@ _fireCallback callbacks state (True, cache) = --  return (cache,state)
       (res,cache2) <- _parseFromCache cache
       case res of
         Result.NotMatch -> _fireCallback callbacks2 state (True,cache) -- テーブルがマッチしていない場合は次に移動
-        Result.Parsed d -> do state2 <- callback d state
-                              _fireCallback callbacks2 state2 (True,cache2) -- パース成功した場合はコールバックを呼び出して次に移動
+        Result.Parsed d -> do
+          (continue, state2) <- callback d state
+          if continue
+            then _fireCallback callbacks2 state2 (True,cache2) -- パース成功した場合はコールバックを呼び出して他にテーブルが作れないか検索
+            else return (cache2,state2) -- 続行フラグがfalseなので処理を終了
         _               -> return (cache2,state) -- 失敗したので終了
           
 _appendPacketAndFireCallback :: PacketCache -> Callbacks state -> state -> Packet.Data -> IO (PacketCache,state)
@@ -174,16 +177,27 @@ _appendPacketAndFireCallback cache callbacks state packet =
        (indicator, cache C.|> packet) -- パケットを追加済みのキャッシュを返す。パケットの開始地点であれば、以前までに蓄積したパケットからテーブルを構築する
      else
        (False, cache) -- 取得すべきpidではないのでパケットを追加しない
-  
-eachTable :: FileHandle.Data -> Callbacks state -> state -> IO state
-eachTable fh callbacks state = do
-  (cache,state') <- _each fh (C.empty,state) impl' --  ::
+
+-- Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> 
+eachTable :: String -> Callbacks state -> state -> IO state
+eachTable path callbacks state {- m_eachpackethook_and_init-} = do
+  fh <- FileHandle.new path
+  _eachTable fh callbacks state {- m_eachpackethook_and_init -}
+
+--  Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) ->  
+_eachTable :: FileHandle.Data -> Callbacks state -> state -> IO state
+_eachTable fh callbacks state {- m_eachpackethook -} = do
+  (cache,state') <- _each fh (C.empty,state) impl'
   return state'
   where
     -- Packet.Data -> cache -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,cache)
-    impl' packet' (cache',state') _ _ = do
+    impl' packet' (cache',state') fhd' _ = do
       cache_and_state <- _appendPacketAndFireCallback cache' callbacks state' packet'
       return (True, cache_and_state)
+      -- case m_eachpackethook of
+      --   Just (f,state2) -> do res <- f packet' state' fhd'
+      --                         return (fst res, (fst cache_and_state, snd res))
+      --   Nothing -> return (True, cache_and_state)
 
 each :: String -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
 each path something act = do

@@ -30,7 +30,7 @@ import Data.Maybe(fromMaybe)
 
 import SITables.Common(SITableIDs(..),(==.=))
 
-type Callback d state = (d -> state -> IO state)
+type Callback d state = (d -> state -> IO (Bool,state))
 
 data Callbacks state = MkCallbacks {
   _cb_BAT  :: Maybe (Callback SITables.BAT.Data  state ),
@@ -44,7 +44,9 @@ data Callbacks state = MkCallbacks {
   _cb_SDT  :: Maybe (Callback SITables.SDT.Data  state ),
   _cb_ST   :: Maybe (Callback SITables.ST.Data   state ),
   _cb_TDT  :: Maybe (Callback SITables.TDT.Data  state ),
-  _cb_TOT  :: Maybe (Callback SITables.TOT.Data  state )
+  _cb_TOT  :: Maybe (Callback SITables.TOT.Data  state ),
+  _cb_ERR  :: Maybe (Callback (Result.Data Header1.Data) state ), -- ヘッダ の解析でエラーがあった場合
+  _cb_UNM  :: Maybe (Callback Header1.Data state ) -- ヘッダの解析はできたが、どれにもマッチしなかった場合
   }
   
 matchPID :: PID -> Callbacks state -> Bool
@@ -64,7 +66,7 @@ matchPID pid callbacks =
     (MkCallbacks {_cb_TOT = Just f}) -> impl' f $ callbacks{_cb_TOT = Nothing}
     _                                -> False
   where
-    impl' :: (Base.Class d) => (d -> state -> IO state) -> Callbacks state -> Bool
+    impl' :: (Base.Class d) => (d -> state -> IO (Bool,state)) -> Callbacks state -> Bool
     impl' callback callbacks2 =
       let empdata = mkEmpty
           _ = callback empdata -- empdata の型を推論できるようにするための記述で、実行はされない
@@ -74,15 +76,17 @@ matchPID pid callbacks =
 parseIO_simple :: (HolderIO.Class bh, Base.Class d) => bh -> Maybe d -> IO (Result.Data d,bh)
 parseIO_simple bh init = Header1.parseIO bh >>=== (\(h,bh2) -> Base.parseIO (fromMaybe mkEmpty init) h bh2)
 
-parseIO :: (HolderIO.Class bh) => bh -> state -> Callbacks state -> IO state
+parseIO :: (HolderIO.Class bh) => bh -> state -> Callbacks state -> IO (Bool,state)
 parseIO bh state callbacks = do
   (res_header1,bh2) <- Header1.parseIO bh
   case res_header1 of
     Result.Parsed x -> _parseIO bh2 x state callbacks  -- 終了
-    _               -> return state -- ヘッダのパースエラーにつき続行不能で終了
+    _               -> case (_cb_ERR callbacks) of
+                         Just cb -> cb res_header1 state -- ヘッダのパースエラーにつき続行不能で終了
+                         Nothing -> return (True,state)  
 
 
-_parseIO :: (HolderIO.Class bh) => bh -> Header1.Data -> state -> Callbacks state -> IO state
+_parseIO :: (HolderIO.Class bh) => bh -> Header1.Data -> state -> Callbacks state -> IO (Bool,state)
 _parseIO bh header1 state callbacks =
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}
@@ -97,14 +101,15 @@ _parseIO bh header1 state callbacks =
     (MkCallbacks {_cb_ST  = Just f}) -> impl' f $ callbacks{_cb_ST  = Nothing}
     (MkCallbacks {_cb_TDT = Just f}) -> impl' f $ callbacks{_cb_TDT = Nothing}
     (MkCallbacks {_cb_TOT = Just f}) -> impl' f $ callbacks{_cb_TOT = Nothing}
-    _                                -> return state
+    (MkCallbacks {_cb_UNM = Just f}) -> f header1 state -- どれにもマッチしない場合 (d -> state -> IO (Bool,state))
+    _                                -> return (True,state)
   where
     impl' f' callbacks2 = do
       (res,bh2) <- Base.parseIO mkEmpty header1 bh
       case res of
-        Result.Parsed x -> f' x state -- 更新した状態を返して終了
-        Result.NotMatch -> _parseIO bh2 header1 state callbacks2 -- マッチしなかったので次に進む
-        _               -> return state -- エラー発生につき終了
+        Result.Parsed x -> f' x state -- 更新した状態を返して検索終了
+        Result.NotMatch -> _parseIO bh2 header1 state callbacks2 -- マッチしなかったので次の候補に進む
+        _               -> return (True,state) -- エラー発生につきコールバックの検索を終了
 
 instance EmptyExist (Callbacks a) where
   mkEmpty = MkCallbacks {
@@ -119,5 +124,7 @@ instance EmptyExist (Callbacks a) where
     _cb_SDT  = Nothing,
     _cb_ST   = Nothing,
     _cb_TDT  = Nothing,
-    _cb_TOT  = Nothing
+    _cb_TOT  = Nothing,
+    _cb_ERR  = Nothing,
+    _cb_UNM  = Nothing
     }
