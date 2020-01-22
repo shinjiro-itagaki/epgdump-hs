@@ -14,6 +14,7 @@ import qualified TS.Packet.AdaptationField as AdaptationField
 import qualified TS.Packet.Header as Header
 import Common(EmptyExist(..))
 import SITables(Callbacks(..))
+import qualified BytesReader.Status as Status
 
 --_KB = 2 ^ 10
 --_MB = _KB ^ 2
@@ -133,6 +134,11 @@ action_count_packets p x info _ = do
   let newx = addToPacketCounter x p
   if (_packet_total newx) `mod` 20000 == 0
     then putStrLn $ show $ FileHandle.progress_percent info
+    else return ()
+--  putStrLn $ show newx
+  if ((Status.pos info) `mod` 500000) == 0
+    then putStrLn $ show $ FileHandle.progress_percent info
+--         putStrLn $ show info
     else return ()
   return (True,newx)
 

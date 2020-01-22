@@ -16,7 +16,7 @@ type BitsLen  = Word64
 type PID = Word64
 type TableID = Word32
 
-data PIDs = MkPIDs [PID] | MkExcludePIDs [PID] deriving (Eq)
+data PIDs = MkPIDs [PID] | MkExcludePIDs [PID] deriving (Eq,Show)
 
 class EmptyExist a where
   mkEmpty :: a
@@ -34,12 +34,10 @@ instance EmptyExist (Bool,Bool) where
   mkEmpty = (False,False)
 
 class (Eq a) => Matcher a where
-  -- please implement
   (=|==) :: a -> [a] -> Bool
   (=|==) x []     = False
   (=|==) x (y:[]) = (x == y)
   (=|==) x (y:ys) = (x == y) || x =|== ys
-  --
 
   (/=|==) :: a -> [a] -> Bool
   (/=|==) x y = not $  x =|== y

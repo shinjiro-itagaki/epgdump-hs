@@ -138,8 +138,11 @@ _parseFromCache cache =
     return (res,rest')
   
 _fireCallback ::  Callbacks state -> state -> (Bool, PacketCache) -> IO (PacketCache, state)
-_fireCallback callbacks state (False,cache) = return (cache,state) -- fireを実施しない
-_fireCallback callbacks state (True, cache) = --  return (cache,state)
+_fireCallback callbacks state (False,cache) = do
+--  putStrLn "_fireCallback False"
+  return (cache,state) -- fireを実施しない
+_fireCallback callbacks state (True, cache) = do
+--  putStrLn "_fireCallback True"
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}
     (MkCallbacks {_cb_BIT = Just f}) -> impl' f $ callbacks{_cb_BIT = Nothing}
@@ -171,12 +174,13 @@ _appendPacketAndFireCallback :: PacketCache -> Callbacks state -> state -> Packe
 _appendPacketAndFireCallback cache callbacks state packet =
   let pid = Header.pid packet
       indicator = Header.payload_unit_start_indicator packet -- ペイロードの開始地点のパケットかどうか
-  in _fireCallback callbacks state $
-     if SITables.matchPID pid callbacks --取得すべきpidかどうか
-     then
-       (indicator, cache C.|> packet) -- パケットを追加済みのキャッシュを返す。パケットの開始地点であれば、以前までに蓄積したパケットからテーブルを構築する
-     else
-       (False, cache) -- 取得すべきpidではないのでパケットを追加しない
+  in do
+    _fireCallback callbacks state $
+      if SITables.matchPID pid callbacks -- 取得すべきpidかどうか
+      then
+        (indicator, cache C.|> packet) -- パケットを追加済みのキャッシュを返す。パケットの開始地点であれば、以前までに蓄積したパケットからテーブルを構築する
+      else
+        (False, cache) -- 取得すべきpidではないのでパケットを追加しない
 
 eachTable :: String -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
 eachTable path callbacks state mx = do
@@ -185,26 +189,28 @@ eachTable path callbacks state mx = do
 
 _eachTable :: FileHandle.Data -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
 _eachTable fh callbacks state mx = do
-  (cache,state',mx') <- _each fh (C.empty,state,mx) impl'
+  (cache,state',mx') <- _eachPacket fh (C.empty,state,mx) impl'
   return state'
   where
     -- Packet.Data -> state -> FileHandle.ReadonlyData -> IO (Bool,state)
     impl' packet' (cache',state',mx') fhd' _ = do
+--      (cache'',state'') <- return (cache',state')
       (cache'',state'') <- _appendPacketAndFireCallback cache' callbacks state' packet'
       (mx'',continue'') <-
         case mx' of
           Just (f,state2) -> do (continue',state2') <- f packet' state2 fhd'
+--                                putStrLn "--"
                                 return (Just (f,state2'),continue')
           Nothing -> return (mx',True)
       return (continue'', (cache'',state'',mx'))
 
-each :: String -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
-each path something act = do
+eachPacket :: String -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
+eachPacket path something act = do
   fh <- FileHandle.new path
-  _each fh something act
+  _eachPacket fh something act
 
-_each :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
-_each fh something act = do
+_eachPacket :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
+_eachPacket fh something act = do
   (resp,(bytes,fh')) <- Packet.read fh
   case resp of
     Result.Parsed p -> if Packet.isEOF p
@@ -214,12 +220,12 @@ _each fh something act = do
              act p something (FileHandle.getReadonlyInfo fh') bytes
              >>= (\(continue,something') ->
                      if continue
-                     then _each fh' something' act
+                     then _eachPacket fh' something' act
                      else return something' -- 続行しないという指定があったので終了
                  )
            else
-             _each fh' something act
-    _ -> _each fh' something act -- パース失敗でスキップ
+             _eachPacket fh' something act
+    _ -> _eachPacket fh' something act -- パース失敗でスキップ
 
   
 -- instance HolderIO.Class Data where

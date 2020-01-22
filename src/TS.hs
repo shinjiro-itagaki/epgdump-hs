@@ -53,5 +53,5 @@ import qualified TS.Packet.Header as Header
 import qualified Parser.Result as Result
 import qualified TS.Reader as Reader
 
-eachPacket = Reader.each
+eachPacket = Reader.eachPacket
 eachTable = Reader.eachTable

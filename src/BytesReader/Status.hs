@@ -21,7 +21,7 @@ class Class a where
 data Data = MkData {
   _pos :: Word64,
   _size :: BytesLen
-  }
+  } deriving (Show)
 
 new :: BytesLen -> BytesLen -> Data
 new p s =  MkData {
