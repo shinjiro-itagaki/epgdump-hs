@@ -114,6 +114,6 @@ parse = parseFromWord8 . unpack
 
 parseFromWord8 :: [Word8] -> Data
 parseFromWord8 []             = mkEmpty
-parseFromWord8 (x:[])         = fromInteger $ toInteger x
-parseFromWord8 (x:(y:[]))     = ((fromInteger $ toInteger x :: Word32) `shiftL`  8) .|. ( fromInteger $ toInteger y :: Word32)
+parseFromWord8 (x:[])         = ((fromInteger $ toInteger x :: Word32) `shiftL` 16)
+parseFromWord8 (x:(y:[]))     = ((fromInteger $ toInteger x :: Word32) `shiftL` 16) .|. ((fromInteger $ toInteger y :: Word32) `shiftL` 8)
 parseFromWord8 (x:(y:(z:zs))) = ((fromInteger $ toInteger x :: Word32) `shiftL` 16) .|. ((fromInteger $ toInteger y :: Word32) `shiftL` 8) .|. (fromInteger $ toInteger z :: Word32)
