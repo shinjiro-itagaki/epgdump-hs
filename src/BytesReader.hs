@@ -84,7 +84,6 @@ instance (Handler.Class h) => Base.Class (Data h) where
     | i < 1 = return (BS.empty, x)
     | otherwise = 
       let i1 = (fromInteger $ toInteger i) :: Int
-          i2 = (fromInteger $ toInteger i) :: Word64
       in Handler.hGet (_handle x) i1
          >>= (\bytes -> return $
                         if BS.null bytes
@@ -92,7 +91,7 @@ instance (Handler.Class h) => Base.Class (Data h) where
                         else (bytes, _addPos (x {_cache = (snoc (_cache x) bytes),
                                                  _loaded = BS.last bytes,
                                                  _stockedBitsLen = StockedBitsLen.Zero
-                                                }) i2))
+                                                }) (fromInteger $ toInteger $ BS.length bytes)))
   
   cache = BS.concat . toList  . _cache
   clearCache x = x { _cache = Data.Vector.empty }
