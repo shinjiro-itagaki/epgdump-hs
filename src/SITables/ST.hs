@@ -20,7 +20,7 @@ class (Base.Class a) => Class a where
 data Data = MkData {
   _header1    :: Header1.Data,
   _data_bytes :: ByteString
-  }
+  } deriving (Show)
 
 instance SITableIDs Data where
   pids      _ =  MkExcludePIDs [0x0000,0x0001,0x0014]

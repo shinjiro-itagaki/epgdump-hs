@@ -31,7 +31,7 @@ data Data = MkData {
   _selector_length       :: Word8,
   _selector_bytes        :: ByteString,
   _private_data          :: ByteString
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

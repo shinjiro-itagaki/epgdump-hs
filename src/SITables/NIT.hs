@@ -38,7 +38,7 @@ data Data = MkData {
   _transport_stream_loop_length :: Word16,
   _items                        :: Vector Item.Data,
   _footer                       :: Footer.Data
-  }
+  } deriving (Show)
 
 instance Header1.Class Data where
   setHeader1 d h = d { _header1 = h }

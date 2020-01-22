@@ -15,7 +15,7 @@ data Data = MkData {
   _original_network_id :: Word16,
   _transport_stream_id :: Word16,
   _service_id :: Word16
-  } -- 0x01
+  } deriving (Show) -- 0x01
 
 instance Class Data where
   original_network_id = _original_network_id 

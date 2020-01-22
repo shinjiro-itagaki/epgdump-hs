@@ -22,7 +22,7 @@ data Data = MkData {
   _number_of_horizontal_elementary_cells :: Word8,
   _number_of_vertical_elementary_cells   :: Word8,
   _items                                 :: Vector Item.Data
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

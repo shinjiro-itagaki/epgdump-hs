@@ -17,7 +17,7 @@ data Data = MkData {
   _reserved_future_use :: Word8, -- 4
   _description_type    :: Word8, -- 4
   _user_defined        :: Word8 -- 8
-  }
+  } deriving (Show)
 
 instance Class Data where
   description_id      = _description_id

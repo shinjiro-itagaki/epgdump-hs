@@ -23,7 +23,7 @@ data Data = MkData {
   _original_network_id :: Word16, -- 16
   _service_id          :: Word16, -- 16
   _private_data_bytes  :: ByteString -- [8]
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

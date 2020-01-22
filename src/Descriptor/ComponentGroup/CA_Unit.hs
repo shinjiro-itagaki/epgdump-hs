@@ -16,7 +16,7 @@ data Data = MkData {
   _ca_unit_id       :: Word8,
   _num_of_component :: Word8,
   _component_tags   :: Vector Word8
-  }
+  } deriving (Show)
 
 instance Class Data where
   ca_unit_id       = _ca_unit_id

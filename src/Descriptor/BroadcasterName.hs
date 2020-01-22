@@ -15,7 +15,7 @@ class (Base.Class a) => Class a where
 
 data Data = MkData {
   _name :: String
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
   

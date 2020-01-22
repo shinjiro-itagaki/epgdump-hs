@@ -3,14 +3,15 @@
 module Parser.Result where
 import Common(BytesLen)
 
-data Data a =
+data (Show a) => Data a =
   Parsed a
   | DataIsTooShort (Maybe BytesLen)-- 一致するデータがあったが、元データが不足している（続きのデータを追加して再実行すればうまくいくと思われる）。値は不足しているバイト数
   | NotMatch       -- 一致するデータが存在しなかった
   | SumCheckError  -- 合計値エラー。データに何らかの欠損があると思われる 
   | UnknownReason  -- 原因不明の失敗
+  deriving (Show)
 
-map :: (a -> b) -> Data a -> Data b
+map :: (Show a, Show b) => (a -> b) -> Data a -> Data b
 map f x = case x of
   Parsed x         -> Parsed $ f x
   DataIsTooShort i -> DataIsTooShort i
@@ -18,14 +19,14 @@ map f x = case x of
   SumCheckError    -> SumCheckError
   UnknownReason    -> UnknownReason
 
-(>>==) :: (Data a, b) -> (a -> b -> (Data c,b)) -> (Data c,b)
+(>>==) :: (Show a, Show c) => (Data a, b) -> (a -> b -> (Data c,b)) -> (Data c,b)
 (>>==) (Parsed x        ,y) f = f x y
 (>>==) (DataIsTooShort i,y) f = (DataIsTooShort i,y)
 (>>==) (NotMatch        ,y) f = (NotMatch        ,y)
 (>>==) (SumCheckError   ,y) f = (SumCheckError   ,y)
 (>>==) (UnknownReason   ,y) f = (UnknownReason   ,y)
 
-(>>===) :: IO (Data a, b) -> ((a,b) -> IO (Data c,b)) -> IO (Data c,b)
+(>>===) :: (Show a, Show c) => IO (Data a, b) -> ((a,b) -> IO (Data c,b)) -> IO (Data c,b)
 (>>===) io f = do
   res <- io
   case res of

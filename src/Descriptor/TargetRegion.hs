@@ -14,6 +14,7 @@ import Data.Bits((.&.))
 data RegionSpecType =
   Reservation -- others
   | BS_PrefSpec  -- 0x01 Region designation of prefecture for BS digital
+  deriving (Show)
 
 class Base.Class a => Class a where
   region_spec_type :: a -> RegionSpecType -- only 0x01
@@ -23,7 +24,7 @@ data Data = MkData {
   _header            :: Header.Data, 
   _region_spec_type  :: Word8, -- only 0x01 -- 8
   _specs             :: Vector Spec.Data
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

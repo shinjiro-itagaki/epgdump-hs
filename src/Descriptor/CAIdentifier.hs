@@ -16,7 +16,7 @@ class Base.Class a => Class a where
   
 data Data = MkData {
   _ca_system_id      :: Word16
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

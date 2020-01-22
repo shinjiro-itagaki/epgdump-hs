@@ -13,7 +13,7 @@ class Base.Class a => Class a where
 data Data = MkData {
   _header            :: Header.Data,
   _stuffing_bytes    :: [Word8]
-  }
+  } deriving (Show)
   
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

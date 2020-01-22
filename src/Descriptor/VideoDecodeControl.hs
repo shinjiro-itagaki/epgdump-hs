@@ -19,7 +19,7 @@ data Data = MkData {
   _sequence_end_code_flag :: Bool,
   _video_encode_format    :: Word8,
   _reserved_future_use    :: Word8 
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = 

@@ -22,7 +22,7 @@ data Data = MkData {
   _elementary_cell_fields         :: Vector ElementaryCellField.Data,
   _cell_linkage_info              :: Word8, -- 8
   _info                           :: CellLinkageInfo.Data
-  }
+  } deriving (Show)
 
 instance Class Data where
   logical_cell_id                = _logical_cell_id

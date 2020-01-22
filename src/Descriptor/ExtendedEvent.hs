@@ -27,7 +27,7 @@ data Data = MkData {
   _items                  :: Vector Item.Data,
   _text_length            :: Word8,
   _text                   :: String  
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

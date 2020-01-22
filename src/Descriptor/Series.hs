@@ -27,7 +27,7 @@ data Data = MkData {
   _episode_number         :: Word16,
   _last_episode_number    :: Word16,
   _series_name            :: String
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

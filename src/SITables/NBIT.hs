@@ -28,7 +28,7 @@ data Data = MkData {
   _header2             :: Header2.Data,
   _items               :: Vector Item.Data,
   _footer              :: Footer.Data
-  }
+  } deriving (Show)
 
 instance SITableIDs Data where
   pids      _ = MkPIDs [0x0025]

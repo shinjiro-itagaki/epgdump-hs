@@ -25,7 +25,7 @@ data Data = MkData {
   _modulation        :: Word8,
   _system_rate       :: Word32,
   _fec_inner         :: Word8
-  }
+  } deriving (Show)
   
 instance Base.Class Data where
   fromByteString bs = (Nothing, bs)

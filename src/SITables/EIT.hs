@@ -39,7 +39,7 @@ data Data = MkData {
   _last_table_id               :: Word8,
   _items                       :: Vector Item.Data, 
   _footer                      :: Footer.Data
-  }
+  } deriving (Show)
 
 instance ServiceInfo.Class Data where
   original_network_id = _original_network_id

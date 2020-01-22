@@ -18,3 +18,4 @@ data Data =
   | MkSubdirectory    Subdirectory.Data
   | MkTitle           Title.Data
   | MkType            Type.Data
+  deriving (Show)

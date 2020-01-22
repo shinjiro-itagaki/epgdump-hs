@@ -13,7 +13,7 @@ class Base.Class a => Class a where
 
 data Data = MkData {
   _header :: Header.Data
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

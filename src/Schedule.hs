@@ -8,7 +8,7 @@ class Class a where
 data Data = MkData {
   _start_time :: Word64,
   _duration   :: Word32
-  }
+  } deriving (Show)
 
 instance Class Data where
   start_time = _start_time

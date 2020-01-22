@@ -32,7 +32,7 @@ data Data = MkData {
   _event_id            :: Word16,
   _reserved_future_use :: Word8, -- 5
   _running_status      :: Word8 -- 3
-  }
+  } deriving (Show)
 
 instance ServiceInfo.Class Data where
   transport_stream_id = _transport_stream_id  

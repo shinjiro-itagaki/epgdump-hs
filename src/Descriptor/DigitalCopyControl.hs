@@ -27,7 +27,7 @@ data Data = MkData {
   _maximum_bitrate                :: Maybe Word8,
   _component_control_length       :: Maybe Word8,
   _component_controls             :: Maybe (Vector ComponentControl.Data)
-}
+} deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

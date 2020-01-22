@@ -13,19 +13,20 @@ class (Base.Class a) => Class a where
   reserved_future_use :: a -> Word8
   service_group_data  :: a -> [ServiceGroupData]
   
-data ServiceGroupType = Simultaneous Word8 | Undefined Word8
+data ServiceGroupType = Simultaneous Word8 | Undefined Word8 deriving (Show)
 
 data ServiceGroupData = ServiceID {
   primary_service_id :: Word16,
   secondary_service_id :: Word16
   } | PrivateData ByteString
+  deriving (Show)
 
 data Data = MkData {
   _header              :: Header.Data,
   _service_group_type  :: ServiceGroupType,
   _reserved_future_use :: Word8,
   _service_group_data  :: Vector ServiceGroupData
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

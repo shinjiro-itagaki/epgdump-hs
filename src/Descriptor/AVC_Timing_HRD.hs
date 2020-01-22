@@ -38,7 +38,7 @@ data Data = MkData {
   _temporal_poc_flag                  :: Bool,
   _picture_to_display_conversion_flag :: Bool,
   _reserved3                          :: Word8
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

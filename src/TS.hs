@@ -52,6 +52,10 @@ import Common(PID)
 import qualified TS.Packet.Header as Header
 import qualified Parser.Result as Result
 import qualified TS.Reader as Reader
+import SITables(Callbacks)
 
+eachPacket :: String -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
 eachPacket = Reader.eachPacket
+
+eachTable :: (Show state,Show state2) => String -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
 eachTable = Reader.eachTable

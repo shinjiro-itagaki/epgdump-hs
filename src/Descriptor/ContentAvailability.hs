@@ -26,7 +26,7 @@ data Data = MkData {
   _retention_state        :: Word8,
   _encryption_mode        :: Bool,
   _reserved_future_uses   :: Vector Word8
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
   fromByteString bs = (Nothing, bs)

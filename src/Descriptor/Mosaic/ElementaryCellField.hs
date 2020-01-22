@@ -10,7 +10,7 @@ class Class a where
 data Data = MkData {
   _reserved_future_use :: (Bool,Bool), -- 2
   _elementary_cell_id  :: Word8 --6
-  }
+  } deriving (Show)
 
 instance Class Data where
   reserved_future_use = _reserved_future_use 

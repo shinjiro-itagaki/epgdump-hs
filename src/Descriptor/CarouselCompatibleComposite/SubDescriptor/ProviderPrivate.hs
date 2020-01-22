@@ -18,7 +18,7 @@ data Data = MkData {
   _pp_private_scope_type :: Word8,
   _pp_scope_identifier   :: Word32,
   _pp_private_bytes      :: [Word8]
-  }
+  } deriving (Show)
 
 instance Header.Class Data where
   setHeader x h = x { _header = h }

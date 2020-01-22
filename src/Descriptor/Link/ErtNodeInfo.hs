@@ -13,7 +13,7 @@ class Class a where
 data Data = MkData {
   _information_provider_id :: Word16,
   _event_relation_id :: Word16
-  } -- 0x06
+  } deriving (Show) -- 0x06
 
 instance Class Data where
   information_provider_id = _information_provider_id

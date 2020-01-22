@@ -33,7 +33,7 @@ data Data = MkData {
   _avc_still_present        :: Bool,
   _avc_24_hour_picture_flag :: Bool,
   _reserved                 :: Word8
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

@@ -137,7 +137,7 @@ _parseFromCache cache =
     (res,_) <- SITables.parseIO_simple payload' (Just emptable)
     return (res,rest')
   
-_fireCallback ::  Callbacks state -> state -> (Bool, PacketCache) -> IO (PacketCache, state)
+_fireCallback :: (Show state) =>  Callbacks state -> state -> (Bool, PacketCache) -> IO (PacketCache, state)
 _fireCallback callbacks state (False,cache) = do
 --  putStrLn "_fireCallback False"
   return (cache,state) -- fireを実施しない
@@ -156,21 +156,25 @@ _fireCallback callbacks state (True, cache) = do
     (MkCallbacks {_cb_ST  = Just f}) -> impl' f $ callbacks{_cb_ST  = Nothing}
     (MkCallbacks {_cb_TDT = Just f}) -> impl' f $ callbacks{_cb_TDT = Nothing}
     (MkCallbacks {_cb_TOT = Just f}) -> impl' f $ callbacks{_cb_TOT = Nothing}
-    _                                -> return (cache, state)
+    _                                -> do -- putStrLn "not match all"
+                                           return (cache, state)
   where
 --    impl' :: (Base.Class d) => (d -> state -> IO state) -> Callbacks state -> IO (Vector PacketCache,state)
     impl' callback callbacks2 = do
       (res,cache2) <- _parseFromCache cache
       case res of
-        Result.NotMatch -> _fireCallback callbacks2 state (True,cache) -- テーブルがマッチしていない場合は次に移動
+        Result.NotMatch -> do
+--          putStrLn "table not match"
+          _fireCallback callbacks2 state (True,cache) -- テーブルがマッチしていない場合は次に移動
         Result.Parsed d -> do
+--          putStrLn "_fireCallback True"
           (continue, state2) <- callback d state
           if continue
             then _fireCallback callbacks2 state2 (True,cache2) -- パース成功した場合はコールバックを呼び出して他にテーブルが作れないか検索
             else return (cache2,state2) -- 続行フラグがfalseなので処理を終了
         _               -> return (cache2,state) -- 失敗したので終了
           
-_appendPacketAndFireCallback :: PacketCache -> Callbacks state -> state -> Packet.Data -> IO (PacketCache,state)
+_appendPacketAndFireCallback :: (Show state) => PacketCache -> Callbacks state -> state -> Packet.Data -> IO (PacketCache,state)
 _appendPacketAndFireCallback cache callbacks state packet =
   let pid = Header.pid packet
       indicator = Header.payload_unit_start_indicator packet -- ペイロードの開始地点のパケットかどうか
@@ -182,12 +186,12 @@ _appendPacketAndFireCallback cache callbacks state packet =
       else
         (False, cache) -- 取得すべきpidではないのでパケットを追加しない
 
-eachTable :: String -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
+eachTable :: (Show state,Show state2) => String -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
 eachTable path callbacks state mx = do
   fh <- FileHandle.new path
   _eachTable fh callbacks state mx
 
-_eachTable :: FileHandle.Data -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
+_eachTable :: (Show state, Show state2) => FileHandle.Data -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
 _eachTable fh callbacks state mx = do
   (cache,state',mx') <- _eachPacket fh (C.empty,state,mx) impl'
   return state'

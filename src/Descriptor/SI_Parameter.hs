@@ -20,13 +20,13 @@ data Data = MkData {
   _parameter_version  :: Word8,
   _update_time        :: Word16,
   _table_descriptions :: [TableDescription]
-  }
+  } deriving (Show)
 
 data TableDescription = MkTableDescription{
   table_id :: Word8,
   table_description_length :: Word8,
   table_description_bytes :: [Word8]
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

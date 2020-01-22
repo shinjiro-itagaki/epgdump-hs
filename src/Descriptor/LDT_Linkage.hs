@@ -22,7 +22,7 @@ data Data = MkData {
   _transport_stream_id :: Word16,
   _original_network_id :: Word16,
   _items               :: Vector Item.Data
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

@@ -19,7 +19,7 @@ data Data = MkData {
   _item_description_chars  :: String,
   _item_length             :: Word8,
   _item_chars              :: String
-  }
+  } deriving (Show)
 
 instance Class Data where
   item_description_length = _item_description_length

@@ -26,7 +26,7 @@ data Data = MkData {
   _local_time_offset          :: Word16,
   _time_of_change             :: Word64,
   _next_time_offset           :: Word16
-  }
+  } deriving (Show)
 
 instance Class Data where
   country_code               = _country_code

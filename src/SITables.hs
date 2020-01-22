@@ -32,7 +32,7 @@ import SITables.Common(SITableIDs(..),(==.=))
 
 type Callback d state = (d -> state -> IO (Bool,state))
 
-data Callbacks state = MkCallbacks {
+data (Show state) => Callbacks state = MkCallbacks {
   _cb_BAT  :: Maybe (Callback SITables.BAT.Data  state ),
   _cb_BIT  :: Maybe (Callback SITables.BIT.Data  state ),
   _cb_EIT  :: Maybe (Callback SITables.EIT.Data  state ),
@@ -47,9 +47,9 @@ data Callbacks state = MkCallbacks {
   _cb_TOT  :: Maybe (Callback SITables.TOT.Data  state ),
   _cb_ERR  :: Maybe (Callback (Result.Data Header1.Data) state ), -- ヘッダ の解析でエラーがあった場合
   _cb_UNM  :: Maybe (Callback Header1.Data state ) -- ヘッダの解析はできたが、どれにもマッチしなかった場合
-  }
+  }--  deriving (Show)
   
-matchPID :: PID -> Callbacks state -> Bool
+matchPID :: (Show state) => PID -> Callbacks state -> Bool
 matchPID pid callbacks =
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}
@@ -73,10 +73,10 @@ matchPID pid callbacks =
       in (pids empdata) `Common.matchPID` pid
       
 
-parseIO_simple :: (HolderIO.Class bh, Base.Class d) => bh -> Maybe d -> IO (Result.Data d,bh)
+parseIO_simple :: (HolderIO.Class bh, Base.Class d, Show d) => bh -> Maybe d -> IO (Result.Data d,bh)
 parseIO_simple bh init = Header1.parseIO bh >>=== (\(h,bh2) -> Base.parseIO (fromMaybe mkEmpty init) h bh2)
 
-parseIO :: (HolderIO.Class bh) => bh -> state -> Callbacks state -> IO (Bool,state)
+parseIO :: (HolderIO.Class bh, Show state) => bh -> state -> Callbacks state -> IO (Bool,state)
 parseIO bh state callbacks = do
   (res_header1,bh2) <- Header1.parseIO bh
   case res_header1 of
@@ -86,7 +86,7 @@ parseIO bh state callbacks = do
                          Nothing -> return (True,state)  
 
 
-_parseIO :: (HolderIO.Class bh) => bh -> Header1.Data -> state -> Callbacks state -> IO (Bool,state)
+_parseIO :: (HolderIO.Class bh, Show state) => bh -> Header1.Data -> state -> Callbacks state -> IO (Bool,state)
 _parseIO bh header1 state callbacks =
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}
@@ -111,7 +111,7 @@ _parseIO bh header1 state callbacks =
         Result.NotMatch -> _parseIO bh2 header1 state callbacks2 -- マッチしなかったので次の候補に進む
         _               -> return (True,state) -- エラー発生につきコールバックの検索を終了
 
-instance EmptyExist (Callbacks a) where
+instance (Show a) => EmptyExist (Callbacks a) where
   mkEmpty = MkCallbacks {
     _cb_BAT  = Nothing,
     _cb_BIT  = Nothing,

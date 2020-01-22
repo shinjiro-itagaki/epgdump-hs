@@ -24,7 +24,7 @@ data Data = MkData {
   _total_bit_rate     :: Maybe Word8, -- total_bit_rate_flag == True
   _text_length        :: Word8,
   _text               :: String
-  }
+  } deriving (Show)
 
 instance Class Data where
   component_group_id = _component_group_id

@@ -21,7 +21,7 @@ data Data = MkData {
   _service_provider_name        :: String,
   _service_name_length          :: Word8,
   _service_name                 :: String
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

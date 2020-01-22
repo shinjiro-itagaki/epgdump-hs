@@ -18,7 +18,7 @@ data Data = MkData {
   _header :: Header.Data,
   _data_component_id     :: Word16,
   _additional_data_component_info :: [Word8]
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
   fromByteString bs = (Nothing, bs)

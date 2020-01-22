@@ -22,7 +22,7 @@ import Data.Vector(Vector,toList,empty,snoc)
 import Data.Maybe(fromMaybe)
 import qualified BytesReader.Counter as Counter
 
-class (Parser.Class a) => Element a where
+class (Parser.Class a, Show a) => Element a where
   gather :: (HolderIO.Class bh, Parser.Class b) => (b -> a -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
   gather appender restlen fh init
       | restlen < 1 = return (Result.Parsed init, fh)

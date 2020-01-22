@@ -16,7 +16,7 @@ class Class a where
 data Data = MkData { 
   _country_code :: CountryCode.Data,
   _rating       :: Word8
-  }
+  } deriving (Show)
 
 instance Class Data where
   country_code = _country_code  

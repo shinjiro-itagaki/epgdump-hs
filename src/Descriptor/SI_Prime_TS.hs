@@ -23,7 +23,7 @@ data Data = MkData {
   _si_prime_ts_network_id       :: Word16,
   _si_prime_transport_stream_id :: Word16,
   _table_descriptions           :: [TableDescription]
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

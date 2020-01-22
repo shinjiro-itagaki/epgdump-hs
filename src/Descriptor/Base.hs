@@ -7,5 +7,5 @@ import BytesReader.HolderIO
 import BytesReader.Counter
 -- import Parser(FromWord64(..),ParseResult(..),mapParseResult,parseFlow)
 
-class Class a where
+class (Show a) => Class a where
   fromByteString :: ByteString -> (Maybe a,ByteString)

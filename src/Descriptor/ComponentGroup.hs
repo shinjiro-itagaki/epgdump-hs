@@ -25,7 +25,7 @@ data Data = MkData {
   _total_bit_rate_flag  :: Bool,
   _num_of_group         :: Word8,
   _items                :: Vector Item.Data  
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

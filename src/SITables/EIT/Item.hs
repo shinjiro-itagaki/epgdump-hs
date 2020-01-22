@@ -33,7 +33,7 @@ data Data = MkData {
   _free_CA_mode            :: Bool,
   _descriptors_loop_length :: Word16,
   _descriptors             :: Vector Descriptor.Data
-  }
+  } deriving (Show)
 
 instance HasDescriptors Data where
   descriptors = toList . _descriptors

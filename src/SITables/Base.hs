@@ -14,7 +14,7 @@ import qualified Data.Digest.CRC32 as CRC32
 
 -- header1は必須
 -- footerはないものもある
-class (Header1.Class a, SITableIDs a, Parser.Class a) => Class a where
+class (Header1.Class a, SITableIDs a, Parser.Class a, Show a) => Class a where
   footer                     :: a -> Maybe Footer.Data
   parseIOFlowAfterHeader1    :: (HolderIO.Class bh) => ParseIOFlow bh a
 
@@ -32,9 +32,9 @@ class (Header1.Class a, SITableIDs a, Parser.Class a) => Class a where
   section_length_without_crc :: a -> BytesLen
   section_length_without_crc x = (Header1.section_length x) - (crc_length x)
   
-crcCheck :: (HolderIO.Class bh) => (ParseResult a, bh) -> IO (ParseResult a, bh)
+crcCheck :: (HolderIO.Class bh, Show a) => (ParseResult a, bh) -> IO (ParseResult a, bh)
 crcCheck (Result.Parsed x, bh) = return $ (\x -> (x,bh)) $ if (CRC32.crc32 $ HolderIO.cache bh) == 0 then Result.Parsed x else Result.SumCheckError
 crcCheck x = return x
 
-clearCache :: (HolderIO.Class bh) => (ParseResult a, bh) -> IO (ParseResult a, bh)
+clearCache :: (HolderIO.Class bh, Show a) => (ParseResult a, bh) -> IO (ParseResult a, bh)
 clearCache (res, bh) = return (res, HolderIO.clearCache bh)

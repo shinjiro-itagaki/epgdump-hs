@@ -21,7 +21,7 @@ data Data = MkData {
   _broadcasting_identifier            :: Word8,
   _additional_broadcasting_identifier :: Word8,
   _additional_identification_info     :: [Word8]
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
   fromByteString bs = (Nothing, bs)

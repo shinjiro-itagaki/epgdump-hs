@@ -19,7 +19,8 @@ class Class a where
 data Data =
   IsTV TV
   | IsSD SD
-  | IsNone None  
+  | IsNone None
+  deriving (Show)
 
 data TV = MkTV {
   _terrestrial_broadcaster_id       :: Word16,
@@ -28,7 +29,7 @@ data TV = MkTV {
   _affiliation_ids                  :: [Word8],
   _tv_info                          :: [Info],
   _tv_private_data_bytes            :: ByteString
-  }
+  } deriving (Show)
 
 data SD = MkSD {
   _terrestrial_sound_broadcaster_id              :: Word16,
@@ -37,17 +38,17 @@ data SD = MkSD {
   _sound_broadcast_affiliation_ids               :: [Word8],
   _sd_info                                       :: [Info],
   _sd_private_data_bytes                         :: ByteString
-  }
+  } deriving (Show)
   
 data None = MkNone {
   _reserved_future_use :: [Word8]
-  }
+  } deriving (Show)
 
 
 data Info = MkInfo {
   _broadcaster_id      :: Word8,
   _original_network_id :: Word16
-  }
+  } deriving (Show)
 
   
 instance Class TV where

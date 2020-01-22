@@ -15,7 +15,7 @@ class Class a where
 data Data = MkData {
   _service_id :: Word16,
   _event_id   :: Word16
-  }
+  } deriving (Show)
 
 instance Class Data where
   service_id = _service_id

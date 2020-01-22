@@ -40,7 +40,7 @@ data Data = MkData {
   _schedule_description_length :: Word16,
   _schedules                   :: Vector Schedule.Data,
   _descriptors                 :: Vector Descriptor.Data
-  }
+  } deriving (Show)
 
 instance HasDescriptors Data where
   descriptors = toList . _descriptors

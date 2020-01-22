@@ -21,7 +21,7 @@ data Data = MkData {
   _guard_interval    :: Word8,
   _transmission_mode :: Word8,
   _frequencies       :: [Word16]
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 

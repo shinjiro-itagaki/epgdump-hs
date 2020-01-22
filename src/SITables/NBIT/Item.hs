@@ -40,7 +40,7 @@ data Data = MkData {
   _reserved_future_use2      :: Word8, -- 4
   _descriptors_loop_length   :: Word16,
   _descriptors               :: Vector Descriptor.Data
-  }
+  } deriving (Show)
 
 instance Class Data where
   information_id            = _information_id

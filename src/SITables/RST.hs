@@ -25,7 +25,7 @@ class (Header1.Class a) => Class a where
 data Data = MkData {
   _header1 :: Header1.Data,
   _items   :: Vector Item.Data
-  }
+  } deriving (Show)
 
 instance SITableIDs Data where
   pids      _ =  MkExcludePIDs [0x0013]

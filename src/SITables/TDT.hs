@@ -22,7 +22,7 @@ data Data = MkData {
   -- CommonHeader 
   _header1 :: Header1.Data,
   _jst_time :: Word64
-  }
+  } deriving (Show)
 
 instance Header1.Class Data where
   setHeader1 x h = x { _header1 = h }

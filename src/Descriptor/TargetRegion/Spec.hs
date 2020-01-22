@@ -25,7 +25,7 @@ data TargetArea =
   | Okinawa
   | Islands_Tokyo -- part of Tokyo (Izu,Ogasawara islands)
   | Islands_Kagoshima --  part of Kagoshima
-  deriving (Eq,Enum,Bounded)
+  deriving (Eq,Enum,Bounded,Show)
 
 bitmaplen = Prelude.length [(minBound :: TargetArea) .. (maxBound :: TargetArea)]
 
@@ -37,7 +37,7 @@ class Class a where
 
 data Data = MkData {
   _pefecture_bitmap :: Word64 -- 56
-  }
+  } deriving (Show)
 
 instance Class Data where
   pefecture_bitmap = fromWord64 . _pefecture_bitmap

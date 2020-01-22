@@ -16,7 +16,7 @@ class (Base.Class a) => Class a where
 data Data = MkData {
   _header            :: Header.Data,
   _sub_descriptors   :: Vector SubDescriptor.Data
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 

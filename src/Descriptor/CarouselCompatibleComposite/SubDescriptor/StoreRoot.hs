@@ -16,7 +16,7 @@ data Data = MkData {
   _update_type     :: Bool,
   _reserved        :: Word8,
   _store_root_path :: String
-  }
+  } deriving (Show)
 
 instance Header.Class Data where
   header = _header

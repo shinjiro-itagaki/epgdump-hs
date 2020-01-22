@@ -38,7 +38,7 @@ data Data = MkData {
   _descriptors              :: Vector Descriptor.Data,
   _items                    :: Vector Item.Data,
   _footer                   :: Footer.Data
-  }
+  } deriving (Show)
 
 instance Header1.Class Data where
   header1 = _header1

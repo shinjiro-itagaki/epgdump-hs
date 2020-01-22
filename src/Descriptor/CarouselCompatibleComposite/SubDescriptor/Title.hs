@@ -18,7 +18,7 @@ data Data = MkData {
   _title_descriptor_length :: Word8,
   _title_text              :: String,
   _title_iso_639_language_code :: LangCode.Data
-  }
+  } deriving (Show)
  
 instance Header.Class Data where
   descriptor_tag    = _title_descriptor_tag

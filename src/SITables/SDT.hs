@@ -32,7 +32,7 @@ data Data = MkData {
   _reserved_future_use :: Word8,
   _items               :: Vector Item.Data,
   _footer              :: Footer.Data
-  }
+  } deriving (Show)
 
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty empty mkEmpty

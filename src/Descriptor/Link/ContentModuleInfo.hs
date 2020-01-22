@@ -22,7 +22,7 @@ data Data = MkData {
   _content_id :: Word32,
   _component_tag :: Word8,
   _module_id :: Word16
-  } -- 0x05
+  } deriving (Show) -- 0x05
 
 instance ServiceInfo.Class Data where
   original_network_id = _original_network_id 

@@ -14,7 +14,7 @@ class Base.Class a => Class a where
 
 data Data = MkData {
   _ratings :: Vector Item.Data
-  }
+  } deriving (Show)
 
 
 instance Base.Class Data where

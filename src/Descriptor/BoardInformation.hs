@@ -22,7 +22,7 @@ data Data = MkData {
   _text_length  :: Word8,
   _title        :: String,
   _title_length :: Word8  
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

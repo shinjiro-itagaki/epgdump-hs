@@ -8,7 +8,7 @@ class Class a where
 data Data = MkData {
   _selector_length :: Word8,
   _selector_bytes  :: ByteString
-  }
+  } deriving (Show)
 
 instance Class Data where
   selector_length = _selector_length 

@@ -24,7 +24,7 @@ type Payload = ByteString
 
 data ContinuityType = Continuous | Duplicated | ContinuousErr
 
-class (Header.Class t) => Class t where
+class (Header.Class t, Show t) => Class t where
   -- please implement
   mkEOF :: t
   mkOK  :: Header.Data -> Maybe AdaptationField.Data -> Payload -> t

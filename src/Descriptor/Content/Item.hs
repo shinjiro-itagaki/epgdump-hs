@@ -15,7 +15,7 @@ data Data = MkData {
   _content_nibble_level_2 :: Word8,
   _user_nibble_1 :: Word8,
   _user_nibble_2 :: Word8
-  }
+  } deriving (Show)
 
 instance Class Data where
   content_nibble_level_1 = _content_nibble_level_1

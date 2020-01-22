@@ -26,6 +26,7 @@ data LogoTransmission =
   | TypeExcept { -- others
       reserved_future_uses :: [Word8] -- [8]
       }
+  deriving (Show)
 
 class Base.Class a => Class a where
   logo_transmission_type :: a -> Word8
@@ -35,7 +36,7 @@ data Data = MkData {
   _header                 :: Header.Data,
   _logo_transmission_type :: Word8,
   _logo_transmission      :: LogoTransmission
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

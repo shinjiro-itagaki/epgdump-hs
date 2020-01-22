@@ -28,7 +28,7 @@ data Data = MkData {
   _descriptors_loop_length :: Word16,
   _descriptors :: [Descriptor.Data],
   _footer :: Footer.Data
-  }
+  } deriving (Show)
 
 instance Header1.Class Data where
   header1 = _header1

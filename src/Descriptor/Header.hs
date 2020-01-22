@@ -10,7 +10,7 @@ import qualified BytesReader.Counter as Counter
 import qualified Parser
 import FromWord64 hiding (Class)
 
-class Class a where
+class (Show a) => Class a where
   header            :: a -> Data
   setHeader         :: a -> Data -> a
   descriptor_tag    :: a -> Word8
@@ -21,7 +21,7 @@ class Class a where
 data Data = MkData {
   _descriptor_tag    :: Word8,
   _descriptor_length :: Word8
-  }
+  } deriving (Show)
 
 instance Class Data where
   header x = x

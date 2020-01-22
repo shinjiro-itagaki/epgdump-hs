@@ -36,7 +36,7 @@ data Data = MkData {
   _reserved_future_use      :: Bool,
   _reserved1                :: Word8,
   _section_length           :: BytesLen
-  }
+  } deriving (Show)
 
 instance Class Data where
   header1                x = x

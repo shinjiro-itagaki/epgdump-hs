@@ -15,7 +15,7 @@ data Data = MkData {
   _transport_stream_id :: Word16,
   _service_id :: Word16,
   _content_id :: Word32
-  } -- 0x04
+  } deriving (Show) -- 0x04
 
 instance ServiceInfo.Class Data where
   original_network_id = _original_network_id 

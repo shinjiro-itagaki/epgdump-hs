@@ -18,7 +18,7 @@ data Data = MkData {
   _country_available_flag :: Bool,
   _reserved_future_use    :: Word8,
   _country_codes          :: Vector CountryCode.Data
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

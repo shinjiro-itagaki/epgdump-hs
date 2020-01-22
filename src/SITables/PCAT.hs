@@ -34,7 +34,7 @@ data Data = MkData {
   _num_of_content_version :: Word8,
   _items                  :: Vector Item.Data,
   _footer                 :: Footer.Data
-  }
+  } deriving (Show)
 
 instance Header1.Class Data where
   setHeader1 d h = d {_header1 = h }

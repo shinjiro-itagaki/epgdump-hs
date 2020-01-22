@@ -26,7 +26,7 @@ data Data = MkData {
   _modulation_type_a                       :: Word8,
   _modulation_type_b                       :: Word8,
   _additional_connected_transmission_infos :: Vector Word8
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

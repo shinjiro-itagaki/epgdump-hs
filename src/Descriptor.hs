@@ -121,6 +121,7 @@ data Data =
   | TimeShiftedEvent             Descriptor.TimeShiftedEvent.Data
   | TimeShiftedService           Descriptor.TimeShiftedService.Data
   | VideoDecodeControl           Descriptor.VideoDecodeControl.Data
+  deriving (Show)  
 
 instance EmptyExist Descriptor.Data where
   mkEmpty = Null
@@ -128,7 +129,7 @@ instance EmptyExist Descriptor.Data where
 instance Parser.Class Descriptor.Data where
 --  parseIOFlow = flowStart
 
-gather :: (HolderIO.Class bh, Parser.Class b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
+gather :: (HolderIO.Class bh, Parser.Class b, Show b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
 gather appender restlen fh init
   | restlen < 1 = return (Result.Parsed init, fh)
   | otherwise = do

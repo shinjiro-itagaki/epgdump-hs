@@ -24,7 +24,7 @@ data Data = MkData {
   _reserved_future_use :: Word8,
   _area_code_length    :: Word8,
   _area_codes          :: Vector AreaCode.Data
-  }
+  } deriving (Show)
 
 instance Class Data where
   service_id          = _service_id

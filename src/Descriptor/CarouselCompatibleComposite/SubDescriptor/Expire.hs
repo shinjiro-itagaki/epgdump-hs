@@ -20,7 +20,7 @@ data Data = MkData {
   __MJD_JST_time       :: Maybe Word64,
   _reserved_future_use :: Maybe Word8,
   _passed_seconds      :: Maybe Word32
-  }
+  } deriving (Show)
 
 instance Header.Class Data where
   header = _header

@@ -29,7 +29,7 @@ data Data = MkData {
   _reserved_future_use          :: Word8,
   _transport_descriptors_length :: Word16,
   _descriptors                  :: Vector Descriptor.Data
-  }
+  } deriving (Show)
 
 instance HasDescriptors Data where
   descriptors = toList . _descriptors

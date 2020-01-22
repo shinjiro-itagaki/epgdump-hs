@@ -22,6 +22,8 @@ instance EmptyExist Bool where
   mkEmpty = False
 
 type ParseResult = Result.Data
+
+mapParseResult :: (Show a, Show b) => (a -> b) -> Result.Data a -> Result.Data b
 mapParseResult = Result.map
 
 data (HolderIO.Class bh, Class result) => ParseIOFlow bh result =
@@ -38,7 +40,7 @@ infixl 2 >>==
 (==<<) l r = r >>== l
 infixl 2 ==<<
   
-class (EmptyExist a) => Class a where
+class (EmptyExist a, Show a) => Class a where
   -- please implement if you need
   parseIOFlow :: (HolderIO.Class bh) => ParseIOFlow bh a
   parseIOFlow = flowStart

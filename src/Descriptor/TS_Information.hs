@@ -22,13 +22,13 @@ data Data = MkData {
   _transmission_type_count :: Word8,
   _ts_name                 :: String,
   _transmission_types      :: [TransmissionType]
-  }
+  } deriving (Show)
 
 data TransmissionType = MkTransmissionType {
   transmission_type_info :: Word8,
   num_of_service :: Word8,
   services :: [Word16]
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 

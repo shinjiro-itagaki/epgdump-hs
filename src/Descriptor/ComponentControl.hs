@@ -25,7 +25,7 @@ data Data = MkData {
   _reserved_future_use            :: Bool,
   _user_defined                   :: Word8,
   _maximum_bitrate                :: Maybe Word8
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
   fromByteString bs = (Nothing, bs)

@@ -21,7 +21,7 @@ data Data = MkData {
   _event_count :: Word8,
   _events      :: [EventInfo.Data],
   _groups      :: Vector GroupInfo
-}
+  } deriving (Show)
 
 data GroupType =
   Undefined --0x0 or 0x6 - 0xF,
@@ -29,7 +29,8 @@ data GroupType =
   | Relay -- -0x2
   | Movement -- 0x3
   | RelayToOtherNetworks -- 0x4
-  | MovementFromOtherNetworks -- 0x5  
+  | MovementFromOtherNetworks -- 0x5
+  deriving (Show)
 
 fromNum :: (Num a,Eq a) => a -> GroupType
 fromNum i
@@ -53,3 +54,4 @@ data GroupInfo =
   Others       ByteString
   | RelayTo      LinkEventInfo.Data
   | MovementFrom LinkEventInfo.Data
+  deriving (Show)

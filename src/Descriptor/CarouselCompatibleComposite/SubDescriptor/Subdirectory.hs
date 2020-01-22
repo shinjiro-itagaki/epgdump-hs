@@ -10,7 +10,7 @@ class (Base.Class a) => Class a where
 data Data = MkData {
   _header            :: Header.Data,
   _subdirectory_path :: String
-  }
+  } deriving (Show)
 
 instance Header.Class Data where
   setHeader x h = x {_header = h}  

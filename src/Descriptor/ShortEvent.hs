@@ -24,7 +24,7 @@ data Data = MkData {
   _event_name        :: String,
   _text_length       :: Word8,
   _text              :: String
-  }
+  } deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

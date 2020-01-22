@@ -8,7 +8,7 @@ import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
 import FromWord64 hiding (Class)
 import qualified Parser
 
-class Class a where
+class (Show a) => Class a where
   header2                :: a -> Data
   setHeader2             :: a -> Data -> a
   
@@ -33,7 +33,7 @@ data Data = MkData {
   _current_next_indicator :: Bool,
   _section_number         :: Word8,
   _last_section_number    :: Word8
-  }
+  } deriving (Show)
 
 instance Class Data where
   header2              x = x

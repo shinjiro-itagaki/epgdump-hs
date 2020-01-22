@@ -11,7 +11,7 @@ class Class a where
 
 data Data = MkData {
   _uri :: String
-  } -- 0x07
+  } deriving (Show) -- 0x07
 
 instance Class Data where
   uri = _uri

@@ -32,7 +32,7 @@ data Data = MkData {
   _original_network_id :: Word16,
   _items               :: Vector Item.Data,
   _footer              :: Footer.Data
-  }
+  } deriving (Show)
   
 instance Header1.Class Data where
   setHeader1 x h = x {_header1 = h}

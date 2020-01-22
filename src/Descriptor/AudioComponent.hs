@@ -43,7 +43,7 @@ data Data = MkData {
   _iso_639_language_code  :: LangCode.Data,
   _iso_639_language_code2 :: Maybe LangCode.Data,
   _text                   :: String  
-}
+} deriving (Show)
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)
