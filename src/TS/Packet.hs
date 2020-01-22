@@ -101,31 +101,30 @@ class (Header.Class t, Show t) => Class t where
 data Data = MkData {
   _header  :: Header.Data,
   _maf     :: Maybe AdaptationField.Data,
-  _payload :: Payload,
-  _duplicated :: Bool
+  _payload :: Payload
   } | EOF | ContinuityCounterError deriving(Eq,Show)
 
 instance EmptyExist Data where
-  mkEmpty = MkData mkEmpty (Just AdaptationField.mkEmpty) mkEmpty False
-
+  mkEmpty = MkData mkEmpty (Just AdaptationField.mkEmpty) mkEmpty
+  
 instance Header.Class Data where
-  header x@(MkData _ _ _ _) = _header x
-  header  _             = mkEmpty :: Header.Data  
+  header x@(MkData _ _ _) = _header x
+  header  _               = mkEmpty :: Header.Data  
   
 instance Class Data where
   (===) x y = x == y
   
-  adaptation_field x@(MkData _ _ _ _) = _maf x
-  adaptation_field _                  = Nothing
+  adaptation_field x@(MkData _ _ _) = _maf x
+  adaptation_field _                = Nothing
 
-  payload x@(MkData _ _ _ _) = _payload x
-  payload _                  = BS.empty
+  payload x@(MkData _ _ _) = _payload x
+  payload _                = BS.empty
   
   isEOF EOF = True
   isEOF _   = False
   
-  isOK (MkData _ _ _ _) = True
-  isOK _                = False
+  isOK (MkData _ _ _) = True
+  isOK _              = False
 
   mkEOF = EOF
-  mkOK h af b = MkData h af b False
+  mkOK h af b = MkData h af b
