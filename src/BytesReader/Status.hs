@@ -18,6 +18,9 @@ class Class a where
   progress_percent :: (Fractional b) => a -> b
   progress_percent = fromRational . (* 100) . progress
   
+  getStatus :: a -> Data
+  getStatus x = new (pos x) (size x)
+  
 data Data = MkData {
   _pos :: Word64,
   _size :: BytesLen

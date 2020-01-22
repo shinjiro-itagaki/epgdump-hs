@@ -95,7 +95,6 @@ instance Counter.Class ByteStringHolder where
 
 instance BytesReaderBase.Class ByteStringHolder where
   isEOF        = return . BS.null . _data
---  getBytesIO   = BytesReader.getBytes
   getBytesIO x i
     | i < 1             = return (BS.empty, x)
     | BS.null $ _data x = return (BS.empty, x)
@@ -116,17 +115,14 @@ instance BytesReaderBase.Class ByteStringHolder where
                  }
              )
 
---  getBitsIO    = BytesReader.getBits
   cache        = (foldl BS.append BS.empty) . _cache
   clearCache x = x { _cache = C.empty }
-
-instance BytesReader.Class ByteStringHolder where
-  pos            = _pos
-  size           = _size
   loaded         = _loaded
   stockedBitsLen = _stockedBitsLen
   updateStockedBitsLen x bitslen = x {_stockedBitsLen = bitslen }
             
+instance BytesReader.Class ByteStringHolder where
+
 _parseFromCache :: (Base.Class d) => PacketCache -> IO (Result.Data d,PacketCache)
 _parseFromCache cache =
   let emptable = mkEmpty
@@ -224,7 +220,7 @@ _eachPacket fh something act = do
            then do
 --             putStrLn $ show p
 --             putStrLn $ show $ Header.pid p
-             act p something (FileHandle.getReadonlyInfo fh') bytes
+             act p something (Status.getStatus fh') bytes
              >>= (\(continue,something') ->
                      if continue
                      then _eachPacket fh' something' act

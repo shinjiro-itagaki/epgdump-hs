@@ -96,7 +96,7 @@ class (Header.Class t, Show t) => Class t where
       else do
       res@(bytes,h'') <- BytesReaderBase.getBytesIO h' (bytesLen - 1)
       putStrLn "====="
-      putStrLn $ show $ BytesReader.loaded h''
+      putStrLn $ show $ BytesReaderBase.loaded h''
       putStrLn $ show $ BS.unpack $ bytes
       return (fromByteString bytes,res)
       

@@ -27,19 +27,19 @@ class (BytesReader.Class a) => Class a where
   new       :: String -> IO a
   syncIO    :: a -> IO a
   -----
-  getBytesCounter   :: a -> BytesLen
-  getBytesCounter = Counter.getBytesCounter
-  resetBytesCounter :: a -> a
-  resetBytesCounter = Counter.resetBytesCounter
+  -- getBytesCounter   :: a -> BytesLen
+  -- getBytesCounter = Counter.getBytesCounter
+  -- resetBytesCounter :: a -> a
+  -- resetBytesCounter = Counter.resetBytesCounter
   
-  getReadonlyInfo :: a -> Status.Data  
-  getReadonlyInfo = BytesReader.getStatus
+  -- getReadonlyInfo :: a -> Status.Data  
+  -- getReadonlyInfo = Status.getStatus
 
-  pos :: a -> BytesLen
-  pos = BytesReader.pos
+  -- pos :: a -> BytesLen
+  -- pos = BytesReader.pos
   
-  size :: a -> BytesLen
-  size = BytesReader.size
+  -- size :: a -> BytesLen
+  -- size = BytesReader.size
 
 progress :: (Status.Class a) => a -> Rational
 progress = Status.progress
