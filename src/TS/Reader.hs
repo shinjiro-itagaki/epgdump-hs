@@ -123,22 +123,30 @@ instance BytesReaderBase.Class ByteStringHolder where
             
 instance BytesReader.Class ByteStringHolder where
 
-_parseFromCache :: (Base.Class d) => PacketCache -> IO (Result.Data d,PacketCache)
-_parseFromCache cache =
+_parseFromCache :: (Base.Class d) => PacketCache -> PID -> IO (Result.Data d,PacketCache)
+_parseFromCache cache pid =
   let emptable = mkEmpty
       pids' = pids emptable
-      (matched',others') = C.partition (\p -> pids' `Common.matchPID` (Header.pid p)) cache
+      (matched',others') = C.partition (\p -> pid == (Header.pid p)) cache
       (block', rest') = splitByFirstBlock matched'
-      payload' = toByteStringHolder $ foldl (\res p -> BS.append res (Packet.payload p)) BS.empty block'
+      bytes' = foldl (\res p -> BS.append res (Packet.payload p)) BS.empty block'
+      payload' = toByteStringHolder bytes' 
   in do
+--    putStrLn $ show block'
+--    putStrLn $ show "---"    
+--    putStrLn $ show $ BS.unpack bytes'
     (res,_) <- SITables.parseIO_simple payload' (Just emptable)
+    case res of
+      Result.Parsed x -> putStrLn $ show x
+      _        -> return ()
+--    putStrLn $ show "---"
     return (res,rest')
   
-_fireCallback :: (Show state) =>  Callbacks state -> state -> (Bool, PacketCache) -> IO (PacketCache, state)
-_fireCallback callbacks state (False,cache) = do
+_fireCallback :: (Show state) =>  Callbacks state -> state -> PID -> (Bool, PacketCache) -> IO (PacketCache, state)
+_fireCallback callbacks state _ (False,cache) = do
 --  putStrLn "_fireCallback False"
   return (cache,state) -- fireを実施しない
-_fireCallback callbacks state (True, cache) = do
+_fireCallback callbacks state pid (True, cache) = do
 --  putStrLn "_fireCallback True"
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}
@@ -153,30 +161,33 @@ _fireCallback callbacks state (True, cache) = do
     (MkCallbacks {_cb_ST  = Just f}) -> impl' f $ callbacks{_cb_ST  = Nothing}
     (MkCallbacks {_cb_TDT = Just f}) -> impl' f $ callbacks{_cb_TDT = Nothing}
     (MkCallbacks {_cb_TOT = Just f}) -> impl' f $ callbacks{_cb_TOT = Nothing}
-    _                                -> do -- putStrLn "not match all"
+    _                                -> do --putStrLn "not match all"
                                            return (cache, state)
   where
 --    impl' :: (Base.Class d) => (d -> state -> IO state) -> Callbacks state -> IO (Vector PacketCache,state)
     impl' callback callbacks2 = do
-      (res,cache2) <- _parseFromCache cache
+      (res,cache2) <- _parseFromCache cache pid
+--      putStrLn "pid matched"
       case res of
         Result.NotMatch -> do
 --          putStrLn "table not match"
-          _fireCallback callbacks2 state (True,cache) -- テーブルがマッチしていない場合は次に移動
+          _fireCallback callbacks2 state pid (True,cache)  -- テーブルがマッチしていない場合は次に移動
         Result.Parsed d -> do
 --          putStrLn "_fireCallback True"
           (continue, state2) <- callback d state
           if continue
-            then _fireCallback callbacks2 state2 (True,cache2) -- パース成功した場合はコールバックを呼び出して他にテーブルが作れないか検索
+            then _fireCallback callbacks2 state2 pid (True,cache2) -- パース成功した場合はコールバックを呼び出して他にテーブルが作れないか検索
             else return (cache2,state2) -- 続行フラグがfalseなので処理を終了
-        _               -> return (cache2,state) -- 失敗したので終了
+        _               -> do
+--          putStrLn "_fireCallback parse failed"
+          return (cache2,state) -- 失敗したので終了
           
 _appendPacketAndFireCallback :: (Show state) => PacketCache -> Callbacks state -> state -> Packet.Data -> IO (PacketCache,state)
 _appendPacketAndFireCallback cache callbacks state packet =
   let pid = Header.pid packet
       indicator = Header.payload_unit_start_indicator packet -- ペイロードの開始地点のパケットかどうか
   in do
-    _fireCallback callbacks state $
+    _fireCallback callbacks state pid $
       if SITables.matchPID pid callbacks -- 取得すべきpidかどうか
       then
         (indicator, cache C.|> packet) -- パケットを追加済みのキャッシュを返す。パケットの開始地点であれば、以前までに蓄積したパケットからテーブルを構築する
@@ -210,6 +221,24 @@ eachPacket path something act = do
   fh <- FileHandle.new path
   _eachPacket fh something act
 
+_print :: ByteString -> Packet.Data -> IO ()
+_print bytes p = do
+  if Header.pid p < 100 then
+    do
+--             putStrLn $ show p
+--             putStrLn $ show $ (.&. 0x0f) $ (0xffffffff :: Word32)               
+      putStrLn "====="
+      putStrLn $ show $ Header.pid p
+      putStrLn $ show $ BS.unpack $ bytes
+      putStrLn $ show $ Header.continuity_counter p
+    else
+    do
+--      putStrLn ""
+      return ()
+--             putStrLn $ show $ Header.header p
+--             putStrLn $ show $ fromInteger $ toInteger $ (0xff :: Word8)
+--             putStrLn $ show $ Header.parseFromWord8 [0x00,0x01,0x01]  
+
 _eachPacket :: FileHandle.Data -> a -> (Packet.Data -> a -> FileHandle.ReadonlyData -> ByteString -> IO (Bool,a)) -> IO a
 _eachPacket fh something act = do
   (resp,(bytes,fh')) <- Packet.read fh
@@ -218,8 +247,7 @@ _eachPacket fh something act = do
       then return something -- EOFにつき終了
       else if Packet.isOK p
            then do
---             putStrLn $ show p
---             putStrLn $ show $ Header.pid p
+--             _print bytes p
              act p something (Status.getStatus fh') bytes
              >>= (\(continue,something') ->
                      if continue

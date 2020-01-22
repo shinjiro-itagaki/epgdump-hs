@@ -20,7 +20,7 @@ class Class a where
   flags5                               :: a -> Flags5 -- 5
   optional_fields                      :: a -> OptionalFields.Data 
   stuffing_bytes                       :: a -> ByteString -- ?? (rest bytes)
-  parse                                :: Header.Data -> [Word8] -> (Result.Data (Maybe a),[Word8])
+  parse                                :: Header.Data -> ByteString -> (Result.Data (Maybe a),ByteString)
 
 data Data = MkData {
   _adaptation_field_length              :: Word8, -- 8
@@ -42,11 +42,19 @@ mkEmpty = MkData {
   _stuffing_bytes                       = BS.empty
   }
 
-    
-flow1 :: Data -> [Word8] -> (Result.Data Data, [Word8])
-flow1 d (x:xs)
-  | toInteger (Prelude.length xs) < (toInteger x) = (Result.DataIsTooShort $ Just $ fromInteger $ toInteger $ ((x -) $ fromInteger $ toInteger $ Prelude.length xs), [])
-  | otherwise = (Result.Parsed $ (d {_adaptation_field_length = x}), Prelude.drop (fromInteger $ toInteger x) xs)
+-- TODO
+-- AdaptationFieldの詳細な内容についてはパースしていないので後日、必要があれば実装する
+flow1 :: Data -> ByteString -> (Result.Data (Maybe Data), ByteString)
+flow1 d bytes =
+  case  BS.uncons bytes of
+    Nothing -> (Result.DataIsTooShort Nothing, bytes)
+    Just (len,bytes') ->
+      let byteslen' = toInteger $ BS.length bytes'
+          len'      = toInteger len
+          len''     = fromInteger len'
+      in if byteslen' < len'
+         then (Result.DataIsTooShort $ Just $ fromInteger $ len' - byteslen'            , BS.empty)
+         else (Result.Parsed         $ Just $ (d {_adaptation_field_length = fromInteger len'}) , BS.drop len'' bytes')
 
 instance Class Data where
   adaptation_field_length              = fromInteger . toInteger . _adaptation_field_length
@@ -56,9 +64,10 @@ instance Class Data where
   flags5                               = _flags5
   optional_fields                      = _optional_fields
   stuffing_bytes                       = _stuffing_bytes
-  parse h y@(x:xs) =
+  parse h bytes =
     if Header.has_adaptation_field h then
-      (\(a,b) -> ((Result.map Just a),b)) $ ((Result.Parsed $ mkEmpty,xs)
-      >>== flow1)
+      flow1 mkEmpty bytes
+--      (\(a,b) -> ((Result.map Just a),b)) $ ((Result.Parsed $ mkEmpty,bytes)
+--      >>== flow1)
     else
-      (Result.Parsed Nothing, y)
+      (Result.Parsed Nothing, bytes)

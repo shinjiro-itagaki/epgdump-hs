@@ -18,6 +18,7 @@ import qualified BytesReader.Handler as Handler
 import qualified BytesReader.Counter as Counter
 import qualified BytesReader.Base as Base
 import qualified BytesReader.StockedBitsLen as StockedBitsLen
+import qualified BytesReader.Base as BytesReaderBase
 
 -- ロード済みの在庫Word8のうち何ビットが残っているかを示すフラグ
 -- 在庫の消費は左側ビットが優先
@@ -37,6 +38,7 @@ class (Base.Class a, Status.Class a) => Class a where
             if x == syncByte
               then do
 --                (putStrLn $ show x)
+--                (putStrLn $ show $ BytesReaderBase.loaded fh2)
                 return fh2
               else syncIO fh2 syncByte
 

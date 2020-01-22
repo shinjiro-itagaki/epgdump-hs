@@ -67,6 +67,11 @@ class (Header.Class t, Show t) => Class t where
           Duplicated    -> impl' (pre ++ [x]) ys     True -- 重複しているものは削除
           ContinuousErr -> []
 
+  -- adaptation_field_length :: a -> Word64
+  -- adaptation_field_length x = case adaptation_field x of
+  --                               Nothing -> 0
+  --                               Just af -> AdaptationField.adaptation_field_length af
+
   -- 引数のByteStringは同期用の先頭バイトは削られているものを想定している
   fromByteString :: ByteString -> Result.Data t
   fromByteString bytes =
@@ -75,13 +80,13 @@ class (Header.Class t, Show t) => Class t where
         byteslen' = toInteger $ BS.length bytes :: Integer
         bytes'    = BS.take plen'' bytes
         header    = Header.parse $ BS.take 3 bytes'
-        (res,rest) = AdaptationField.parse header $ BS.unpack $ BS.drop 3 bytes'
-        body      = BS.pack rest
+        (res,rest) = AdaptationField.parse header bytes'
+        payload    = if Header.has_payload header then rest else mkEmpty
     in
       if byteslen' < plen'
       then Result.DataIsTooShort $ Just $ fromInteger $ (plen' - byteslen')
       else case res of
-        Result.Parsed maf       -> Result.Parsed $ mkOK header maf body
+        Result.Parsed maf       -> Result.Parsed $ mkOK header maf payload
         Result.DataIsTooShort i -> Result.DataIsTooShort i
         Result.NotMatch         -> Result.NotMatch
         Result.SumCheckError    -> Result.SumCheckError
@@ -94,10 +99,10 @@ class (Header.Class t, Show t) => Class t where
     if isEOF'
       then return (Result.Parsed mkEOF, (BS.empty,h'))
       else do
+--      putStrLn $ show $ BytesReaderBase.loaded h'
       res@(bytes,h'') <- BytesReaderBase.getBytesIO h' (bytesLen - 1)
-      putStrLn "====="
-      putStrLn $ show $ BytesReaderBase.loaded h''
-      putStrLn $ show $ BS.unpack $ bytes
+--      putStrLn "====="
+--      putStrLn $ show $ BS.unpack $ bytes
       return (fromByteString bytes,res)
       
 

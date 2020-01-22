@@ -5,6 +5,7 @@ import TS
 import System.IO(openFile, IOMode(ReadMode))
 import System.Environment (getArgs)
 import Common(BytesLen)
+import qualified Common
 import qualified Data.ByteString.Lazy as BS
 import qualified TS.Packet
 import qualified TS.FileHandle as FileHandle
@@ -14,8 +15,11 @@ import qualified TS.Packet.AdaptationField as AdaptationField
 import qualified TS.Packet.Header as Header
 import Common(EmptyExist(..))
 import SITables(Callbacks(..))
+import qualified SITables
 import qualified BytesReader.Status as Status
 import qualified BytesReader.Base as BytesReaderBase
+import qualified SITables.EIT as EIT
+import SITables.Common(SITableIDs(..))
 
 --_KB = 2 ^ 10
 --_MB = _KB ^ 2
@@ -114,12 +118,11 @@ addToPacketCounter c p
 main :: IO ()
 main = do
   args <- getArgs
+  test  
   let filepath =  args !! 0
       counter = 0 :: BytesLen
-      -- action_count_packets :: TS.Packet.Data -> PacketCounter -> FileHandle.ReadonlyData -> BS.ByteString -> IO (Bool,PacketCounter)
       action_count_packets' = Just ( (\x y z ->  action_count_packets x y z mkEmpty ) , mkEmpty :: PacketCounter)
---  TS.eachPacket filepath mkEmpty action_count_packets >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)
-  TS.eachTable filepath mkTableCounterCallbacks mkEmpty action_count_packets' >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)  
+  TS.eachTable filepath mkTableCounterCallbacks mkEmpty action_count_packets' >>= (\counter -> putStrLn . ("count of packets is = " ++) $ show counter)
 
 action_count_tables :: TableCounter -> IO (Bool,TableCounter)
 action_count_tables x = do
@@ -143,14 +146,20 @@ action_count_packets p x info _ = do
     else return ()
   return (True,newx)
 
-test :: FileHandle.Data -> Word64 -> IO Word64
-test fh i = do
-  fh2 <- FileHandle.syncIO fh
-  (bs,fh3) <- BytesReaderBase.getBytesIO fh2 187
-  if BS.length bs < 1
-    then return i
-    else do
---      test fh $ (\x -> if x == 0 then i+1 else i) $ (`mod` 188) $ foldl (+) 0 $ map (`shiftR` 1) $ BS.unpack bs
---      test fh $ (\x -> if x == 0 then i+1 else i) $ (`mod` 188) $ foldl (+) 0 $ BS.unpack bs
-        test fh $ (\x -> if x == 0 then i+1 else i) $ (`mod` 10) $ BS.foldl max (0::Word8) $ BS.map (`shiftR` 1) bs
-      
+data Hoge = MkHoge {
+  foo :: Maybe Word8,
+  baa :: Maybe Word8
+  }
+
+hoge = MkHoge {
+  foo = Just 1,
+  baa = Nothing
+  }
+
+test :: IO ()
+test = do
+  putStrLn $ ("matchpid = " ++) $ show $ SITables.matchPID 0x0012 mkTableCounterCallbacks
+  putStrLn $ ("matchpid = " ++) $ show $ (Common.MkPIDs [0x0013,0x0012]) `Common.matchPID` 0x0012
+  case hoge of
+    MkHoge {baa = Just x} -> putStrLn "baa"    
+    MkHoge {foo = Just x} -> putStrLn "foo"

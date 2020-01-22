@@ -66,15 +66,22 @@ matchPID pid callbacks =
     (MkCallbacks {_cb_TOT = Just f}) -> impl' f $ callbacks{_cb_TOT = Nothing}
     _                                -> False
   where
-    impl' :: (Base.Class d) => (d -> state -> IO (Bool,state)) -> Callbacks state -> Bool
+    impl' :: (Base.Class d, Show state) => (d -> state -> IO (Bool,state)) -> Callbacks state -> Bool
     impl' callback callbacks2 =
       let empdata = mkEmpty
           _ = callback empdata -- empdata の型を推論できるようにするための記述で、実行はされない
-      in (pids empdata) `Common.matchPID` pid
+      in if (pids empdata) `Common.matchPID` pid
+         then True
+         else SITables.matchPID pid callbacks2 -- マッチしなかった場合は次の候補を検索
       
 
 parseIO_simple :: (BytesReaderBase.Class bh, Base.Class d, Show d) => bh -> Maybe d -> IO (Result.Data d,bh)
-parseIO_simple bh init = Header1.parseIO bh >>=== (\(h,bh2) -> Base.parseIO (fromMaybe mkEmpty init) h bh2)
+parseIO_simple bh init = do
+  res_header <- Header1.parseIO bh
+  -- putStrLn $ case res_header of
+  --              (Result.Parsed x,_) -> show x
+  --              _                   -> ""
+  (return res_header) >>=== (\(h,bh2) -> Base.parseIO (fromMaybe mkEmpty init) h bh2)
 
 parseIO :: (BytesReaderBase.Class bh, Show state) => bh -> state -> Callbacks state -> IO (Bool,state)
 parseIO bh state callbacks = do
