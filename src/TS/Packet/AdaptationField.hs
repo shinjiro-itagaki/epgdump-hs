@@ -30,7 +30,7 @@ data Data = MkData {
   _flags5                               :: Flags5, -- 5
   _optional_fields                      :: OptionalFields.Data,
   _stuffing_bytes                       :: ByteString -- ??
-  } deriving(Eq)
+  } deriving(Eq,Show)
 
 mkEmpty = MkData {
   _adaptation_field_length              = 0,

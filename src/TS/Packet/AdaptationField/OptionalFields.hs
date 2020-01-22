@@ -40,7 +40,7 @@ data Data = MkData {
   _piecewise_rate                    :: Word32, -- 22 , 43
   _splice_type                       :: Word8, -- 4 , 47
   _dts_next_au                       :: Word64 -- 33, 80
-  } deriving(Eq)
+  } deriving(Eq,Show)
 
 mkEmpty = MkData {
   _pcr                               = 0,

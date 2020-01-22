@@ -96,28 +96,23 @@ class (EmptyExist a) => Class a where
   transport_scrambling_control_raw = transport_scrambling_control_raw . header
   
                                    
-type Data = (Word8,(Word8,Word8))
+type Data = Word32
 
 instance Class Data where
   header x = x
-  transport_error_indicator    = (> 0) . (.&. 0x80) . fst -- 1 10000000 00000000 00000000 
-  payload_unit_start_indicator = (> 0) . (.&. 0x40) . fst -- 1 01000000 00000000 00000000 
-  transport_priority           = (> 0) . (.&. 0x20) . fst -- 1 00100000 00000000 00000000 
-  pid                        x = let l = (`shiftL` 8) $ fromInteger $ toInteger $ (.&. 0x1F) $ fst x :: PID -- 13 00011111 11111111 00000000 
-                                     r = fromInteger $ toInteger $ fst $ snd x :: PID
-                                 in l .&. r
-  transport_scrambling_control_raw = (`shiftR` 6) . (.&. 0xC0) . snd . snd -- 2 00000000 00000000 11000000
-  adaptation_field_control     = (`shiftR` 4) . (.&. 0x30) . snd . snd -- 2 00000000 00000000 00110000
-  continuity_counter           = toContinuityCounter . snd . snd -- 4 00000000 00000000 00001111
-
-instance EmptyExist Data where
-  mkEmpty = (0,(0,0))
+  transport_error_indicator    = (> 0) . (.&. 0x800000) -- 1 10000000 00000000 00000000 
+  payload_unit_start_indicator = (> 0) . (.&. 0x400000) -- 1 01000000 00000000 00000000 
+  transport_priority           = (> 0) . (.&. 0x200000) -- 1 00100000 00000000 00000000 
+  pid                              = fromInteger . toInteger . (`shiftR` 8) . (.&. 0x1FFF00) -- 13 00011111 11111111 00000000 
+  transport_scrambling_control_raw = fromInteger . toInteger . (`shiftR` 6) . (.&. 0x0000C0) --  2 00000000 00000000 11000000
+  adaptation_field_control         = fromInteger . toInteger . (`shiftR` 4) . (.&. 0x000030) --  2 00000000 00000000 00110000
+  continuity_counter               = toContinuityCounter                    . (.&. 0x00000F) --  4 00000000 00000000 00001111
 
 parse :: ByteString -> Data
 parse = parseFromWord8 . unpack
 
 parseFromWord8 :: [Word8] -> Data
-parseFromWord8 [] = mkEmpty
-parseFromWord8 (x:[]) = (x,(0,0))
-parseFromWord8 (x:(y:[])) = (x,(y,0))
-parseFromWord8 (x:(y:(z:zs))) = (x,(y,z))
+parseFromWord8 []             = mkEmpty
+parseFromWord8 (x:[])         = fromInteger $ toInteger x
+parseFromWord8 (x:(y:[]))     = ((fromInteger $ toInteger x :: Word32) `shiftL`  8) .|. ( fromInteger $ toInteger y :: Word32)
+parseFromWord8 (x:(y:(z:zs))) = ((fromInteger $ toInteger x :: Word32) `shiftL` 16) .|. ((fromInteger $ toInteger y :: Word32) `shiftL` 8) .|. (fromInteger $ toInteger z :: Word32)

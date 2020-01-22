@@ -216,7 +216,9 @@ _eachPacket fh something act = do
     Result.Parsed p -> if Packet.isEOF p
       then return something -- EOFにつき終了
       else if Packet.isOK p
-           then --
+           then do
+--             putStrLn $ show p
+--             putStrLn $ show $ Header.pid p
              act p something (FileHandle.getReadonlyInfo fh') bytes
              >>= (\(continue,something') ->
                      if continue

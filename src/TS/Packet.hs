@@ -103,7 +103,7 @@ data Data = MkData {
   _maf     :: Maybe AdaptationField.Data,
   _payload :: Payload,
   _duplicated :: Bool
-  } | EOF | ContinuityCounterError deriving(Eq)
+  } | EOF | ContinuityCounterError deriving(Eq,Show)
 
 instance EmptyExist Data where
   mkEmpty = MkData mkEmpty (Just AdaptationField.mkEmpty) mkEmpty False
