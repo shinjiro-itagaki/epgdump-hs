@@ -24,7 +24,7 @@ type Payload = ByteString
 
 data ContinuityType = Continuous | Duplicated | ContinuousErr
 
-class (Header.Class t, Show t) => Class t where
+class (Header.Class t, Show t, Eq t) => Class t where
   -- please implement
   mkEOF :: t
   mkOK  :: Header.Data -> Maybe AdaptationField.Data -> Payload -> t
@@ -32,8 +32,10 @@ class (Header.Class t, Show t) => Class t where
   isOK  :: t -> Bool
   adaptation_field :: t -> Maybe AdaptationField.Data
   payload          :: t -> ByteString
-  (===) :: t -> t -> Bool
   --
+
+  (===) :: t -> t -> Bool
+  (===) x y = x == y
 
   header :: t -> Header.Data
   header = Header.header
@@ -120,8 +122,6 @@ instance Header.Class Data where
   header  _               = mkEmpty :: Header.Data  
   
 instance Class Data where
-  (===) x y = x == y
-  
   adaptation_field x@(MkData _ _ _) = _maf x
   adaptation_field _                = Nothing
 
