@@ -75,18 +75,42 @@ getTableCounterTotal x = sum [
 
 mkTableCounterCallbacks :: Callbacks TableCounter
 mkTableCounterCallbacks = MkCallbacks {
+--   _cb_BAT  = Nothing,
   _cb_BAT  = Just $ (\ _ x -> (return $ x {_bat  = 1 + (_bat  x)}) >>= action_count_tables),
+   
+--   _cb_BIT = Nothing,  
   _cb_BIT  = Just $ (\ _ x -> (return $ x {_bit  = 1 + (_bit  x)}) >>= action_count_tables),
+   
+--  _cb_EIT  = Nothing,
   _cb_EIT  = Just $ (\ _ x -> (return $ x {_eit  = 1 + (_eit  x)}) >>= action_count_tables),
+  
+--  _cb_LDT  = Nothing,
   _cb_LDT  = Just $ (\ _ x -> (return $ x {_ldt  = 1 + (_ldt  x)}) >>= action_count_tables),
+  
+--  _cb_NBIT = Nothing,
   _cb_NBIT = Just $ (\ _ x -> (return $ x {_nbit = 1 + (_nbit x)}) >>= action_count_tables),
+  
+--  _cb_NIT  = Nothing,
   _cb_NIT  = Just $ (\ _ x -> (return $ x {_nit  = 1 + (_nit  x)}) >>= action_count_tables),
+  
+--  _cb_PCAT = Nothing,
   _cb_PCAT = Just $ (\ _ x -> (return $ x {_pcat = 1 + (_pcat x)}) >>= action_count_tables),
-  _cb_RST  = Just $ (\ _ x -> (return $ x {_rst  = 1 + (_rst  x)}) >>= action_count_tables),
+  
+  _cb_RST  = Nothing,
+--  _cb_RST  = Just $ (\ _ x -> (return $ x {_rst  = 1 + (_rst  x)}) >>= action_count_tables),
+  
+--  _cb_SDT  = Nothing,
   _cb_SDT  = Just $ (\ _ x -> (return $ x {_sdt  = 1 + (_sdt  x)}) >>= action_count_tables),
-  _cb_ST   = Just $ (\ _ x -> (return $ x {_st   = 1 + (_st   x)}) >>= action_count_tables),
+  
+  _cb_ST   = Nothing,
+--  _cb_ST   = Just $ (\ _ x -> (return $ x {_st   = 1 + (_st   x)}) >>= action_count_tables),
+  
+--  _cb_TDT  = Nothing,
   _cb_TDT  = Just $ (\ _ x -> (return $ x {_tdt  = 1 + (_tdt  x)}) >>= action_count_tables),
+  
+--  _cb_TOT  = Nothing,
   _cb_TOT  = Just $ (\ _ x -> (return $ x {_tot  = 1 + (_tot  x)}) >>= action_count_tables),
+  
   _cb_UNM  = Just $ (\ _ x -> (return $ x {_unm  = 1 + (_unm  x)}) >>= action_count_tables),
   _cb_ERR  = Just $ (\ _ x -> (return $ x {_err  = 1 + (_err  x)}) >>= action_count_tables)   
   }

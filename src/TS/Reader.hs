@@ -49,20 +49,24 @@ class (BytesReader.Class a) => Class a where
 
 type PacketCache = C.Seq Packet.Data
 
+-- 引数のパケット一覧はpidがすべて同じであることを前提にしている
 splitByFirstBlock :: PacketCache -> (PacketCache, PacketCache)
 splitByFirstBlock cache =
-  let synced' = C.dropWhileL (not . Header.payload_unit_start_indicator) cache -- 最初のスタート地点の前にあるパケットを削除 xxxHxxxxxHxxx... => HxxxxxHxxx...
-      mfst'   = synced' C.!? 0 --  HxxxxxHxxx... => H
-      rest'   = C.drop 1 $ synced' -- xxxxxHxxx...
-      tail'   = C.takeWhileL (not . Header.payload_unit_start_indicator) $ rest' -- 先頭パケットの次から次のスタート地点までを取得 xxxxxHxxx... => xxxxx
-      others' = C.dropWhileL (not . Header.payload_unit_start_indicator) $ rest' -- 次の先頭以降を取得  xxxxxHxxx... => Hxxx...
+  let synced' = C.dropWhileL (not . Header.payload_unit_start_indicator) cache -- 最初のスタート地点の前にあるパケットを削除 xxxHyyyyyHzzz... => HxxxxxHyyy...
+      mfst'   = synced' C.!? 0     --  HxxxxxHyyy... => H
+      rest'   = C.drop 1 $ synced' --  HxxxxxHyyy... => xxxxxHyyy...
+
+      -- tail'   : 先頭パケットの次から次のスタート地点まで (H)xxxxxHyyy... => (H)xxxxx
+      -- others' : 次の先頭以降  (H)xxxxxHyyy... => Hyyy...
+      (tail',others') = C.spanl (not . Header.payload_unit_start_indicator) $ rest'
       oneset' = C.fromList $ Packet.continuityChecked $ toList $ case mfst' of
                   Nothing   -> C.empty
                   Just fst' -> fst' C.<| tail'
+      packet_losted = C.null oneset' && isJust mfst' -- 先頭パケットがあるのに連続チェック済みのパケット一覧が空 => パケット欠損があったことを示す
   in
-    if C.null oneset' && isJust mfst' -- パケット欠損があった場合
-    then splitByFirstBlock others'
-    else (oneset', others')
+    if packet_losted
+    then splitByFirstBlock others' -- パケット欠損がある場合は残りを対象にして処理を続行
+    else (oneset', others') -- パケット欠損がないのでそのまま返す
 
 data ByteStringHolder = MkByteStringHolder {
   _data           :: ByteString,
@@ -127,27 +131,32 @@ _parseFromCache :: (Base.Class d) => PacketCache -> PID -> IO (Result.Data d,Pac
 _parseFromCache cache pid =
   let emptable = mkEmpty
       pids' = pids emptable
-      (matched',others') = C.partition (\p -> pid == (Header.pid p)) cache
-      (block', rest') = splitByFirstBlock matched'
+      (pid_matched',pid_unmatched') = C.partition (\p -> pid == (Header.pid p)) cache
+      (block', rest') = splitByFirstBlock pid_matched'
       bytes' = foldl (\res p -> BS.append res (Packet.payload p)) BS.empty block'
       payload' = toByteStringHolder bytes' 
   in do
 --    putStrLn $ show block'
---    putStrLn $ show "---"    
---    putStrLn $ show $ block'
+    -- putStrLn $ show "---"
+    -- putStrLn $ show pid
+--    putStrLn $ show "macthed"
+--    putStrLn $ show $ matched'
+--    putStrLn $ show $ cache
+    -- putStrLn $ show "block'"
+    -- putStrLn $ show $ block'
+    -- putStrLn $ show "rest"
+    -- putStrLn $ show $ rest'    
+    -- -- putStrLn $ show "---"    
 --    putStrLn $ show $ BS.unpack bytes'
     (res,_) <- SITables.parseIO_simple payload' (Just emptable)
-    case res of
-      Result.Parsed x -> putStrLn $ show x
-      _        -> return ()
+    -- case res of
+    --   Result.Parsed x -> putStrLn $ show x
+    --   _        -> return ()
 --    putStrLn $ show "---"
-    return (res,rest')
+    return (res,pid_unmatched' C.>< rest')
   
-_fireCallback :: (Show state) =>  Callbacks state -> state -> PID -> (Bool, PacketCache) -> IO (PacketCache, state)
-_fireCallback callbacks state _ (False,cache) = do
---  putStrLn "_fireCallback False"
-  return (cache,state) -- fireを実施しない
-_fireCallback callbacks state pid (True, cache) = do
+_fireCallback :: (Show state) =>  Callbacks state -> state -> PID -> PacketCache -> IO (PacketCache, state)
+_fireCallback callbacks state pid cache = do
 --  putStrLn "_fireCallback True"
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}
@@ -172,12 +181,12 @@ _fireCallback callbacks state pid (True, cache) = do
       case res of
         Result.NotMatch -> do
 --          putStrLn "table not match"
-          _fireCallback callbacks2 state pid (True,cache)  -- テーブルがマッチしていない場合は次に移動
+          _fireCallback callbacks2 state pid cache  -- テーブルがマッチしていない場合は次に移動
         Result.Parsed d -> do
 --          putStrLn "_fireCallback True"
           (continue, state2) <- callback d state
           if continue
-            then _fireCallback callbacks2 state2 pid (True,cache2) -- パース成功した場合はコールバックを呼び出して他にテーブルが作れないか検索
+            then _fireCallback callbacks2 state2 pid cache2 -- パース成功した場合はコールバックを呼び出して他にテーブルが作れないか検索
             else return (cache2,state2) -- 続行フラグがfalseなので処理を終了
         _               -> do
 --          putStrLn "_fireCallback parse failed"
@@ -187,13 +196,22 @@ _appendPacketAndFireCallback :: (Show state) => PacketCache -> Callbacks state -
 _appendPacketAndFireCallback cache callbacks state packet =
   let pid = Header.pid packet
       indicator = Header.payload_unit_start_indicator packet -- ペイロードの開始地点のパケットかどうか
+      pid_matched = SITables.matchPID pid callbacks
+      toNextCache = \x@(cache',state') -> return $ if pid_matched then (cache' C.|> packet, state') else x
   in do
-    _fireCallback callbacks state pid $
-      if SITables.matchPID pid callbacks -- 取得すべきpidかどうか
-      then
-        (indicator, cache C.|> packet) -- パケットを追加済みのキャッシュを返す。パケットの開始地点であれば、以前までに蓄積したパケットからテーブルを構築する
+    -- if pid_matched then
+    --   putStrLn $ ("pid matched=" ++) $ show pid
+    -- else
+    --   putStr ""
+      
+    if pid_matched then
+      toNextCache =<<
+      if indicator then
+        -- payload_unit_start_indicator がtrueの場合は、これまで蓄積した同じPIDのパケットを消費してコールバックを実行したあとにパケットを追加
+        _fireCallback callbacks state pid cache
       else
-        (False, cache) -- 取得すべきpidではないのでパケットを追加しない
+        return (cache,state) -- 何もしない
+    else return (cache,state) -- 取得すべきpidではないのでパケットを追加しない
 
 eachTable :: (Show state,Show state2) => String -> Callbacks state -> state -> Maybe (Packet.Data -> state2 -> FileHandle.ReadonlyData -> IO (Bool,state2), state2) -> IO state
 eachTable path callbacks state mx = do

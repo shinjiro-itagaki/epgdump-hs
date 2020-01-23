@@ -48,7 +48,7 @@ data (Show state) => Callbacks state = MkCallbacks {
   _cb_ERR  :: Maybe (Callback (Result.Data Header1.Data) state ), -- ヘッダ の解析でエラーがあった場合
   _cb_UNM  :: Maybe (Callback Header1.Data state ) -- ヘッダの解析はできたが、どれにもマッチしなかった場合
   }--  deriving (Show)
-  
+
 matchPID :: (Show state) => PID -> Callbacks state -> Bool
 matchPID pid callbacks =
   case callbacks of
