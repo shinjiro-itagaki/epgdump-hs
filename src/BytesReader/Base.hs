@@ -71,9 +71,13 @@ class (Counter.Class a) => Class a where
             -- putStrLn $ ("load_for_rest_len=" ++) $ show load_for_rest_len
             -- putStrLn $ ("rest'=" ++) $ show rest'
             -- (\x -> putStrLn $ ("jjjjjj'=" ++) $ show $ fst x) =<< getBytesIO fh 1
+            -- putStrLn $ ("counter=" ++) $ show $ Counter.getBytesCounter fh
             (v2,fh2) <- addBytes fh needloadlen $ toWord64 curr
+            -- putStrLn $ ("counter=" ++) $ show $ Counter.getBytesCounter fh2            
             -- putStrLn $ ("v2'=" ++) $ show v2
-            (_ ,fh3) <- getBytesIO fh load_for_rest_len
+            (_ ,fh3) <- getBytesIO fh2 load_for_rest_len
+            -- putStrLn $ ("counter=" ++) $ show $ Counter.getBytesCounter fh3
+            -- putStrLn "----"
             fh4 <- return $ updateStockedBitsLen fh3 $ StockedBitsLen.numToStockedBitsLen $ fromInteger rest -- 残りのビット数をセット
             v4  <- return $ (v2 `shiftL` rest') .|. (toWord64 $ stockedValue fh4)
             -- putStrLn $ ("v4'=" ++) $ show v4
