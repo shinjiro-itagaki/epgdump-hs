@@ -20,19 +20,43 @@ import qualified Parser.Result as Result
 bytesLen :: BytesLen
 bytesLen = 188
 
-type Payload = ByteString
+data ContinuityType = Continuous | Duplicated | ContinuousErr deriving (Eq,Show)
 
-data ContinuityType = Continuous | Duplicated | ContinuousErr
+data Type =
+  PES -- (Packetized Elementary Stream) https://en.wikipedia.org/wiki/Packetized_elementary_stream
+  | PSI -- (Program Specific Information) https://en.wikipedia.org/wiki/Program-specific_information
+  | Following -- following packet
+  deriving (Eq,Show)
 
 class (Header.Class t, Show t, Eq t) => Class t where
   -- please implement
   mkEOF :: t
-  mkOK  :: Header.Data -> Maybe AdaptationField.Data -> Payload -> t
+  mkOK  :: Header.Data -> Maybe AdaptationField.Data -> ByteString -> t
   isEOF :: t -> Bool
   isOK  :: t -> Bool
   adaptation_field :: t -> Maybe AdaptationField.Data
-  payload          :: t -> ByteString
+  data_bytes :: t -> ByteString
   --
+
+  -- 先頭パケットのdata_bytesの先頭3バイト (packet_start_code_prefix) が 0x000001 なら PES、そうでないなら PSI
+  type_ :: t -> Type
+  type_ x
+    | Header.payload_unit_start_indicator x =
+      case (BS.length $ data_bytes x) < 3 of
+        True -> PSI
+        False -> let bs = BS.unpack $ data_bytes x
+                     b0 = bs !! 0
+                     b1 = bs !! 1
+                     b2 = bs !! 2
+                 in if b0 == 0 && b1 == 0 && b2 == 1 then PES else PSI
+    | otherwise = Following
+
+  -- PSI の先頭パケットの data_byte は pointer_field から始まる
+  payload :: t -> ByteString
+  payload x = case type_ x of
+                Following -> data_bytes x
+                PSI -> let bs = data_bytes x in if BS.null bs then BS.empty else BS.tail bs
+                PES -> data_bytes x
 
   (===) :: t -> t -> Bool
   (===) x y = x == y
@@ -111,7 +135,7 @@ class (Header.Class t, Show t, Eq t) => Class t where
 data Data = MkData {
   _header  :: Header.Data,
   _maf     :: Maybe AdaptationField.Data,
-  _payload :: Payload
+  _data_bytes :: ByteString
   } | EOF | ContinuityCounterError deriving(Eq,Show)
 
 instance EmptyExist Data where
@@ -125,8 +149,8 @@ instance Class Data where
   adaptation_field x@(MkData _ _ _) = _maf x
   adaptation_field _                = Nothing
 
-  payload x@(MkData _ _ _) = _payload x
-  payload _                = BS.empty
+  data_bytes x@(MkData _ _ _) = _data_bytes x
+  data_bytes _                = BS.empty
   
   isEOF EOF = True
   isEOF _   = False
