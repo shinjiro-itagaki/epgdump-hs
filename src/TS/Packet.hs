@@ -105,14 +105,15 @@ class (Header.Class t, Show t, Eq t) => Class t where
         plen''    = fromInteger plen'           :: Int64
         byteslen' = toInteger $ BS.length bytes :: Integer
         bytes'    = BS.take plen'' bytes
-        header    = Header.parse $ BS.take 3 bytes'
-        (res,rest) = AdaptationField.parse header bytes'
-        payload    = if Header.has_payload header then rest else mkEmpty
+        (header_bytes',body_bytes') = BS.splitAt 3 bytes' -- divide bytes to header and body
+        header    = Header.parse $ BS.take 3 header_bytes'
+        (res,rest) = AdaptationField.parse header body_bytes'
+        data_bytes = if Header.has_payload header then rest else mkEmpty
     in
       if byteslen' < plen'
       then Result.DataIsTooShort $ Just $ fromInteger $ (plen' - byteslen')
       else case res of
-        Result.Parsed maf       -> Result.Parsed $ mkOK header maf payload
+        Result.Parsed maf       -> Result.Parsed $ mkOK header maf data_bytes
         Result.DataIsTooShort i -> Result.DataIsTooShort i
         Result.NotMatch         -> Result.NotMatch
         Result.SumCheckError    -> Result.SumCheckError

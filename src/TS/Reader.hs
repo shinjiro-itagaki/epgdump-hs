@@ -136,18 +136,18 @@ _parseFromCache cache pid =
       bytes' = foldl (\res p -> BS.append res (Packet.payload p)) BS.empty block'
       payload' = toByteStringHolder bytes' 
   in do
---    putStrLn $ show block'
+    -- putStrLn $ show block'
     -- putStrLn $ show "---"
-    -- putStrLn $ show pid
---    putStrLn $ show "macthed"
---    putStrLn $ show $ matched'
---    putStrLn $ show $ cache
-    -- putStrLn $ show "block'"
-    -- putStrLn $ show $ block'
-    -- putStrLn $ show "rest"
-    -- putStrLn $ show $ rest'    
+    -- putStrLn $ "pid=" ++ (show pid)
+    -- putStrLn $ show "bytes"
+    -- putStrLn $ show $ BS.unpack $ bytes'
+    (v,payload'') <- BytesReaderBase.getBitsIO payload' 8
+    -- putStrLn $ (show "table_id = " ++) $ show v
     -- putStrLn $ show "---"    
---    putStrLn $ show $ BS.unpack bytes'
+    -- (v2,payload''') <- BytesReaderBase.getBytesIO payload'' 2
+    -- putStrLn $ (show "v2 = " ++) $ show $ BS.unpack v2
+    -- putStrLn $ (show "loaded value = " ++) $ show $ BytesReaderBase.loaded payload'''
+    
     (res,_) <- SITables.parseIO_simple payload' (Just emptable)
     -- case res of
     --   Result.Parsed x -> putStrLn $ show x
@@ -246,7 +246,7 @@ _print bytes p = do
     do
 --             putStrLn $ show p
 --             putStrLn $ show $ (.&. 0x0f) $ (0xffffffff :: Word32)               
-      putStrLn "====="
+      putStrLn "=====" -- hoge
       putStrLn $ show $ Header.pid p
       putStrLn $ show $ BS.unpack $ bytes
       putStrLn $ show $ Header.continuity_counter p
