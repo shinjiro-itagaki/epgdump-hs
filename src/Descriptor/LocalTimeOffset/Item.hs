@@ -7,7 +7,7 @@ import Common(ByteString)
 import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import Data.Vector(Vector,empty,toList,snoc)
-import qualified Descriptor.CountryCode as CountryCode
+import qualified Utils.CountryCode as CountryCode
 
 class Class a where
   country_code               :: a -> CountryCode.Data

@@ -1,4 +1,4 @@
-module Descriptor.CountryCode where
+module Utils.CountryCode where
 
 import Data.Word(Word64, Word32, Word16, Word8)
 

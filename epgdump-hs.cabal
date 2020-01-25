@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ed6cd849427b5fb57155a007d172147b8f41335343bea8ad92de9a1b60d1e92b
+-- hash: 77204ddf2e58ce6e52ba1d97218a98b535e59569e73928a2ec22ea6b6bd405cf
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -66,7 +66,6 @@ library
       Descriptor.Content.Item
       Descriptor.ContentAvailability
       Descriptor.CountryAvailability
-      Descriptor.CountryCode
       Descriptor.DataComponent
       Descriptor.DataContents
       Descriptor.DigitalCopyControl
@@ -165,6 +164,7 @@ library
       TS.Reader
       Utils.ComponentType
       Utils.Container
+      Utils.CountryCode
       Utils.FromByteString
       Utils.LangCode
       Utils.ToString

@@ -5,7 +5,6 @@ module Descriptor.ComponentGroup.Item (
   ) where
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Common(ByteString)
-import qualified Descriptor.CountryCode as CountryCode
 import Data.Vector(Vector,empty,toList,snoc)
 import qualified Descriptor.ComponentGroup.CA_Unit as CA_Unit
 

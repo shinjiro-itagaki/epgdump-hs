@@ -6,7 +6,7 @@ import Data.Word(Word64, Word32, Word16, Word8)
 import Common(ByteString)
 import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
-import qualified Descriptor.CountryCode as CountryCode
+import qualified Utils.CountryCode as CountryCode
 import Data.Vector(Vector,empty,toList,snoc)
 
 class (Base.Class a) => Class a where
