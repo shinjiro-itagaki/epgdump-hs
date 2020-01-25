@@ -9,7 +9,7 @@ import qualified Descriptor.Header as Header
 import Data.Vector(Vector,empty,toList,snoc)
 import qualified Descriptor.EmergencyInformation.Item as Item
 import qualified Descriptor.Selector as Selector
-import qualified Descriptor.LangCode as LangCode
+import qualified Utils.LangCode as LangCode
 
 class (Base.Class a, Selector.Class a) => Class a where
   data_component_id     :: a -> Word16
@@ -34,6 +34,9 @@ data Data = MkData {
   _text_length           :: Word8,
   _text                  :: String
   } deriving (Show)
+
+instance Header.Class Data where
+  header = _header
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

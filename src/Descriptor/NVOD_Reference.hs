@@ -13,8 +13,12 @@ class Base.Class a => Class a where
   references :: a -> [ServiceInfo.Data]
 
 data Data = MkData {
+  _header     :: Header.Data, 
   _references :: Vector ServiceInfo.Data
   } deriving (Show)
+
+instance Header.Class Data where
+  header = _header
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

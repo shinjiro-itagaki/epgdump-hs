@@ -63,7 +63,9 @@ class (EmptyExist a, Show a) => Class a where
   execParseIOFlow :: (BytesReaderBase.Class bh) => bh -> a -> ParseIOFlow bh a -> IO (ParseResult a, bh)
   execParseIOFlow bh init  MkFlowStart = return (Result.Parsed init, bh) -- 何もせずそのまま成功として返す
   execParseIOFlow bh init  MkFlowEnd   = return (Result.Parsed init, bh)  
-  execParseIOFlow bh init (MkParseIOFlow f) = f bh init
+  execParseIOFlow bh init (MkParseIOFlow f) = do
+--    Prelude.putStrLn "execParseIOFlow bh init (MkParseIOFlow f)"
+    f bh init
   execParseIOFlow bh init (MkParseIOFlowPair MkFlowEnd _) = execParseIOFlow bh init MkFlowEnd -- 右側は実行せずに無視する
   execParseIOFlow bh init (MkParseIOFlowPair l r) = do
     lres@(res, bh2) <- execParseIOFlow bh init l

@@ -37,7 +37,9 @@ instance EmptyExist Data where
     }
 
 _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow fh init = getBitsIO_M fh [
+_parseIOFlow fh init = do
+  putStrLn "footer :: _parseIOFlow2"
+  getBitsIO_M fh [
     (crc_32_bitslen init , (\(v,d) -> d { _crc_32 = fromWord64 v}))
     ] init
   

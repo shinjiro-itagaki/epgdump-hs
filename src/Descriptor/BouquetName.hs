@@ -7,18 +7,26 @@ import Common(ByteString)
 import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import qualified Descriptor.CountryCode as CountryCode
-import qualified Descriptor.LangCode as LangCode
+import qualified Utils.LangCode as LangCode
 import Data.Vector(Vector,empty,toList,snoc)
+import qualified Data.ByteString.Lazy.Char8 as BChar8
+import qualified Data.ByteString.Lazy as BS
+import Utils.ToString(toString)
 
 class (Base.Class a) => Class a where
   name :: a -> String
   
 data Data = MkData {
-  _name              :: String
+  _header :: Header.Data,
+  _name   :: ByteString
   } deriving (Show)
 
+instance Header.Class Data where
+  header = _header
+
 instance Base.Class Data where
---  fromByteString bs = (Nothing, bs)
+  fromByteStringAfterHeader h bs =
+    Base.gatherByteString (Header.descriptor_length h) (MkData h) bs
 
 instance Class Data where
-  name = _name
+  name = toString . _name

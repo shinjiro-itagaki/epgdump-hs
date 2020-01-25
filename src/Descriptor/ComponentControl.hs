@@ -27,6 +27,9 @@ data Data = MkData {
   _maximum_bitrate                :: Maybe Word8
   } deriving (Show)
 
+instance Header.Class Data where
+  header = _header
+
 instance Base.Class Data where
   fromByteString bs = (Nothing, bs)
 

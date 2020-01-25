@@ -80,13 +80,15 @@ instance Class Data where
   last_table_id               = _last_table_id
 
 _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow2 fh init =
+_parseIOFlow2 fh init = do
+  putStrLn "_parseIOFlow2"
   getBitsIO_M fh [
-  (16, (\(v,d) -> d { _service_id = fromWord64 v}))
-  ] init
+    (16, (\(v,d) -> d { _service_id = fromWord64 v}))
+    ] init
 
 _parseIOFlow4 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow4 fh init = do
+  putStrLn "_parseIOFlow4"  
   getBitsIO_M fh [
     (16, (\(v,d) -> d { _transport_stream_id         = fromWord64 v})),
     (16, (\(v,d) -> d { _original_network_id         = fromWord64 v})),
@@ -95,7 +97,9 @@ _parseIOFlow4 fh init = do
     ] init
 
 _parseIOFlow5_items :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow5_items bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
+_parseIOFlow5_items bh init = do
+  putStrLn "_parseIOFlow5"
+  Items.gather addItem' (Base.section_length_without_crc init) bh init
   where
     addItem' :: Data -> Item.Data -> Data
     addItem' x item = x {_items = (snoc (_items x) item)  }

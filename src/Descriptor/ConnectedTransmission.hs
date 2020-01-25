@@ -28,6 +28,9 @@ data Data = MkData {
   _additional_connected_transmission_infos :: Vector Word8
   } deriving (Show)
 
+instance Header.Class Data where
+  header = _header
+
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)
 

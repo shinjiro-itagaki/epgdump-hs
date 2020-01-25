@@ -23,6 +23,9 @@ data Data = MkData {
   _frequencies       :: [Word16]
   } deriving (Show)
 
+instance Header.Class Data where
+  header = _header
+
 instance Base.Class Data where
 
 instance Class Data where

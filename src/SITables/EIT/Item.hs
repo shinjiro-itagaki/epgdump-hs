@@ -51,6 +51,7 @@ instance EmptyExist Data where
 
 _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = do
+  -- putStrLn "EIT.Item::_parseIOFlow"
   getBitsIO_M fh [
     (16, (\(v,d) -> d { _event_id                = fromWord64 v})),
     (40, (\(v,d) -> d { _start_time              = fromWord64 v})),

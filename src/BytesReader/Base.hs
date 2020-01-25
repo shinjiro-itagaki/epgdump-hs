@@ -6,6 +6,7 @@ import Common(ByteString,BytesLen)
 import qualified BytesReader.StockedBitsLen as StockedBitsLen
 import qualified Data.ByteString.Lazy as BS
 import Data.Bits((.|.),(.&.),shiftL,shiftR)
+import Utils.ToWord64(toWord64)
 
 class (Counter.Class a) => Class a where
   ----
@@ -83,12 +84,3 @@ class (Counter.Class a) => Class a where
             -- putStrLn $ ("v4'=" ++) $ show v4
             return (v4,fh4)
             -- return (19,fh4)
-
-  
-
-class ToWord64 a where
-  toWord64 :: a -> Word64
-
-instance ToWord64 Word8 where
-  toWord64 = fromInteger . toInteger
-

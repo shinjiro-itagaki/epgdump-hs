@@ -17,7 +17,10 @@ data Data = MkData {
   _quality_level     :: Bool,
   _reference_pid     :: Word16
   } deriving (Show)
-  
+
+instance Header.Class Data where
+  header = _header
+
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)
 

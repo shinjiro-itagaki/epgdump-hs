@@ -21,6 +21,9 @@ data Data = MkData {
   _reserved_future_use    :: Word8 
   } deriving (Show)
 
+instance Header.Class Data where
+  header = _header
+
 instance Base.Class Data where
 --  fromByteString bs = 
 

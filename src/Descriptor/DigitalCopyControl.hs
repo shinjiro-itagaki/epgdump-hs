@@ -29,6 +29,9 @@ data Data = MkData {
   _component_controls             :: Maybe (Vector ComponentControl.Data)
 } deriving (Show)
 
+instance Header.Class Data where
+  header = _header
+
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)
 

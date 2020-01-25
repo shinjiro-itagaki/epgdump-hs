@@ -13,8 +13,12 @@ class (Base.Class a) => Class a where
   items :: a -> [Item.Data]
 
 data Data = MkData {
-  _items :: Vector Item.Data
+  _header :: Header.Data,
+  _items  :: Vector Item.Data
   } deriving (Show)
+
+instance Header.Class Data where
+  header = _header
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

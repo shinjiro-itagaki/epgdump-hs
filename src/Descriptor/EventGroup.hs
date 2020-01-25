@@ -17,6 +17,7 @@ class (Base.Class a) => Class a where
   groups      :: a -> [GroupInfo]
 
 data Data = MkData {
+  _header      :: Header.Data,
   _group_type  :: Word8,
   _event_count :: Word8,
   _events      :: [EventInfo.Data],
@@ -40,6 +41,9 @@ fromNum i
   | i == 0x4 = RelayToOtherNetworks
   | i == 0x5 = MovementFromOtherNetworks
   | otherwise = Undefined
+
+instance Header.Class Data where
+  header = _header
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

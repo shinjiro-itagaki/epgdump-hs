@@ -5,7 +5,7 @@ module Descriptor.ShortEvent (
 -- import Descriptor.Common(HasISO_639_LanguageCode(..),HasTextAndLen(..),LangCode,HasTextAndLen(..), HasText(..))
 import Data.Word(Word64, Word32, Word16, Word8)  
 import Common(ByteString)
-import qualified Descriptor.LangCode as LangCode
+import qualified Utils.LangCode as LangCode
 import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 
@@ -25,6 +25,9 @@ data Data = MkData {
   _text_length       :: Word8,
   _text              :: String
   } deriving (Show)
+
+instance Header.Class Data where
+  header = _header
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

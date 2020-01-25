@@ -22,6 +22,7 @@ import qualified TS.Packet as Packet
 --import TS.Packet(FromPackets(..))
 import Parser(ParseResult(..),mapParseResult)
 import qualified BytesReader.Base as BytesReaderBase
+import qualified BytesReader
 import qualified SITables.Header1 as Header1
 import Common(EmptyExist(..),PID,matchPID)
 import qualified Parser.Result as Result
@@ -75,15 +76,18 @@ matchPID pid callbacks =
          else SITables.matchPID pid callbacks2 -- マッチしなかった場合は次の候補を検索
       
 
-parseIO_simple :: (BytesReaderBase.Class bh, Base.Class d, Show d) => bh -> Maybe d -> IO (Result.Data d,bh)
+parseIO_simple :: (BytesReader.Class bh, Base.Class d, Show d) => bh -> Maybe d -> IO (Result.Data d,bh)
 parseIO_simple bh init = do
   res_header <- Header1.parseIO bh
-  -- putStrLn $ case res_header of
-  --              (Result.Parsed x,_) -> show x
-  --              _                   -> ""
-  (return res_header) >>=== (\(h,bh2) -> Base.parseIO (fromMaybe mkEmpty init) h bh2)
+  case res_header of
+    (Result.Parsed x,_) -> do putStrLn $ show x
+                              putStrLn "header parsed"
+    _                   -> putStr ""
+  res <- (return res_header) >>=== (\(h,bh2) -> Base.parseIO (fromMaybe mkEmpty init) h bh2)
+  -- putStrLn "finish parseIO_simple ====="
+  return res
 
-parseIO :: (BytesReaderBase.Class bh, Show state) => bh -> state -> Callbacks state -> IO (Bool,state)
+parseIO :: (BytesReader.Class bh, Show state) => bh -> state -> Callbacks state -> IO (Bool,state)
 parseIO bh state callbacks = do
   (res_header1,bh2) <- Header1.parseIO bh
   case res_header1 of
@@ -93,7 +97,7 @@ parseIO bh state callbacks = do
                          Nothing -> return (True,state)  
 
 
-_parseIO :: (BytesReaderBase.Class bh, Show state) => bh -> Header1.Data -> state -> Callbacks state -> IO (Bool,state)
+_parseIO :: (BytesReader.Class bh, Show state) => bh -> Header1.Data -> state -> Callbacks state -> IO (Bool,state)
 _parseIO bh header1 state callbacks =
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}

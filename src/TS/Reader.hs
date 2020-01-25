@@ -40,6 +40,7 @@ import qualified Data.Map.Lazy as MapL
 import qualified Parser.Result as Result
 import SITables(Callback,Callbacks(..),parseIO)
 import SITables.Common(SITableIDs(..))
+import qualified SITables.Header1 as Header1
 import Data.Maybe(fromMaybe,isJust)
 import qualified BytesReader.StockedBitsLen as StockedBitsLen
 import qualified BytesReader.Status as Status
@@ -102,11 +103,16 @@ instance BytesReaderBase.Class ByteStringHolder where
   getBytesIO x i
     | i < 1             = return (BS.empty, x)
     | BS.null $ _data x = return (BS.empty, x)
-    | otherwise = 
+    | otherwise =
       let i1 = (fromInteger $ toInteger i) :: Int64
           (bytes,rest) = BS.splitAt i1 $ _data x
           i2 = (fromInteger $ toInteger $ BS.length bytes) :: Word64
-      in 
+          newcount = (_bytesCounter x) + i2
+      in do
+        -- putStrLn $ ("oldcount=" ++) $ show (_bytesCounter x)
+        -- putStrLn $ ("i2=" ++) $ show i2
+        -- putStrLn $ ("newcount=" ++) $ show newcount
+        -- putStrLn "--"
         return $ if BS.null bytes
         then (BS.empty, x)
         else (bytes, x {
@@ -114,7 +120,7 @@ instance BytesReaderBase.Class ByteStringHolder where
                  _pos            = (_pos x) + i2,
                  _cache          = ((_cache x) C.|> bytes),
                  _loaded         = BS.last bytes,
-                 _bytesCounter   = (_bytesCounter x) + i2,
+                 _bytesCounter   = newcount,
                  _stockedBitsLen = StockedBitsLen.Zero
                  }
              )
@@ -137,21 +143,35 @@ _parseFromCache cache pid =
       payload' = toByteStringHolder bytes' 
   in do
     -- putStrLn $ show block'
-    -- putStrLn $ show "---"
-    -- putStrLn $ "pid=" ++ (show pid)
+    putStrLn $ show "---"
+    putStrLn $ "pid=" ++ (show pid)
     -- putStrLn $ show "bytes"
     -- putStrLn $ show $ BS.unpack $ bytes'
-    (v,payload'') <- BytesReaderBase.getBitsIO payload' 8
+    -- putStrLn $ (show "bytes length = " ++) $ show $ BS.length bytes'
+    -- putStrLn $ (show "section_length = " ++) $ show $ v
     -- putStrLn $ (show "table_id = " ++) $ show v
     -- putStrLn $ show "---"    
     -- (v2,payload''') <- BytesReaderBase.getBytesIO payload'' 2
     -- putStrLn $ (show "v2 = " ++) $ show $ BS.unpack v2
     -- putStrLn $ (show "loaded value = " ++) $ show $ BytesReaderBase.loaded payload'''
+
+    -- putStrLn "x019"
+    -- putStrLn $ show $ BS.unpack $ BS.drop (fromInteger $ toInteger $ 1019 + 3) bytes'
     
     (res,_) <- SITables.parseIO_simple payload' (Just emptable)
-    -- case res of
-    --   Result.Parsed x -> putStrLn $ show x
-    --   _        -> return ()
+    case res of
+      Result.Parsed x -> do
+        putStrLn $ show "Parsed!!"
+        putStrLn $ show x
+      Result.DataIsTooShort i -> do
+        putStrLn $ show "DataIsTooShort"
+      Result.NotMatch         -> do
+        putStrLn $ show "nomatch"
+        -- putStr ""
+      Result.SumCheckError    -> do
+        putStrLn $ show "SumCheckError"
+      Result.UnknownReason    -> do
+        putStrLn $ show "UnknownReason"
 --    putStrLn $ show "---"
     return (res,pid_unmatched' C.>< rest')
   

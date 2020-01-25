@@ -1,4 +1,4 @@
-module Descriptor.LangCode where
+module Utils.LangCode where
 
 type Data_ISO_639 = (Char,Char,Char)
 type Data = Data_ISO_639

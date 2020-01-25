@@ -6,7 +6,7 @@ import Common(ByteString)
 import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import qualified Descriptor.CountryCode as CountryCode
-import qualified Descriptor.LangCode as LangCode
+import qualified Utils.LangCode as LangCode
 import Data.Vector(Vector,empty,toList,snoc)
 import qualified Descriptor.CarouselCompatibleComposite.SubDescriptor as SubDescriptor
 
@@ -17,6 +17,9 @@ data Data = MkData {
   _header            :: Header.Data,
   _sub_descriptors   :: Vector SubDescriptor.Data
   } deriving (Show)
+
+instance Header.Class Data where
+  header = _header
 
 instance Base.Class Data where
 

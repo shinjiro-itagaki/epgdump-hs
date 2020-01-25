@@ -28,6 +28,9 @@ data TableDescription = MkTableDescription{
   table_description_bytes :: [Word8]
   } deriving (Show)
 
+instance Header.Class Data where
+  header = _header
+
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)
 

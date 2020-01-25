@@ -8,7 +8,7 @@ import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import Data.Vector(Vector,empty,toList,snoc)
 import qualified Descriptor.ExtendedEvent.Item as Item
-import qualified Descriptor.LangCode as LangCode
+import qualified Utils.LangCode as LangCode
 
 class (Base.Class a) => Class a where
   descriptor_number       :: a -> Word8
@@ -20,6 +20,7 @@ class (Base.Class a) => Class a where
   text                    :: a -> String
 
 data Data = MkData {
+  _header                 :: Header.Data, 
   _descriptor_number      :: Word8,
   _last_descriptor_number :: Word8,
   _iso_639_language_code  :: LangCode.Data,
@@ -28,6 +29,9 @@ data Data = MkData {
   _text_length            :: Word8,
   _text                   :: String  
   } deriving (Show)
+
+instance Header.Class Data where
+  header = _header
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)

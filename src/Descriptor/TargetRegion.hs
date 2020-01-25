@@ -26,6 +26,9 @@ data Data = MkData {
   _specs             :: Vector Spec.Data
   } deriving (Show)
 
+instance Header.Class Data where
+  header = _header
+
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)
 

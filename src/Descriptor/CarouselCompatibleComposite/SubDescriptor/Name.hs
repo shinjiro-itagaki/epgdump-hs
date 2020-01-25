@@ -14,7 +14,6 @@ data Data = MkData {
 
 instance Header.Class Data where
   header = _header
-  setHeader x h = x {_header = h}
 
 instance Base.Class Data where
   

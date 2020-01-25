@@ -10,6 +10,7 @@ import FromWord64 hiding (Class)
 import qualified Parser
 import SITables.Common
 import qualified BytesReader.Counter as Counter
+import Data.Bits((.&.))
 
 class Class a where
   header1                     :: a -> Data
@@ -58,13 +59,15 @@ instance EmptyExist Data where
 
 _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
 _parseIOFlow fh init = do
+  -- putStrLn "Header1::_parseIOFlow"
   (res,fh2) <- getBitsIO_M fh [
     (8 , (\(v,d) -> d { _table_id                 = fromWord64 v})),
     (1 , (\(v,d) -> d { _section_syntax_indicator = fromWord64 v})),
     (1 , (\(v,d) -> d { _reserved_future_use      = fromWord64 v})),
     (2 , (\(v,d) -> d { _reserved1                = fromWord64 v})),
-    (12, (\(v,d) -> d { _section_length           = fromWord64 v}))
+    (12, (\(v,d) -> d { _section_length           = (0x3FF .&.) $ fromWord64 v}))
     ] init
+  -- putStrLn $ show res
   return (res, (Counter.resetBytesCounter fh2))
 
 instance Parser.Class Data where

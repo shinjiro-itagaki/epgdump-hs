@@ -21,7 +21,6 @@ data Data = MkData {
   } deriving (Show)
 
 instance Header.Class Data where
-  setHeader x h = x { _header = h }
   header = _header
 
 instance Base.Class Data where

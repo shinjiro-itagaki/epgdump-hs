@@ -15,10 +15,14 @@ class (Base.Class a) => Class a where
   country_codes          :: a -> [CountryCode.Data]
 
 data Data = MkData {
+  _header                 :: Header.Data,
   _country_available_flag :: Bool,
   _reserved_future_use    :: Word8,
   _country_codes          :: Vector CountryCode.Data
   } deriving (Show)
+
+instance Header.Class Data where
+  header = _header
 
 instance Base.Class Data where
 --  fromByteString bs = (Nothing, bs)
