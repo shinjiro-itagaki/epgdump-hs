@@ -3,12 +3,11 @@ module Descriptor.Link.ServiceInfo (
   ,Data
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)  
-import Common(ByteString,EmptyExist(..))
 import qualified Utils.FromByteString as FromByteString
-import Utils.FromByteString(fromByteStringWithRest)
+import qualified Utils.EmptyExist as EmptyExist
+import Utils
 
-class (EmptyExist a) => Class a where
+class (EmptyExist.Class a) => Class a where
   service_info :: a -> Data
   
   id0 :: a -> Word16
@@ -35,7 +34,7 @@ data Data = MkData {
   _id2 {- _service_id -}          :: Word16
   } deriving (Show,Eq) -- 0x01
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty
 
 instance FromByteString.Class Data where

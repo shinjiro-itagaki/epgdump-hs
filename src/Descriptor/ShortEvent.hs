@@ -30,7 +30,6 @@ instance Header.Class Data where
   header = _header
 
 instance Base.Class Data where
---  fromByteString bs = (Nothing, bs)
   
 instance Class Data where
   iso_639_language_code = _iso_639_language_code

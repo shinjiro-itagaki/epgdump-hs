@@ -1,10 +1,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 module TS.Packet.Header where
 
-import Data.Word(Word64, Word32, Word16, Word8)
-import Data.Bits(Bits(..))
 import Data.ByteString.Lazy(unpack)
-import Common(ByteString,EmptyExist(..),PID,TableID)
+import Utils
+import qualified Utils.EmptyExist as EmptyExist
 
 data ScrambleControl =
   NoScramble -- '00'
@@ -46,7 +45,7 @@ toContinuityCounter i =
 -- 上1ビットが立っている(2 or 3)場合はadaptation_fieldがある
 -- 下1ビットが立っている(1 or 3)場合はpayloadがある（ヘッダに続いて直ちにpayloadが始まる）
 -- 32bit
-class (EmptyExist a) => Class a where
+class (EmptyExist.Class a) => Class a where
 --  mkEmpty :: a
   
   header                       :: a -> Data
@@ -100,7 +99,7 @@ data Data = MkData {
   _continuity_counter           :: ContinuityCounter
   } deriving (Show,Eq)
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData {
     _transport_error_indicator    = False,
     _payload_unit_start_indicator = False,

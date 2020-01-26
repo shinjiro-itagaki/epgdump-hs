@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module FromWord64 where
+module Utils.FromWord64 where
 
 import Data.Word(Word64, Word32, Word16, Word8)
 import Data.Char(chr)

@@ -11,6 +11,7 @@ import qualified Utils.CountryCode as CountryCode
 import Data.Vector(Vector,empty,toList,snoc)
 import Utils.FromByteString(fromByteString,fromByteStringWithRest,fromByteStringWithRestM)
 import Data.Bits((.&.))
+import qualified Parser.Result as Result
 
 class (Base.Class a) => Class a where
   country_available_flag :: a -> Bool
@@ -40,7 +41,7 @@ instance Base.Class Data where
           _reserved_future_use    = reserved_future_use,
           _country_codes          = country_codes
           }
-    in (Just d, bs2)
+    in Result.Parsed d
 
 instance Class Data where
   country_available_flag = _country_available_flag

@@ -19,7 +19,6 @@ instance Header.Class Data where
   header = _header
 
 instance Base.Class Data where
---  fromByteString bs = (Nothing, bs)
 
 instance Class Data where
   reference_service_id = _reference_service_id

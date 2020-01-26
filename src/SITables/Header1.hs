@@ -1,23 +1,20 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module SITables.Header1 where
-import Data.Word(Word64, Word32, Word16, Word8)
-import qualified Common
-import Common(EmptyExist(..),BitsLen,BytesLen)
 import qualified BytesReader.Base as BytesReaderBase
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
-import FromWord64 hiding (Class)
-import qualified Parser
-import SITables.Common
+import qualified Parser.Result as Result
+import Utils.FromWord64 hiding (Class)
 import qualified BytesReader.Counter as Counter
-import Data.Bits((.&.))
+import qualified Utils.FromByteString as FromByteString
+import qualified Utils.EmptyExist as EmptyExist
+import Utils
 
 class Class a where
   header1                     :: a -> Data
   setHeader1                  :: a -> Data -> a
 
   table_id                 = table_id                 . header1  
-  table_id                    :: a -> Common.TableID
+  table_id                    :: a -> TableID
   
   section_syntax_indicator    :: a -> Bool
   section_syntax_indicator = section_syntax_indicator . header1
@@ -32,11 +29,11 @@ class Class a where
   section_length           = section_length           . header1
 
 data Data = MkData {
-  _table_id                 :: Common.TableID,
+  _table_id                 :: TableID,
   _section_syntax_indicator :: Bool,
   _reserved_future_use      :: Bool,
   _reserved1                :: Word8,
-  _section_length           :: BytesLen
+  _section_length           :: Word16
   } deriving (Show)
 
 instance Class Data where
@@ -46,9 +43,9 @@ instance Class Data where
   section_syntax_indicator = _section_syntax_indicator
   reserved_future_use      = _reserved_future_use
   reserved1                = _reserved1
-  section_length           = _section_length
+  section_length           = toWord64 . _section_length
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData {
     _table_id                 = mkEmpty,
     _section_syntax_indicator = mkEmpty,
@@ -57,27 +54,20 @@ instance EmptyExist Data where
     _section_length           = mkEmpty
     }
 
-_parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow fh init = do
-  -- putStrLn "Header1::_parseIOFlow"
-  (res,fh2) <- getBitsIO_M fh [
-    (8 , (\(v,d) -> d { _table_id                 = fromWord64 v})),
-    (1 , (\(v,d) -> d { _section_syntax_indicator = fromWord64 v})),
-    (1 , (\(v,d) -> d { _reserved_future_use      = fromWord64 v})),
-    (2 , (\(v,d) -> d { _reserved1                = fromWord64 v})),
-    (12, (\(v,d) -> d { _section_length           = (0x3FF .&.) $ fromWord64 v}))
-    ] init
-  -- putStrLn $ show res
-  return (res, (Counter.resetBytesCounter fh2))
-
-instance Parser.Class Data where
-  parseIOFlow = flowStart |>>= _parseIOFlow
-
-parseFlow :: (BytesReaderBase.Class bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
-parseFlow = Parser.parseFlow caster
-  where
-    caster :: (Class a) => Data -> a -> a
-    caster header1 d = setHeader1 d header1
-
-parseIO :: (BytesReaderBase.Class bh) => bh -> IO (ParseResult Data, bh)
-parseIO = Parser.parseIO
+instance FromByteString.Class Data where
+  fromByteStringWithRest bs =
+    let (table_id,bs0) = fromByteStringWithRest bs
+        (w16,     bs1) = fromByteStringWithRest bs0
+        _ = w16 + (0 :: Word16)
+        section_syntax_indicator = (/=0)   $ (`shiftR` 15) $ w16 .&. 0x8000
+        reserved_future_use      = (/=0)   $ (`shiftR` 14) $ w16 .&. 0x4000
+        reserved1                = toWord8 $ (`shiftR` 12) $ w16 .&. 0x3000
+        section_length           =           (`shiftR`  0) $ w16 .&. 0x0FFF
+        d = MkData {
+          _table_id                 = table_id,
+          _section_syntax_indicator = section_syntax_indicator,
+          _reserved_future_use      = reserved_future_use,
+          _reserved1                = reserved1,
+          _section_length           = section_length
+          }
+    in (d,bs1)

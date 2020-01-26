@@ -7,7 +7,8 @@ data (Show a) => Data a =
   Parsed a
   | DataIsTooShort (Maybe BytesLen)-- 一致するデータがあったが、元データが不足している（続きのデータを追加して再実行すればうまくいくと思われる）。値は不足しているバイト数
   | NotMatch       -- 一致するデータが存在しなかった
-  | SumCheckError  -- 合計値エラー。データに何らかの欠損があると思われる 
+  | SumCheckError  -- 合計値エラー。データに何らかの欠損があると思われる
+  | NotSupported   -- サポートしていない
   | UnknownReason  -- 原因不明の失敗
   deriving (Show)
 
@@ -17,6 +18,7 @@ map f x = case x of
   DataIsTooShort i -> DataIsTooShort i
   NotMatch         -> NotMatch
   SumCheckError    -> SumCheckError
+  NotSupported     -> NotSupported
   UnknownReason    -> UnknownReason
 
 (>>==) :: (Show a, Show c) => (Data a, b) -> (a -> b -> (Data c,b)) -> (Data c,b)

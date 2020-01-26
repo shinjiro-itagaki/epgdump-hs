@@ -2,24 +2,22 @@ module SITables.NIT(
   Data,
   Class(..)
   ) where
-import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(EmptyExist(..),PID,TableID,TableID,PID,PIDs(..))
 import qualified BytesReader.Base as BytesReaderBase
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import qualified Parser
+import qualified Parser.Result as Result
 import qualified SITables.NIT.Item as Item
 import Data.Vector(Vector,toList,empty,snoc)
-import FromWord64 hiding (Class)
+import qualified Utils.SITableIDs as SITableIDs
+import qualified Utils.EmptyExist as EmptyExist
+import Utils
 
-import qualified Parser.Result as Result
+import qualified Utils.FromByteString as FromByteString
 
-class (Header1.Class a, Header2.Class a, HasDescriptors a) => Class a where
+class (Header1.Class a, Header2.Class a) => Class a where
   network_id                   :: a -> Word16
   reserved_future_use1         :: a -> Word8  
   network_descriptors_length   :: a -> Word16
@@ -52,9 +50,6 @@ instance Footer.Class Data where
   setFooter d x = d { _footer = x }  
   footer = _footer
   
-instance HasDescriptors Data where
-  descriptors = toList . _descriptors
-
 instance Class Data where
   network_id                   = _network_id
   reserved_future_use1         = _reserved_future_use1
@@ -63,7 +58,7 @@ instance Class Data where
   transport_stream_loop_length = _transport_stream_loop_length
   transport_streams            = toList . _items
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData {
     _header1                      = mkEmpty,
     _network_id                   = mkEmpty,
@@ -77,46 +72,46 @@ instance EmptyExist Data where
     _footer                       = mkEmpty
     }
 
-instance Parser.Class Data where
-
-instance SITableIDs Data where
+instance SITableIDs.Class Data where
   pids      _ = MkPIDs [0x0010]
   table_ids _ = [0x40,0x41]
 
-_parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow1 fh init =
-  getBitsIO_M fh [
-  (16, (\(v,d) -> d { _network_id = fromWord64 v}))
-  ] init
+-- _parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow1 fh init =
+--   getBitsIO_M fh [
+--   (16, (\(v,d) -> d { _network_id = fromWord64 v}))
+--   ] init
 
-_parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow2 fh init =
-  getBitsIO_M fh [
-  ( 4, (\(v,d) -> d { _reserved_future_use1       = fromWord64 v})),
-  (12, (\(v,d) -> d { _network_descriptors_length = fromWord64 v}))
-  ] init
+-- _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow2 fh init =
+--   getBitsIO_M fh [
+--   ( 4, (\(v,d) -> d { _reserved_future_use1       = fromWord64 v})),
+--   (12, (\(v,d) -> d { _network_descriptors_length = fromWord64 v}))
+--   ] init
 
-_parseIOFlow3 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow3 fh init = return (Result.Parsed init, fh) -- todo descriptors
+-- _parseIOFlow3 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow3 fh init = return (Result.Parsed init, fh) -- todo descriptors
 
-_parseIOFlow4 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow4 fh init = 
-  getBitsIO_M fh [
-  ( 4, (\(v,d) -> d { _reserved_future_use2         = fromWord64 v})),
-  (12, (\(v,d) -> d { _transport_stream_loop_length = fromWord64 v}))
-  ] init
+-- _parseIOFlow4 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow4 fh init = 
+--   getBitsIO_M fh [
+--   ( 4, (\(v,d) -> d { _reserved_future_use2         = fromWord64 v})),
+--   (12, (\(v,d) -> d { _transport_stream_loop_length = fromWord64 v}))
+--   ] init
 
-_parseIOFlow5 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow5 fh init = return (Result.Parsed init, fh) -- todo items
+-- _parseIOFlow5 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow5 fh init = return (Result.Parsed init, fh) -- todo items
 
 instance Base.Class Data where
   footer = Just . _footer
-  parseIOFlowAfterHeader1 =
-    flowStart
-    |>>= _parseIOFlow1
-    |>>= Header2.parseFlow
-    |>>= _parseIOFlow2
-    |>>= _parseIOFlow3
-    |>>= _parseIOFlow4
-    |>>= _parseIOFlow5    
-    |>>= Footer.parseFlow    
+--   parseIOFlowAfterHeader1 =
+--     flowStart
+--     |>>= _parseIOFlow1
+--     |>>= Header2.parseFlow
+--     |>>= _parseIOFlow2
+--     |>>= _parseIOFlow3
+--     |>>= _parseIOFlow4
+--     |>>= _parseIOFlow5    
+--     |>>= Footer.parseFlow    
+
+instance FromByteString.Class Data where

@@ -9,7 +9,7 @@ import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import Data.Vector(Vector,empty,toList,snoc)
 import qualified Data.ByteString.Lazy as BS
-
+import qualified Parser.Result as Result
 import qualified Descriptor.Content.Item as Item
 
 class Base.Class a => Class a where
@@ -26,7 +26,8 @@ instance Header.Class Data where
 instance Base.Class Data where
   fromByteStringAfterHeader h bs =
     let (items,rest) = Base.gather (Header.descriptor_length h) impl snoc bs empty
-    in (Just $ MkData h items, rest)
+        d = MkData h items
+    in Result.Parsed d
     where
       impl :: ByteString -> (Maybe Item.Data, ByteString)
       impl xs = let (bs,rest) = BS.splitAt 2 xs

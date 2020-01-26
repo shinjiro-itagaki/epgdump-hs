@@ -5,19 +5,14 @@ module SITables.EIT.Item(
   Class(..),
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(HasDescriptors(..))
-import Common(EmptyExist(..),PID,TableID)
 import qualified BytesReader.Base as BytesReaderBase
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import FromWord64 hiding (Class)
-import qualified Parser
+import qualified Parser.Result as Result
+import Utils
 import qualified Descriptor
-import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
-import SITables.Items(Element(..))
+import qualified Utils.EmptyExist as EmptyExist
 
-class (HasDescriptors a) => Class a where
+class Class a where
   event_id                :: a -> Word16
   start_time              :: a -> Word64
   duration                :: a -> Word32
@@ -35,9 +30,6 @@ data Data = MkData {
   _descriptors             :: Vector Descriptor.Data
   } deriving (Show)
 
-instance HasDescriptors Data where
-  descriptors = toList . _descriptors
-
 instance Class Data where
   event_id                = _event_id 
   start_time              = _start_time
@@ -46,23 +38,22 @@ instance Class Data where
   free_CA_mode            = _free_CA_mode
   descriptors_loop_length = _descriptors_loop_length
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty
 
-_parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow fh init = do
-  -- putStrLn "EIT.Item::_parseIOFlow"
-  getBitsIO_M fh [
-    (16, (\(v,d) -> d { _event_id                = fromWord64 v})),
-    (40, (\(v,d) -> d { _start_time              = fromWord64 v})),
-    (24, (\(v,d) -> d { _duration                = fromWord64 v})),
-    ( 3, (\(v,d) -> d { _running_status          = fromWord64 v})),
-    ( 1, (\(v,d) -> d { _free_CA_mode            = fromWord64 v})),
-    (12, (\(v,d) -> d { _descriptors_loop_length = fromWord64 v}))
-    ] init
+-- _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow fh init = do
+--   -- putStrLn "EIT.Item::_parseIOFlow"
+--   getBitsIO_M fh [
+--     (16, (\(v,d) -> d { _event_id                = fromWord64 v})),
+--     (40, (\(v,d) -> d { _start_time              = fromWord64 v})),
+--     (24, (\(v,d) -> d { _duration                = fromWord64 v})),
+--     ( 3, (\(v,d) -> d { _running_status          = fromWord64 v})),
+--     ( 1, (\(v,d) -> d { _free_CA_mode            = fromWord64 v})),
+--     (12, (\(v,d) -> d { _descriptors_loop_length = fromWord64 v}))
+--     ] init
 
-instance Parser.Class Data where
-  parseIOFlow = 
-    flowStart |>>= _parseIOFlow
+-- instance Parser.Class Data where
+--   parseIOFlow = 
+--     flowStart |>>= _parseIOFlow
     
-instance Element Data where

@@ -11,6 +11,12 @@ class Class a where
 instance Class Word8 where
   toWord64 = fromInteger . toInteger
 
+instance Class Word16 where
+  toWord64 = fromInteger . toInteger
+
+instance Class Word32 where
+  toWord64 = fromInteger . toInteger
+
 instance Class [Word8] where
   toWord64 = Prelude.foldl (\rtn w8 -> (rtn `shiftL` 8) .|. (toWord64 w8) ) (0 :: Word64)
 

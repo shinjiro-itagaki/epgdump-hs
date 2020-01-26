@@ -18,7 +18,7 @@ import Data.Maybe(fromMaybe)
 import qualified Utils.Collection as Collection
 import qualified Data.Sequence as S
 import qualified Data.Vector as V
-import Common(EmptyExist(..))
+import qualified Utils.EmptyExist as EmptyExist
 
 map :: (a -> b) -> (a,ByteString) -> (b,ByteString)
 map f (x,y) = (f x,y)
@@ -29,14 +29,14 @@ class Class a where
   fromByteString :: ByteString -> a
   fromByteString = fst . fromByteStringWithRest
   
-  gatherFromByteString :: (EmptyExist b) => ByteString -> (b -> a -> b) -> b
-  gatherFromByteString bs appender = impl bs appender mkEmpty
+  gatherFromByteString :: (EmptyExist.Class b) => ByteString -> (b -> a -> b) -> b
+  gatherFromByteString bs appender = impl bs appender EmptyExist.mkEmpty
     where
       impl bs appender y
         | BS.null bs = y
         | otherwise = let (e,rest) = fromByteStringWithRest bs
                       in impl rest appender (appender y e)
-                         
+
   fromByteStringWithRestM :: (Monad m) => ByteString -> (m a,ByteString)
   fromByteStringWithRestM xs =
     let (v,rest) = fromByteStringWithRest xs
@@ -65,4 +65,15 @@ instance Class Word8 where
 
 instance Class Char where
   fromByteStringWithRest = fromMaybe ('\0',BS.empty) . BChar8.uncons
+
+instance (Class a) => Class (V.Vector a) where
+  fromByteStringWithRest bs = impl bs V.empty
+    where
+      impl bs' v
+        | BS.null bs' = (v,bs')
+        | otherwise =
+            let (e,rest) = fromByteStringWithRest bs'
+            in impl rest (V.snoc v e)
+        
+
 

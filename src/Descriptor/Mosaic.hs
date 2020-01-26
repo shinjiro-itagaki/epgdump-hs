@@ -12,6 +12,7 @@ import qualified Data.ByteString.Lazy as BS
 import qualified Descriptor.Mosaic.Item as Item
 import Data.Bits(shiftR,(.&.))
 import Utils.FromByteString(fromByteStringWithRest,fromByteString, gatherFromByteString)
+import qualified Parser.Result as Result
 
 class (Base.Class a) => Class a where
   mosaic_entry_point                    :: a -> Bool
@@ -50,7 +51,7 @@ instance Base.Class Data where
           _number_of_vertical_elementary_cells   = number_of_vertical_elementary_cells,
           _items                                 = items
           }
-    in (Just d,rest)
+    in Result.Parsed d
         
 instance Class Data where
   mosaic_entry_point                    = _mosaic_entry_point

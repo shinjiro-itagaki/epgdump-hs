@@ -5,19 +5,14 @@ module SITables.NBIT.Item(
   Class(..),
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(HasDescriptors(..))
-import Common(EmptyExist(..),PID,TableID)
 import qualified BytesReader.Base as BytesReaderBase
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import FromWord64 hiding (Class)
-import qualified Parser
+import qualified Parser.Result as Result
 import qualified Descriptor
-import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty,snoc)
-import SITables.Items(Element(..))
+import qualified Utils.EmptyExist as EmptyExist
+import Utils
 
-class (HasDescriptors a) => Class a where
+class Class a where
   information_id            :: a -> Word16
   information_type          :: a -> Word8
   description_body_location :: a -> (Bool,Bool)
@@ -54,41 +49,37 @@ instance Class Data where
   descriptors_loop_length   = _descriptors_loop_length
   descriptors               = toList . _descriptors
 
-instance HasDescriptors Data where
-  descriptors = toList . _descriptors
-
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty mkEmpty mkEmpty Data.Vector.empty
 
-_parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow1 fh init = do
-  getBitsIO_M fh [
-    (16, (\(v,d) -> d { _information_id            = fromWord64 v})),
-    ( 4, (\(v,d) -> d { _information_type          = fromWord64 v})),
-    ( 2, (\(v,d) -> d { _description_body_location = fromWord64 v})),
-    ( 2, (\(v,d) -> d { _reserved_future_use1      = fromWord64 v})),
-    ( 8, (\(v,d) -> d { _user_defined              = fromWord64 v})),
-    ( 8, (\(v,d) -> d { _number_of_keys            = fromWord64 v}))
-    ] init
+-- _parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow1 fh init = do
+--   getBitsIO_M fh [
+--     (16, (\(v,d) -> d { _information_id            = fromWord64 v})),
+--     ( 4, (\(v,d) -> d { _information_type          = fromWord64 v})),
+--     ( 2, (\(v,d) -> d { _description_body_location = fromWord64 v})),
+--     ( 2, (\(v,d) -> d { _reserved_future_use1      = fromWord64 v})),
+--     ( 8, (\(v,d) -> d { _user_defined              = fromWord64 v})),
+--     ( 8, (\(v,d) -> d { _number_of_keys            = fromWord64 v}))
+--     ] init
     
-_parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow2 fh init =
-  let n = number_of_keys init
-      list = map (\_ -> (16, (\(v,d) -> d { _keys = snoc (_keys d) $ fromWord64 v})) ) [1 .. n]
-  in getBitsIO_M fh list init
+-- _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow2 fh init =
+--   let n = number_of_keys init
+--       list = map (\_ -> (16, (\(v,d) -> d { _keys = snoc (_keys d) $ fromWord64 v})) ) [1 .. n]
+--   in getBitsIO_M fh list init
 
-_parseIOFlow3 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow3 fh init = do
-  getBitsIO_M fh [  
-    ( 4, (\(v,d) -> d { _reserved_future_use2      = fromWord64 v})),
-    (12, (\(v,d) -> d { _descriptors_loop_length   = fromWord64 v}))
-    ] init
+-- _parseIOFlow3 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow3 fh init = do
+--   getBitsIO_M fh [  
+--     ( 4, (\(v,d) -> d { _reserved_future_use2      = fromWord64 v})),
+--     (12, (\(v,d) -> d { _descriptors_loop_length   = fromWord64 v}))
+--     ] init
 
-instance Parser.Class Data where
-  parseIOFlow = 
-    flowStart
-    |>>= _parseIOFlow1
-    |>>= _parseIOFlow2
-    |>>= _parseIOFlow3
+-- instance Parser.Class Data where
+--   parseIOFlow = 
+--     flowStart
+--     |>>= _parseIOFlow1
+--     |>>= _parseIOFlow2
+--     |>>= _parseIOFlow3
     
-instance Element Data where

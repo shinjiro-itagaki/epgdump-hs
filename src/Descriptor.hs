@@ -55,19 +55,19 @@ import Descriptor.TimeShiftedEvent
 import Descriptor.TimeShiftedService
 import Descriptor.VideoDecodeControl
 
-import Data.Word(Word64, Word32, Word16, Word8)  
-import Data.ByteString(ByteString)
-import qualified Data.ByteString as BS
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO)
-import qualified Parser
+import qualified Descriptor.Header as Header
+import qualified Data.ByteString.Lazy as BS
 import qualified Parser.Result as Result
-import Common(EmptyExist(..),BytesLen,BitsLen)
 import qualified BytesReader.Base as BytesReaderBase
 import qualified BytesReader.Counter as Counter
-
+import qualified Utils.FromByteString as FromByteString
+import Utils
+import qualified Utils.EmptyExist as EmptyExist
+import qualified Descriptor.Base as Base
 
 data Data =
   Null
+  | NotSupported
   | ParseFailed
   | AVC_Timing_HRD               Descriptor.AVC_Timing_HRD.Data
   | AVC_Video                    Descriptor.AVC_Video.Data
@@ -123,18 +123,72 @@ data Data =
   | VideoDecodeControl           Descriptor.VideoDecodeControl.Data
   deriving (Show)  
 
-instance EmptyExist Descriptor.Data where
+instance EmptyExist.Class Descriptor.Data where
   mkEmpty = Null
 
-instance Parser.Class Descriptor.Data where
---  parseIOFlow = flowStart
+map_ :: (Show a, Show b) => (a -> b) -> Result.Data a -> Result.Data b   -- ここを省略すると型が単一に固定されるためコンパイルが通らない
+map_ = Result.map
 
-gather :: (BytesReaderBase.Class bh, Parser.Class b, Show b) => (b -> Descriptor.Data -> b) -> BytesLen -> bh -> b -> IO (ParseResult b, bh)
-gather appender restlen fh init
-  | restlen < 1 = return (Result.Parsed init, fh)
-  | otherwise = do
-      res@(res_item,fh') <- parseIO fh
-      case res_item of
-        Result.Parsed item -> gather appender (restlen - ((Counter.getBytesCounter fh') - (Counter.getBytesCounter fh))) fh' (appender init item)
-        _           -> return $ (\x -> (x,fh')) $ mapParseResult (\_ -> init) res_item
+instance FromByteString.Class Descriptor.Data where
+  fromByteStringWithRest bs =
+    let (header,bs0) = fromByteStringWithRest bs
+        (bs1,rest) = BS.splitAt (Header.descriptor_length header) bs0
+        res = (\f -> f bs1) $ case Header.descriptor_tag header of
+                0x2A -> map_ AVC_Timing_HRD              . Base.fromByteStringAfterHeader header
+                0x28 -> map_ AVC_Video                   . Base.fromByteStringAfterHeader header
+                0xC4 -> map_ AudioComponent              . Base.fromByteStringAfterHeader header
+                0xDB -> map_ BoardInformation            . Base.fromByteStringAfterHeader header
+                0x47 -> map_ BouquetName                 . Base.fromByteStringAfterHeader header
+                0xD8 -> map_ BroadcasterName             . Base.fromByteStringAfterHeader header
+                0x53 -> map_ CAIdentifier                . Base.fromByteStringAfterHeader header
+                0xF7 -> map_ CarouselCompatibleComposite . Base.fromByteStringAfterHeader header
+                0x50 -> map_ Component                   . Base.fromByteStringAfterHeader header
+                0x00 -> map_ ComponentControl            . Base.fromByteStringAfterHeader header
+                0xD9 -> map_ ComponentGroup              . Base.fromByteStringAfterHeader header
+                0x09 -> map_ ConditionalAccess           . Base.fromByteStringAfterHeader header
+                0xF8 -> map_ ConditionalPlayback         . Base.fromByteStringAfterHeader header
+                0xDD -> map_ ConnectedTransmission       . Base.fromByteStringAfterHeader header
+                0x54 -> map_ Content                     . Base.fromByteStringAfterHeader header
+                0xDE -> map_ ContentAvailability         . Base.fromByteStringAfterHeader header
+                0x49 -> map_ CountryAvailability         . Base.fromByteStringAfterHeader header
+                0xFD -> map_ DataComponent               . Base.fromByteStringAfterHeader header
+                0xC7 -> map_ DataContents                . Base.fromByteStringAfterHeader header
+                0xC1 -> map_ DigitalCopyControl          . Base.fromByteStringAfterHeader header
+                0xFC -> map_ EmergencyInformation        . Base.fromByteStringAfterHeader header
+                0xD6 -> map_ EventGroup                  . Base.fromByteStringAfterHeader header
+                0xCE -> map_ ExtendedBroadcaster         . Base.fromByteStringAfterHeader header
+                0x4E -> map_ ExtendedEvent               . Base.fromByteStringAfterHeader header
+                0xC0 -> map_ HierarchicalTransmission    . Base.fromByteStringAfterHeader header
+                0xC5 -> map_ HyperLink                   . Base.fromByteStringAfterHeader header
+                0xDC -> map_ LDT_Linkage                 . Base.fromByteStringAfterHeader header
+                0x4A -> map_ Linkage                     . Base.fromByteStringAfterHeader header
+                0x58 -> map_ LocalTimeOffset             . Base.fromByteStringAfterHeader header
+                0xCF -> map_ LogoTransmission            . Base.fromByteStringAfterHeader header
+                0x51 -> map_ Mosaic                      . Base.fromByteStringAfterHeader header
+                0x4B -> map_ NVOD_Reference              . Base.fromByteStringAfterHeader header
+                0x40 -> map_ NetworkName                 . Base.fromByteStringAfterHeader header
+                0x55 -> map_ ParentalRating              . Base.fromByteStringAfterHeader header
+                0xFB -> map_ PartialReception            . Base.fromByteStringAfterHeader header
+                0xD7 -> map_ SI_Parameter                . Base.fromByteStringAfterHeader header
+                0xDA -> map_ SI_Prime_TS                 . Base.fromByteStringAfterHeader header
+                0x43 -> map_ SatelliteDeliverySystem     . Base.fromByteStringAfterHeader header
+                0xD5 -> map_ Series                      . Base.fromByteStringAfterHeader header
+                0x48 -> map_ Service                     . Base.fromByteStringAfterHeader header
+                0xE0 -> map_ ServiceGroup                . Base.fromByteStringAfterHeader header
+                0x41 -> map_ ServiceList                 . Base.fromByteStringAfterHeader header
+                0x4D -> map_ ShortEvent                  . Base.fromByteStringAfterHeader header
+                0x52 -> map_ StreamIdentifier            . Base.fromByteStringAfterHeader header
+                0x42 -> map_ Stuffing                    . Base.fromByteStringAfterHeader header
+                0xFE -> map_ SystemManagement            . Base.fromByteStringAfterHeader header
+                0xCD -> map_ TS_Information              . Base.fromByteStringAfterHeader header
+                0xC6 -> map_ TargetRegion                . Base.fromByteStringAfterHeader header
+                0xFA -> map_ TerrestrialDeliverySystem   . Base.fromByteStringAfterHeader header
+                0x4F -> map_ TimeShiftedEvent            . Base.fromByteStringAfterHeader header
+                0x4C -> map_ TimeShiftedService          . Base.fromByteStringAfterHeader header
+                0xC8 -> map_ VideoDecodeControl          . Base.fromByteStringAfterHeader header
+                _    -> (\x -> Result.NotSupported)
+    in case res of
+      Result.Parsed     x -> (x           ,rest)
+      Result.NotSupported -> (NotSupported,rest)
+      _                   -> (ParseFailed ,rest)
 

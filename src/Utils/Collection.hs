@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Utils.Collection where
-import Common(EmptyExist)
+import qualified Utils.EmptyExist as EmptyExist
 
-class (EmptyExist a) => Class a where
+class (EmptyExist.Class a) => Class a where
   add :: a -> e -> a
 

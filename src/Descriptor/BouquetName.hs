@@ -12,6 +12,7 @@ import Data.Vector(Vector,empty,toList,snoc)
 import qualified Data.ByteString.Lazy.Char8 as BChar8
 import qualified Data.ByteString.Lazy as BS
 import Utils.ToString(toString)
+import qualified Parser.Result as Result
 
 class (Base.Class a) => Class a where
   name :: a -> String
@@ -26,7 +27,7 @@ instance Header.Class Data where
 
 instance Base.Class Data where
   fromByteStringAfterHeader h bs =
-    Base.gatherByteString (Header.descriptor_length h) (MkData h) bs
+    Result.Parsed $ MkData h bs
 
 instance Class Data where
   name = toString . _name

@@ -3,15 +3,14 @@ module Descriptor.Linkage (
   Class(..)
   ,Data
   ) where
-import Data.Word(Word64, Word32, Word16, Word8)
-import Common(ByteString,EmptyExist(..))
+import Utils
+import qualified Utils.EmptyExist as EmptyExist
 import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import Data.Vector(Vector,empty,toList,snoc)
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
-import Utils.FromByteString(fromByteStringWithRest)
 import qualified Data.ByteString.Lazy as BS
-
+import qualified Parser.Result as Result
 
 class (Base.Class a, ServiceInfo.Class a) => Class a where
   linkage_type        :: a -> LinkageType
@@ -36,7 +35,7 @@ data LinkageType = ReservedForFutureUse
                  | ReservedForReTransmission
                  deriving (Show,Eq)
 
-instance EmptyExist LinkageType where
+instance EmptyExist.Class LinkageType where
   mkEmpty = ReservedForFutureUse
 
 toLinkageType :: Word8 -> LinkageType
@@ -54,7 +53,7 @@ toLinkageType x
         0xFE -> ReservedForReTransmission
         _    -> ReservedForFutureUse
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty
 
 instance Header.Class Data where
@@ -67,7 +66,7 @@ instance Base.Class Data where
         (service_info,bs2) = fromByteStringWithRest bs1
         private_data_bytes = bs2
         d = MkData h (toLinkageType linkage_type) service_info private_data_bytes
-    in (Just d,rest)
+    in Result.Parsed d
 
 instance ServiceInfo.Class Data where
   service_info = _service_info

@@ -30,7 +30,6 @@ instance Header.Class Data where
   header = _header
 
 instance Base.Class Data where
---  fromByteString bs = (Nothing, bs)
 
 instance Class Data where
   region_spec_type x = if (_region_spec_type x) .&. 0x01 > 0 then BS_PrefSpec else Reservation

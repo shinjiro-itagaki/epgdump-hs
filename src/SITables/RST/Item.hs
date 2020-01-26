@@ -5,22 +5,16 @@ module SITables.RST.Item(
   Class(..),
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(HasDescriptors(..))
-import Common(EmptyExist(..),PID,TableID)
 import qualified BytesReader.Base as BytesReaderBase
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import FromWord64 hiding (Class)
-import qualified Parser
+import qualified Parser.Result as Result
 import qualified Descriptor
-import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
-import SITables.Items(Element(..))
 import qualified Utils.FromByteString as FromByteString
-
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
 import qualified Descriptor.Link.EventInfo as EventInfo
 import qualified Descriptor.EventInfo as Info
+import qualified Utils.EmptyExist as EmptyExist
+import Utils
 
 class (EventInfo.Class a) => Class a where
   reserved_future_use :: a -> Word8 -- 5
@@ -50,25 +44,24 @@ instance Class Data where
   reserved_future_use = _reserved_future_use
   running_status      = _running_status
   
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty
 
-_parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow fh init = do
-  getBitsIO_M fh [
-    -- (16, (\(v,d) -> d { _transport_stream_id = fromWord64 v})),
-    -- (16, (\(v,d) -> d { _original_network_id = fromWord64 v})),
-    -- (16, (\(v,d) -> d { _service_id          = fromWord64 v})),
-    (16, (\(v,d) -> d )),
-    (16, (\(v,d) -> d )),
-    (16, (\(v,d) -> d )),
-    (16, (\(v,d) -> d { _event_id            = fromWord64 v})),    
-    ( 5, (\(v,d) -> d { _reserved_future_use = fromWord64 v})),
-    ( 3, (\(v,d) -> d { _running_status      = fromWord64 v}))
-    ] init
+-- _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow fh init = do
+--   getBitsIO_M fh [
+--     -- (16, (\(v,d) -> d { _transport_stream_id = fromWord64 v})),
+--     -- (16, (\(v,d) -> d { _original_network_id = fromWord64 v})),
+--     -- (16, (\(v,d) -> d { _service_id          = fromWord64 v})),
+--     (16, (\(v,d) -> d )),
+--     (16, (\(v,d) -> d )),
+--     (16, (\(v,d) -> d )),
+--     (16, (\(v,d) -> d { _event_id            = fromWord64 v})),    
+--     ( 5, (\(v,d) -> d { _reserved_future_use = fromWord64 v})),
+--     ( 3, (\(v,d) -> d { _running_status      = fromWord64 v}))
+--     ] init
 
-instance Parser.Class Data where
-  parseIOFlow = 
-    flowStart |>>= _parseIOFlow
+-- instance Parser.Class Data where
+--   parseIOFlow = 
+--     flowStart |>>= _parseIOFlow
     
-instance Element Data where

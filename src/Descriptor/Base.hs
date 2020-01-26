@@ -1,27 +1,24 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Descriptor.Base where
-import Data.Word(Word64, Word32, Word16, Word8)  
-import Common(EmptyExist(..),BitsLen,BytesLen,ByteString)
+import Utils
 import BytesReader.Counter
 import qualified Descriptor.Header as Header
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
--- import Parser(FromWord64(..),ParseResult(..),mapParseResult,parseFlow)
 import qualified BytesReader
 import qualified BytesReader.Base as BytesReaderBase
 import qualified Data.ByteString.Lazy as BS
-import Data.Bits(shiftL,(.|.))
+import qualified Parser.Result as Result
 -- import qualified Utils.FromByteString as FromByteString
 
 class (Show a, Header.Class a) => Class a where
-  fromByteString :: ByteString -> (Maybe a,ByteString)
-  fromByteString bs =
-    let mx = BS.uncons bs >>= (\(x,rest') -> BS.uncons rest' >>= (\(y,rest'') -> Just (Header.mk x y,rest'')))
-    in case mx of
-         Just (header,rest) -> fromByteStringAfterHeader header rest
-         Nothing -> (Nothing,BS.empty)
-  
-  fromByteStringAfterHeader :: Header.Data -> ByteString -> (Maybe a,ByteString)
+  -- fromByteString :: ByteString -> (Maybe a,ByteString)
+  -- fromByteString bs =
+  --   let mx = BS.uncons bs >>= (\(x,rest') -> BS.uncons rest' >>= (\(y,rest'') -> Just (Header.mk x y,rest'')))
+  --   in case mx of
+  --        Just (header,rest) -> fromByteStringAfterHeader header rest
+  --        Nothing -> (Nothing,BS.empty)
+  fromByteStringAfterHeader :: Header.Data -> ByteString -> Result.Data a
+  fromByteStringAfterHeader header bs = Result.NotSupported
   
 gather :: BytesLen -> (ByteString -> (Maybe b, ByteString)) -> (a -> b -> a) -> ByteString -> a -> (a,ByteString)
 gather alllen maker appender bs container

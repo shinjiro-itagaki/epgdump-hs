@@ -10,6 +10,7 @@ import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import qualified Utils.LangCode as LangCode
 import qualified Data.Vector as V
+import qualified Parser.Result as Result
 
 class Base.Class a => Class a where
   ca_system_id :: a -> [Word16]
@@ -25,7 +26,7 @@ instance Header.Class Data where
 instance Base.Class Data where
   fromByteStringAfterHeader h bs =
     let (m_v2,rest) = Base.gatherWord16 (Header.descriptor_length h) V.snoc V.empty bs
-    in (\x -> (x,rest)) $ Just $ MkData h $ case m_v2 of
+    in Result.Parsed $ MkData h $ case m_v2 of
       Nothing -> V.empty
       Just v2 -> v2
 

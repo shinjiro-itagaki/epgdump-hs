@@ -9,8 +9,8 @@ import Common(ByteString)
 --import qualified Descriptor.Base as Base
 --import qualified Descriptor.Header as Header
 import Data.Bits(testBit)
-import qualified FromWord64
-import FromWord64 hiding (Class)
+import qualified Utils.FromWord64 as FromWord64
+import Utils.FromWord64 hiding (Class)
 
 data TargetArea =
   EastHokkaido | WestHokkaido | Aomori | Iwate | Miyagi | Akita | Yamagata | Fukushima

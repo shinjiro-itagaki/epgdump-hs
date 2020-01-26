@@ -37,8 +37,6 @@ class (Base.Class a, Status.Class a) => Class a where
             x <- return $ Data.ByteString.Lazy.head bytes
             if x == syncByte
               then do
---                (putStrLn $ show x)
---                (putStrLn $ show $ BytesReaderBase.loaded fh2)
                 return fh2
               else syncIO fh2 syncByte
 
@@ -47,9 +45,7 @@ data (Handler.Class h) => Data h = MkData {
   _pos            :: Word64, -- bits
   _size           :: BytesLen,
   _loaded         :: Word8,
-  _stockedBitsLen :: StockedBitsLen.Data,
-  _bytesCounter   :: BytesLen,
-  _cache          :: Vector ByteString
+  _bytesCounter   :: BytesLen
   }
 
 new :: (Handler.Class h) => h -> IO (Data h)
@@ -60,9 +56,7 @@ new h = do
     _pos            = 0,
     _size           = size,
     _loaded         = 0,
-    _bytesCounter   = 0,
-    _stockedBitsLen = StockedBitsLen.Zero,
-    _cache          = Data.Vector.empty
+    _bytesCounter   = 0
     }
 
 
@@ -90,15 +84,7 @@ instance (Handler.Class h) => Base.Class (Data h) where
          >>= (\bytes -> return $
                         if BS.null bytes
                         then (BS.empty, x)
-                        else (bytes, _addPos (x {_cache = (snoc (_cache x) bytes),
-                                                 _loaded = BS.last bytes,
-                                                 _stockedBitsLen = StockedBitsLen.Zero
+                        else (bytes, _addPos (x {_loaded = BS.last bytes
                                                 }) (fromInteger $ toInteger $ BS.length bytes)))
   
-  cache = BS.concat . toList  . _cache
-  clearCache x = x { _cache = Data.Vector.empty }
-  loaded         = _loaded  
-  stockedBitsLen = _stockedBitsLen  
-  updateStockedBitsLen x bitslen = x {_stockedBitsLen = bitslen }  
-
 instance (Handler.Class h) => Class (Data h) where

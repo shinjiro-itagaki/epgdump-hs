@@ -9,6 +9,7 @@ import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import Utils.FromByteString(fromByteString,fromByteStringWithRest)
 import Data.Bits((.&.),testBit,shiftR)
+import qualified Parser.Result as Result
 
 data Polalization = LinearHorizontal | LinearVertical | CircularLeft | CircularRight deriving (Eq,Show)
 
@@ -115,7 +116,7 @@ instance Base.Class Data where
           _system_rate       = system_rate',
           _fec_inner         = fec_inner'
           }
-    in (Just d,bs4)
+    in Result.Parsed d
 
 
 instance Class Data where

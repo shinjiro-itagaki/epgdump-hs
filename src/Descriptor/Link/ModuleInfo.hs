@@ -3,12 +3,11 @@ module Descriptor.Link.ModuleInfo (
   ,Data
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)  
-import Common(ByteString,EmptyExist(..))
-import Data.Word(Word64, Word32, Word16, Word8)  
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
 import qualified Descriptor.Link.EventInfo   as EventInfo
 import qualified Utils.FromByteString as FromByteString
+import qualified Utils.EmptyExist as EmptyExist
+import Utils
 
 class (EventInfo.Class a) => Class a where
   component_tag :: a -> Word8
@@ -20,7 +19,7 @@ data Data  = MkData {
   _module_id :: Word16
   } deriving (Show,Eq) -- 0x03
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty
 
 instance FromByteString.Class Data where

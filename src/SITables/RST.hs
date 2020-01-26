@@ -3,21 +3,19 @@ module SITables.RST(
   Class(..)
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(SITableIDs(..))
 import qualified SITables.Base as Base
-import Common(ByteString,EmptyExist(..),PID,TableID,TableID,PID,PIDs(..))
 import qualified BytesReader.Base as BytesReaderBase
-import qualified SITables.Items as Items
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified Descriptor
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import FromWord64 hiding (Class)
-import qualified Parser
+import qualified Parser.Result as Result
 import qualified SITables.Base as Base
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.RST.Item as Item
+import qualified Utils.FromByteString as FromByteString
+import qualified Utils.EmptyExist as EmptyExist
+import qualified Utils.SITableIDs as SITableIDs
+import Utils
 
 class (Header1.Class a) => Class a where
   items :: a -> [Item.Data]
@@ -27,7 +25,7 @@ data Data = MkData {
   _items   :: Vector Item.Data
   } deriving (Show)
 
-instance SITableIDs Data where
+instance SITableIDs.Class Data where
   pids      _ =  MkExcludePIDs [0x0013]
   table_ids _ = [0x71]
 
@@ -38,20 +36,20 @@ instance Header1.Class Data where
 instance Class Data where
   items = toList . _items
 
-_parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
-  where
-    addItem' :: Data -> Item.Data -> Data
-    addItem' x item = x {_items = (snoc (_items x) item)  }
+-- _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
+--   where
+--     addItem' :: Data -> Item.Data -> Data
+--     addItem' x item = x {_items = (snoc (_items x) item)  }
 
 
 instance Base.Class Data where
   footer  _ = Nothing
-  parseIOFlowAfterHeader1 =
-    flowStart
-    |>>= _parseIOFlow    
+  -- parseIOFlowAfterHeader1 =
+  --   flowStart
+  --   |>>= _parseIOFlow    
 
-instance Parser.Class Data where
-
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty Data.Vector.empty
+
+instance FromByteString.Class Data where

@@ -5,13 +5,10 @@ import qualified Descriptor.Mosaic.ElementaryCellField as ElementaryCellField
 import qualified Descriptor.Mosaic.CellLinkageInfo as CellLinkageInfo
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified Data.Vector as V
-import Data.Word(Word64, Word32, Word16, Word8)
-import Common(ByteString,EmptyExist(..))
+import qualified Utils.EmptyExist as EmptyExist
 import qualified Utils.FromByteString as FromByteString
-import Utils.FromByteString(fromByteStringWithRest)
 import qualified Data.ByteString.Lazy as BS
-import Data.Bits(shiftR,(.&.))
-import Utils.ToWord8(toWord8)
+import Utils
 
 class (FromByteString.Class a, CellLinkageInfo.Class a) => Class a where
   logical_cell_id                :: a -> Word8 -- 6
@@ -58,5 +55,5 @@ instance FromByteString.Class Data where
           }
     in (d,bs5)
 
-instance EmptyExist (V.Vector Data) where
+instance EmptyExist.Class (V.Vector Data) where
   mkEmpty = V.empty

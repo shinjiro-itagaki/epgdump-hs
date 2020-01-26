@@ -3,13 +3,10 @@ module Descriptor.Link.EventInfo (
   ,Data
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)  
-import Common(ByteString,EmptyExist(..))
-
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
-
 import qualified Utils.FromByteString as FromByteString
-import Utils.FromByteString(fromByteStringWithRest)
+import qualified Utils.EmptyExist as EmptyExist
+import Utils
 
 class (ServiceInfo.Class a, FromByteString.Class a, Show a) => Class a where
   event_info :: a -> Data
@@ -21,7 +18,7 @@ data Data = MkData {
   _event_id :: Word16
   } deriving (Show,Eq) -- 0x02
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty
 
 instance ServiceInfo.Class Data where

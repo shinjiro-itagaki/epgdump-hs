@@ -1,12 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module SITables.Header2 where
-import Data.Word(Word64, Word32, Word16, Word8)
-import Common(EmptyExist(..),BitsLen)
+import qualified Utils.EmptyExist as EmptyExist
 import qualified BytesReader.Base as BytesReaderBase
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
-import FromWord64 hiding (Class)
-import qualified Parser
+import qualified Parser.Result as Result
+import qualified Utils.FromByteString as FromByteString
+import qualified Utils.EmptyExist as EmptyExist
+import Utils
 
 class (Show a) => Class a where
   header2                :: a -> Data
@@ -45,7 +45,7 @@ instance Class Data where
   last_section_number    = _last_section_number
 
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData {
     _reserved2                = mkEmpty,
     _version_number           = mkEmpty,
@@ -54,20 +54,19 @@ instance EmptyExist Data where
     _last_section_number      = mkEmpty
     }
 
-_parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow fh init = getBitsIO_M fh [
-    (2 , (\(v,d) -> d { _reserved2              = fromWord64 v})),
-    (5 , (\(v,d) -> d { _version_number         = fromWord64 v})),
-    (1 , (\(v,d) -> d { _current_next_indicator = fromWord64 v})),
-    (8 , (\(v,d) -> d { _section_number         = fromWord64 v})),
-    (8 , (\(v,d) -> d { _last_section_number    = fromWord64 v}))
-    ] init
-
-instance Parser.Class Data where
-  parseIOFlow = flowStart |>>= _parseIOFlow  
-
-parseFlow :: (BytesReaderBase.Class bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
-parseFlow = Parser.parseFlow caster
-  where
-    caster :: (Class a) => Data -> a -> a
-    caster header2 d = setHeader2 d header2
+instance FromByteString.Class Data where
+  fromByteStringWithRest bs =
+    let (w8                  ,bs0) = fromByteStringWithRest bs
+        reserved2                  =          (`shiftR` 6) $ w8 .&. 0xC0
+        version_number             =          (`shiftR` 5) $ w8 .&. 0x3E
+        current_next_indicator     = (/= 0) $ (`shiftR` 0) $ w8 .&. 0x01
+        (section_number      ,bs1) = fromByteStringWithRest bs0
+        (last_section_number, bs2) = fromByteStringWithRest bs1
+        d = MkData{
+          _reserved2                = reserved2,
+          _version_number           = version_number,
+          _current_next_indicator   = current_next_indicator,
+          _section_number           = section_number,
+          _last_section_number      = last_section_number
+          }
+    in (d,bs2)

@@ -2,24 +2,22 @@ module SITables.PCAT (
   Data,
   Class(..)
   ) where
-import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified Schedule
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(EmptyExist(..),PID,TableID,TableID,PID,PIDs(..))
 import qualified BytesReader.Base as BytesReaderBase
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import FromWord64 hiding (Class)
-import qualified Parser
+import qualified Parser.Result as Result
+import Utils
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.PCAT.Item as Item
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
 import qualified Descriptor.Link.ContentInfo as ContentInfo
-
+import qualified Utils.EmptyExist as EmptyExist
+import qualified Utils.SITableIDs as SITableIDs
+import qualified Utils.FromByteString as FromByteString
 
 class (Header1.Class a, Header2.Class a, ContentInfo.Class a) => Class a where
   num_of_content_version :: a -> Word8
@@ -59,35 +57,35 @@ instance ContentInfo.Class Data where
 instance Class Data where
   num_of_content_version = _num_of_content_version
 
-instance SITableIDs Data where
+instance SITableIDs.Class Data where
   pids      _ = MkPIDs [0x0022]
   table_ids _ = [0xC2]
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty mkEmpty
 
-instance Parser.Class Data where
+-- _parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow1 fh init = do
+--   getBitsIO_M fh [
+--     (16, (\(v,d) -> d { _service_id = fromWord64 v}))
+--     ] init
 
-_parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow1 fh init = do
-  getBitsIO_M fh [
-    (16, (\(v,d) -> d { _service_id = fromWord64 v}))
-    ] init
-
-_parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow2 fh init = do
-  getBitsIO_M fh [
-    (16, (\(v,d) -> d { _transport_stream_id    = fromWord64 v})),
-    (16, (\(v,d) -> d { _original_network_id    = fromWord64 v})),
-    (32, (\(v,d) -> d { _content_id             = fromWord64 v})),
-    ( 8, (\(v,d) -> d { _num_of_content_version = fromWord64 v}))
-    ] init
+-- _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow2 fh init = do
+--   getBitsIO_M fh [
+--     (16, (\(v,d) -> d { _transport_stream_id    = fromWord64 v})),
+--     (16, (\(v,d) -> d { _original_network_id    = fromWord64 v})),
+--     (32, (\(v,d) -> d { _content_id             = fromWord64 v})),
+--     ( 8, (\(v,d) -> d { _num_of_content_version = fromWord64 v}))
+--     ] init
   
 instance Base.Class Data where
   footer = Just . _footer
-  parseIOFlowAfterHeader1 =
-    flowStart
-    |>>= _parseIOFlow1
-    |>>= Header2.parseFlow
-    |>>= _parseIOFlow2
-    |>>= Footer.parseFlow    
+--   parseIOFlowAfterHeader1 =
+--     flowStart
+--     |>>= _parseIOFlow1
+--     |>>= Header2.parseFlow
+--     |>>= _parseIOFlow2
+--     |>>= Footer.parseFlow    
+
+instance FromByteString.Class Data where

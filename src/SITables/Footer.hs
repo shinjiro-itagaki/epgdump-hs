@@ -1,12 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module SITables.Footer where
-import Data.Word(Word64, Word32, Word16, Word8)
-import Common(EmptyExist(..),BitsLen,BytesLen,BitsLen)
 import qualified BytesReader.Base as BytesReaderBase
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M)
-import FromWord64 hiding (Class)
-import qualified Parser
+import qualified Parser.Result as Result
+import qualified Data.ByteString.Lazy as BS
+import qualified Utils.FromByteString as FromByteString
+import qualified Utils.EmptyExist as EmptyExist
+import Utils
 
 class (Show a) => Class a where
   footer :: a -> Data
@@ -31,23 +31,14 @@ instance Class Data where
   footer  x = x
   crc_32    = _crc_32
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData {
     _crc_32 = mkEmpty
     }
 
-_parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow fh init = do
-  putStrLn "footer :: _parseIOFlow2"
-  getBitsIO_M fh [
-    (crc_32_bitslen init , (\(v,d) -> d { _crc_32 = fromWord64 v}))
-    ] init
-  
-instance Parser.Class Data where
-  parseIOFlow = flowStart |>>= _parseIOFlow
-
-parseFlow :: (BytesReaderBase.Class bh, Parser.Class a, Class a) => bh -> a -> IO (ParseResult a, bh)
-parseFlow = Parser.parseFlow caster
-  where
-    caster :: (Class a) => Data -> a -> a
-    caster footer d = setFooter d footer
+instance FromByteString.Class Data where
+  -- こちらは末尾の4bytesを取得する
+  fromByteStringWithRest bs =
+    let (rest,bs0) = BS.splitAt ((BS.length bs) - 4) bs
+        d = MkData $ toWord32 bs0
+    in (d,rest)

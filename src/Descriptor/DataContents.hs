@@ -39,7 +39,6 @@ instance Header.Class Data where
   header = _header
 
 instance Base.Class Data where
---  fromByteString bs = (Nothing, bs)
 
 instance Selector.Class Data where
   selector_length = _selector_length

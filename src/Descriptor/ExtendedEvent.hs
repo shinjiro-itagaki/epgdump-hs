@@ -17,6 +17,7 @@ import Utils.FromByteString(fromByteStringWithRest,fromByteStringWithRestM)
 import Utils.FromWord32(fromWord32)
 import qualified Data.ByteString.Lazy as BS
 import Data.Bits((.&.),shiftR)
+import qualified Parser.Result as Result
 
 class (Base.Class a) => Class a where
   descriptor_number       :: a -> Word8
@@ -66,7 +67,7 @@ instance Base.Class Data where
           _text_length            = text_length,
           _text                   = text
           }
-    in (Just d,rest)
+    in Result.Parsed d
 
 instance Class Data where
   iso_639_language_code  = _iso_639_language_code  

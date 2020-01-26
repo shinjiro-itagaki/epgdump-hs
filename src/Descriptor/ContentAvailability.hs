@@ -31,7 +31,6 @@ instance Header.Class Data where
   header = _header
 
 instance Base.Class Data where
-  fromByteString bs = (Nothing, bs)
 
 instance Class Data where
   copy_restriction_mode  = _copy_restriction_mode

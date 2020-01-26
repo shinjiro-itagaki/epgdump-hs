@@ -14,6 +14,7 @@ import Data.Bits(Bits,shiftR,shiftL,(.&.))
 import Data.ByteString.Lazy as BS
 import Utils.FromByteString(fromByteString)
 import Utils.ToString(toString)
+import qualified Parser.Result as Result
 
 import qualified Utils.ComponentType as ComponentType
 
@@ -50,14 +51,14 @@ instance Base.Class Data where
         
         (bs2,rest2) = BS.splitAt 3 bs
         iso_639_language_code' = fromByteString bs2
-        fx = (\x -> MkData { _header = h,
-                             _stream_content = stream_content',
-                             _component_type = component_type',
-                             _component_tag  = component_tag',
-                             _iso_639_language_code = iso_639_language_code',
-                             _text = x
-                           })
-    in Base.gatherByteString len fx rest2
+        d =  MkData { _header = h,
+                      _stream_content = stream_content',
+                      _component_type = component_type',
+                      _component_tag  = component_tag',
+                      _iso_639_language_code = iso_639_language_code',
+                      _text = rest2
+                    }
+    in Result.Parsed d 
 
 instance Class Data where
   stream_content = _stream_content

@@ -4,23 +4,22 @@ import TS
 
 import System.IO(openFile, IOMode(ReadMode))
 import System.Environment (getArgs)
-import Common(BytesLen)
 import qualified Common
 import qualified Data.ByteString.Lazy as BS
 import qualified TS.Packet
 import qualified TS.FileHandle as FileHandle
-import Data.Word(Word64,Word8)
-import Data.Bits(shiftL,shiftR)
 import qualified TS.Packet.AdaptationField as AdaptationField
 import qualified TS.Packet.Header as Header
-import Common(EmptyExist(..))
 import SITables(Callbacks(..))
 import qualified SITables
 import qualified BytesReader.Status as Status
 import qualified BytesReader.Base as BytesReaderBase
-import qualified SITables.EIT as EIT
-import SITables.Common(SITableIDs(..))
+import qualified Utils.EmptyExist as EmptyExist
 
+import Utils
+
+jjge :: ByteString -> (Word16,ByteString)
+jjge = fromByteStringWithRest 
 --_KB = 2 ^ 10
 --_MB = _KB ^ 2
 
@@ -30,7 +29,7 @@ data PacketCounter = MkPacketCounter {
   _no_adaptation  :: Word64
   } deriving (Show)
 
-instance EmptyExist PacketCounter where
+instance EmptyExist.Class PacketCounter where
   mkEmpty = MkPacketCounter {
     _packet_total   = 0,
     _has_adaptation = 0,
@@ -115,7 +114,7 @@ mkTableCounterCallbacks = MkCallbacks {
   _cb_ERR  = Just $ (\ _ x -> (return $ x {_err  = 1 + (_err  x)}) >>= action_count_tables)   
   }
 
-instance EmptyExist TableCounter where
+instance EmptyExist.Class TableCounter where
   mkEmpty = MkTableCounter {
     _table_total = 0,
     _bat  = 0,
@@ -142,7 +141,7 @@ addToPacketCounter c p
 main :: IO ()
 main = do
   args <- getArgs
-  test  
+--  test  
   let filepath =  args !! 0
       counter = 0 :: BytesLen
       action_count_packets' = Just ( (\x y z ->  action_count_packets x y z mkEmpty ) , mkEmpty :: PacketCounter)
@@ -170,20 +169,20 @@ action_count_packets p x info _ = do
     else return ()
   return (True,newx)
 
-data Hoge = MkHoge {
-  foo :: Maybe Word8,
-  baa :: Maybe Word8
-  }
+-- data Hoge = MkHoge {
+--   foo :: Maybe Word8,
+--   baa :: Maybe Word8
+--   }
 
-hoge = MkHoge {
-  foo = Just 1,
-  baa = Nothing
-  }
+-- hoge = MkHoge {
+--   foo = Just 1,
+--   baa = Nothing
+--   }
 
-test :: IO ()
-test = do
-  putStrLn $ ("matchpid = " ++) $ show $ SITables.matchPID 0x0012 mkTableCounterCallbacks
-  putStrLn $ ("matchpid = " ++) $ show $ (Common.MkPIDs [0x0013,0x0012]) `Common.matchPID` 0x0012
-  case hoge of
-    MkHoge {baa = Just x} -> putStrLn "baa"    
-    MkHoge {foo = Just x} -> putStrLn "foo"
+-- test :: IO ()
+-- test = do
+--   putStrLn $ ("matchpid = " ++) $ show $ SITables.matchPID 0x0012 mkTableCounterCallbacks
+--   putStrLn $ ("matchpid = " ++) $ show $ (Common.MkPIDs [0x0013,0x0012]) `Matcher.matchPID` 0x0012
+--   case hoge of
+--     MkHoge {baa = Just x} -> putStrLn "baa"    
+--     MkHoge {foo = Just x} -> putStrLn "foo"

@@ -37,7 +37,6 @@ instance Header.Class Data where
   header = _header
 
 instance Base.Class Data where
---  fromByteString bs = (Nothing, bs)
 
 instance Class Data where  
   hyper_linkage_type    = _hyper_linkage_type

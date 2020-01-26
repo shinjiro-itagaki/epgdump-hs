@@ -5,18 +5,11 @@ module SITables.BAT.Item(
   Class(..),
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(HasDescriptors(..))
-import Common(EmptyExist(..),PID,TableID)
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import FromWord64 hiding (Class)
-import qualified Parser
 import qualified Descriptor
-import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
-import SITables.Items(Element(..))
+import Utils
 
-class (HasDescriptors a) => Class a where
+class Class a where
   original_network_id          :: a -> Word16
   transport_stream_id          :: a -> Word16
   reserved_future_use          :: a -> Word8
@@ -29,9 +22,6 @@ data Data = MkData {
   _transport_descriptors_length :: Word16,
   _descriptors                  :: Vector Descriptor.Data
   } deriving (Show)
-
-instance HasDescriptors Data where
-  descriptors = toList . _descriptors
 
 instance Class Data where
   original_network_id          = _original_network_id  

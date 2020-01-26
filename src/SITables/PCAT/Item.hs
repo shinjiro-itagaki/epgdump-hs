@@ -6,19 +6,15 @@ module SITables.PCAT.Item(
   ) where
 
 import qualified Schedule
-import SITables.Common(HasDescriptors(..),SITableIDs(..))
-import Data.Word(Word64, Word32, Word16, Word8)
-import Common(EmptyExist(..),PID,TableID)
 import qualified BytesReader.Base as BytesReaderBase
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import FromWord64 hiding (Class)
-import qualified Parser
+import qualified Parser.Result as Result
+import Utils
 import qualified Descriptor
 import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
-import SITables.Items(Element(..))
+import qualified Utils.EmptyExist as EmptyExist
 
-class (HasDescriptors a) => Class a where
+class Class a where
   content_version             :: a -> Word16
   content_minor_version       :: a -> Word16
   version_indicator           :: a -> (Bool,Bool)
@@ -42,9 +38,6 @@ data Data = MkData {
   _descriptors                 :: Vector Descriptor.Data
   } deriving (Show)
 
-instance HasDescriptors Data where
-  descriptors = toList . _descriptors
-
 instance Class Data where
   content_version             = _content_version
   content_minor_version       = _content_minor_version
@@ -55,23 +48,23 @@ instance Class Data where
   schedule_description_length = _schedule_description_length
   schedules                   = toList . _schedules
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty Data.Vector.empty
 
-_parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow fh init = do
-  getBitsIO_M fh [
-    (16, (\(v,d) -> d { _content_version                = fromWord64 v})),
-    (16, (\(v,d) -> d { _content_minor_version          = fromWord64 v})),
-    ( 2, (\(v,d) -> d { _version_indicator              = fromWord64 v})),
-    ( 2, (\(v,d) -> d { _reserved_future_use1           = fromWord64 v})),
-    (12, (\(v,d) -> d { _content_descriptor_length      = fromWord64 v})),
-    ( 4, (\(v,d) -> d { _reserved_future_use2           = fromWord64 v})),
-    (12, (\(v,d) -> d { _schedule_description_length    = fromWord64 v}))
-    ] init
+-- _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
+-- _parseIOFlow fh init = do
+--   getBitsIO_M fh [
+--     (16, (\(v,d) -> d { _content_version                = fromWord64 v})),
+--     (16, (\(v,d) -> d { _content_minor_version          = fromWord64 v})),
+--     ( 2, (\(v,d) -> d { _version_indicator              = fromWord64 v})),
+--     ( 2, (\(v,d) -> d { _reserved_future_use1           = fromWord64 v})),
+--     (12, (\(v,d) -> d { _content_descriptor_length      = fromWord64 v})),
+--     ( 4, (\(v,d) -> d { _reserved_future_use2           = fromWord64 v})),
+--     (12, (\(v,d) -> d { _schedule_description_length    = fromWord64 v}))
+--     ] init
 
-instance Parser.Class Data where
-  parseIOFlow = 
-    flowStart |>>= _parseIOFlow
+-- instance Parser.Class Data where
+--   parseIOFlow = 
+--     flowStart |>>= _parseIOFlow
     
-instance Element Data where
+

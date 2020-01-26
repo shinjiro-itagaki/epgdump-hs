@@ -3,12 +3,12 @@ module Descriptor.Link.ContentModuleInfo (
   ,Data
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)  
-import Common(ByteString,EmptyExist(..))
+import Utils
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
 import qualified Descriptor.Link.ContentInfo as ContentInfo
 import qualified Descriptor.Link.ModuleInfo as ModuleInfo
-
+import qualified Utils.EmptyExist as EmptyExist
+  
 class (ContentInfo.Class a) => Class a where
   content_info  :: a -> ContentInfo.Data
   component_tag :: a -> Word8
@@ -20,7 +20,7 @@ data Data = MkData {
   _module_id :: Word16
   } deriving (Show,Eq) -- 0x05
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty
 
 instance ServiceInfo.Class Data where

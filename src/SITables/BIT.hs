@@ -4,21 +4,21 @@ module SITables.BIT (
   pids,
   table_ids
   ) where
-import Data.Word(Word64, Word32, Word16, Word8)
-import SITables.Common(HasDescriptors(..),SITableIDs(..))
 import qualified Schedule
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
-import Common(EmptyExist(..),PID,TableID,TableID,PID,PIDs(..),BytesLen)
 import qualified BytesReader.Base as BytesReaderBase
 import qualified Descriptor
 import qualified SITables.Base as Base
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import qualified Parser
+import qualified Parser.Result as Result
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified SITables.BIT.Item as Item
-import FromWord64 hiding (Class)
+import qualified Data.ByteString.Lazy as BS
+import qualified Utils.FromByteString as FromByteString
+import qualified Utils.EmptyExist as EmptyExist
+import qualified Utils.SITableIDs as SITableIDs
+import Utils
 
 class (Base.Class a, Header2.Class a, Footer.Class a) => Class a where
   original_network_id      :: a -> Word16
@@ -60,11 +60,11 @@ instance Class Data where
   descriptors              = toList . _descriptors
   items                    = toList . _items
 
-instance SITableIDs Data where
+instance SITableIDs.Class Data where
   pids      _ = MkPIDs [0x0024]
   table_ids _ = [0xC4]
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty =  MkData {
     _header1                  = mkEmpty,
     _original_network_id      = mkEmpty,
@@ -77,34 +77,29 @@ instance EmptyExist Data where
     _footer                   = mkEmpty
   }
 
-instance Parser.Class Data where
-
-_parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow2 fh init =
-  getBitsIO_M fh [
-  (16, (\(v,d) -> d { _original_network_id = fromWord64 v}))
-  ] init
-
-_parseIOFlow4 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow4 fh init = do
-  getBitsIO_M fh [
-    ( 8, (\(v,d) -> d { _reserved_future_use      = fromWord64 v})),
-    ( 3, (\(v,d) -> d { _broadcast_view_propriety = fromWord64 v})),
-    ( 1, (\(v,d) -> d { _first_descriptors_length = fromWord64 v}))
-    ] init
-
-_parseIOFlow5_descs :: (BytesReaderBase.Class bh) => bh -> Data -> IO (ParseResult Data, bh)
-_parseIOFlow5_descs bh init = Descriptor.gather addItem' (first_descriptors_length init) bh init
-  where
-    addItem' :: Data -> Descriptor.Data -> Data
-    addItem' x desc = x {_descriptors = (snoc (_descriptors x) desc)  }
-  
 instance Base.Class Data where
-  footer  = Just . _footer
-  parseIOFlowAfterHeader1 =
-    flowStart
-    |>>= _parseIOFlow2
-    |>>= Header2.parseFlow
-    |>>= _parseIOFlow4
-    |>>= _parseIOFlow5_descs
-    |>>= Footer.parseFlow
+  parseAfterHeader1 h bs =
+    let (original_network_id,bs0)    = fromByteStringWithRest bs
+        (header2,bs1)                = fromByteStringWithRest bs0
+        (w16,bs2)                    = fromByteStringWithRest bs2
+        reserved_future_use          = toWord8 $ (`shiftR` 13) $ w16 .&. 0xE000
+        broadcast_view_propriety     = (/= 0)  $ (`shiftR` 12) $ w16 .&. 0x1000
+        first_descriptors_length     = w16 .&. 0x0FFF
+        (bs3,bs4)                    = BS.splitAt (fromInteger $ toInteger first_descriptors_length) bs2
+        descriptors                  = fromByteString bs3
+        items                        = fromByteString bs4
+        (footer,rest)                = fromByteStringWithRest bs4
+        d = MkData {
+          _header1                      = h,
+          _original_network_id          = original_network_id,
+          _header2                      = header2,
+          _reserved_future_use          = reserved_future_use,
+          _broadcast_view_propriety     = broadcast_view_propriety,
+          _first_descriptors_length     = first_descriptors_length,
+          _descriptors                  = descriptors,
+          _items                        = items,
+          _footer                       = footer
+          }
+    in Result.Parsed d
+
+instance FromByteString.Class Data where

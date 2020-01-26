@@ -6,12 +6,9 @@ import qualified TS.Packet.Header as Header
 
 import qualified BytesReader
 import qualified Data.ByteString.Lazy as BS
-import Data.Word(Word64, Word32, Word16, Word8)
-import qualified Data.ByteString.Lazy as BS
-import Common(BytesLen,EmptyExist(..),PID,TableID,ByteString)
-import qualified Parser
+import Utils
+import qualified Utils.EmptyExist as EmptyExist
 import qualified Data.Vector as V
-import Data.Int(Int64)
 import qualified BytesReader.Base as BytesReaderBase
 import qualified TS.FileHandle as FH
 import qualified TS.Packet.AdaptationField as AdaptationField
@@ -130,7 +127,7 @@ class (Header.Class t, Show t, Eq t) => Class t where
       res@(bytes,h'') <- BytesReaderBase.getBytesIO h' (bytesLen - 1)
 --      putStrLn "====="
 --      putStrLn $ show $ BS.unpack $ bytes
-      return (fromByteString bytes,res)
+      return (TS.Packet.fromByteString bytes,res)
       
 
 data Data = MkData {
@@ -139,7 +136,7 @@ data Data = MkData {
   _data_bytes :: ByteString
   } | EOF | ContinuityCounterError deriving(Eq,Show)
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty (Just AdaptationField.mkEmpty) mkEmpty
   
 instance Header.Class Data where

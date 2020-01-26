@@ -5,15 +5,10 @@ module TS (
   ,eachTable
   ) where
 
-import Data.ByteString.Lazy(hGet,length, ByteString,unpack, take, pack, append,map, head)
-import Data.Word(Word64, Word32, Word16, Word8)
+import Utils
+import Data.ByteString.Lazy(hGet,length, unpack, take, pack, append,map, head)
 import Data.ByteString.Lazy.Char8(pack)
-import Data.Bits((.&.),(.|.),shiftL,shiftR,Bits)
-import Data.Char(intToDigit,digitToInt)
-import Data.Int(Int64)
 import qualified TS.FileHandle as FileHandle
-import Parser(ParseResult(..),parseFlow,(|>>=),flowStart,getBitsIO_M,mapParseResult,parseIO,ParseIOFlow,execParseIOFlow)
-import qualified Parser
 
 import qualified SITables.BAT as BAT
 import qualified SITables.BIT as BIT

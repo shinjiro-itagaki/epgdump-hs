@@ -3,8 +3,8 @@ module Descriptor.Link.ContentInfo (
   ,Data
   ) where
 
-import Data.Word(Word64, Word32, Word16, Word8)  
-import Common(ByteString,EmptyExist(..))
+import Utils
+import qualified Utils.EmptyExist as EmptyExist
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
 
 class (ServiceInfo.Class a, Show a) => Class a where
@@ -18,7 +18,7 @@ data Data = MkData {
   _content_id :: Word32
   } deriving (Show,Eq) -- 0x04
 
-instance EmptyExist Data where
+instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty
 
 instance ServiceInfo.Class Data where

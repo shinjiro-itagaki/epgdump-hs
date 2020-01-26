@@ -25,7 +25,6 @@ instance Header.Class Data where
   header = _header
 
 instance Base.Class Data where
---  fromByteString bs = 
 
 instance Class Data where
   still_picture_flag     = _still_picture_flag
