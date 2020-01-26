@@ -4,23 +4,26 @@ module Descriptor.Link.ContentInfo (
   ) where
 
 import Data.Word(Word64, Word32, Word16, Word8)  
-import Common(ByteString)
+import Common(ByteString,EmptyExist(..))
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
 
-class (ServiceInfo.Class a) => Class a where
+class (ServiceInfo.Class a, Show a) => Class a where
+  content_info :: a -> Data
+  
   content_id :: a -> Word32
+  content_id = content_id . content_info
 
 data Data = MkData {
-  _original_network_id :: Word16,
-  _transport_stream_id :: Word16,
-  _service_id :: Word16,
+  _service_info :: ServiceInfo.Data,
   _content_id :: Word32
-  } deriving (Show) -- 0x04
+  } deriving (Show,Eq) -- 0x04
+
+instance EmptyExist Data where
+  mkEmpty = MkData mkEmpty mkEmpty
 
 instance ServiceInfo.Class Data where
-  original_network_id = _original_network_id 
-  transport_stream_id = _transport_stream_id
-  service_id          = _service_id
+  service_info = _service_info
   
 instance Class Data where
+  content_info x = x
   content_id = _content_id

@@ -1,3 +1,4 @@
+-- 6.2.4
 module Descriptor.Content (
   Class(..)
   ,Data

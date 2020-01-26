@@ -6,17 +6,43 @@ import qualified Data.ByteString.Lazy as BS
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Data.ByteString.Lazy.Char8 as BChar8
 import qualified Utils.LangCode as LangCode
+import qualified Utils.CountryCode as CountryCode
+
 import Data.Int(Int64)
 import Utils.ToWord64(toWord64)
 import Utils.ToWord32(toWord32)
 import Utils.ToWord16(toWord16)
 import Utils.ToWord8(toWord8)
+import Data.Maybe(fromMaybe)
+
+import qualified Utils.Collection as Collection
+import qualified Data.Sequence as S
+import qualified Data.Vector as V
+import Common(EmptyExist(..))
+
+map :: (a -> b) -> (a,ByteString) -> (b,ByteString)
+map f (x,y) = (f x,y)
 
 class Class a where
   fromByteStringWithRest :: ByteString -> (a,ByteString)
+ 
   fromByteString :: ByteString -> a
   fromByteString = fst . fromByteStringWithRest
+  
+  gatherFromByteString :: (EmptyExist b) => ByteString -> (b -> a -> b) -> b
+  gatherFromByteString bs appender = impl bs appender mkEmpty
+    where
+      impl bs appender y
+        | BS.null bs = y
+        | otherwise = let (e,rest) = fromByteStringWithRest bs
+                      in impl rest appender (appender y e)
+                         
+  fromByteStringWithRestM :: (Monad m) => ByteString -> (m a,ByteString)
+  fromByteStringWithRestM xs =
+    let (v,rest) = fromByteStringWithRest xs
+    in (return v,rest)
 
+--instance Class CountryCode.Data where
 instance Class LangCode.Data where
   fromByteStringWithRest x = (\(y,z) -> (impl' $ BChar8.unpack y,z)) $ BS.splitAt 3 x
     where
@@ -36,3 +62,7 @@ instance Class Word16 where
 
 instance Class Word8 where
   fromByteStringWithRest x = (\(y,z) -> (toWord8  $ BS.unpack y,z)) $ BS.splitAt 1 x
+
+instance Class Char where
+  fromByteStringWithRest = fromMaybe ('\0',BS.empty) . BChar8.uncons
+

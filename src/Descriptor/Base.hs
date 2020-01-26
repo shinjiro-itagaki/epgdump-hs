@@ -11,6 +11,7 @@ import qualified BytesReader
 import qualified BytesReader.Base as BytesReaderBase
 import qualified Data.ByteString.Lazy as BS
 import Data.Bits(shiftL,(.|.))
+-- import qualified Utils.FromByteString as FromByteString
 
 class (Show a, Header.Class a) => Class a where
   fromByteString :: ByteString -> (Maybe a,ByteString)

@@ -1,3 +1,4 @@
+-- 6.2.2
 module Descriptor.CAIdentifier (
   Class(..)
   ,Data

@@ -1,3 +1,4 @@
+-- 6.2.3
 module Descriptor.Component (
     Class(..)
     ,Data

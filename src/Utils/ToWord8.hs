@@ -11,6 +11,21 @@ class Class a where
 instance Class Word8 where
   toWord8 x = x
 
+instance Class Word16 where
+  toWord8 x
+    | x > 0xFF = 0xFF
+    | otherwise = fromInteger $ toInteger x
+
+instance Class Word32 where
+  toWord8 x
+    | x > 0xFF = 0xFF
+    | otherwise = fromInteger $ toInteger x
+
+instance Class Word64 where
+  toWord8 x
+    | x > 0xFF = 0xFF
+    | otherwise = fromInteger $ toInteger x
+
 instance Class [Word8] where
   toWord8 xs = case xs of
     [] -> 0
