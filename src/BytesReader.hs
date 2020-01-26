@@ -63,18 +63,19 @@ new h = do
 instance (Handler.Class h) => Status.Class (Data h) where
   pos = _pos
   size = _size
-  
-instance (Handler.Class h) => Counter.Class (Data h) where
-  getBytesCounter     = _bytesCounter 
-  resetBytesCounter x = x {_bytesCounter = 0 }
+
 
 -- private method
 _addPos :: (Handler.Class h) => (Data h) -> Word64 -> (Data h)
 _addPos x i = x { _pos = i + (_pos x),  _bytesCounter = i + (_bytesCounter x) }
 
-instance (Handler.Class h) => Base.Class (Data h) where
-  isEOF = Handler.isEOF . _handle  
+instance (Handler.Class h) => Counter.Class (Data h) where
+  getBytesCounter     = _bytesCounter 
+  resetBytesCounter x = x {_bytesCounter = 0 }
 
+instance (Handler.Class h) => Base.Class (Data h) where
+  isEOF = Handler.isEOF . _handle
+  loaded = _loaded
 --  getBytesIO :: (Integral i) => a -> i -> IO (ByteString, a)
   getBytesIO x i
     | i < 1 = return (BS.empty, x)
