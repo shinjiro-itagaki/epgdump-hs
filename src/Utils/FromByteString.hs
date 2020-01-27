@@ -38,14 +38,6 @@ class Class a where
 
   fromByteString_n :: (Ord n,Num n) => n -> ByteString -> [a]
   fromByteString_n n bs = fst $ fromByteStringWithRest_n n bs
-  
-  gatherFromByteString :: (EmptyExist.Class b) => ByteString -> (b -> a -> b) -> b
-  gatherFromByteString bs appender = impl bs appender EmptyExist.mkEmpty
-    where
-      impl bs appender y
-        | BS.null bs = y
-        | otherwise = let (e,rest) = fromByteStringWithRest bs
-                      in impl rest appender (appender y e)
 
   fromByteStringWithRestM :: (Monad m) => ByteString -> (m a,ByteString)
   fromByteStringWithRestM xs =

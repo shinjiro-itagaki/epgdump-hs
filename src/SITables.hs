@@ -24,6 +24,7 @@ import qualified Parser.Result as Result
 import Parser.Result((>>===))
 import Data.Maybe(fromMaybe)
 import qualified Utils.FromByteString as FromByteString
+import qualified Data.ByteString.Lazy as BS
 import Utils
 --import Utils.FromByteString(fromByteStringWithRest)
 type Callback d state = (d -> state -> IO (Bool,state))
@@ -75,10 +76,13 @@ matchPID pid callbacks =
 parse :: (Show state) => state -> Callbacks state -> ByteString -> IO (Result.Data Bool,state)
 parse st callbacks bs =
   let (header1,bs0) = fromByteStringWithRest bs
-  in parseAfterHeader1 header1 st callbacks bs0
+  in do
+    putStrLn $ show $ BS.unpack $ bs
+    parseAfterHeader1 header1 st callbacks bs0
 
 parseAfterHeader1 :: (Show state) => Header1.Data -> state -> Callbacks state -> ByteString -> IO (Result.Data Bool,state)
-parseAfterHeader1 header1 state callbacks bs =
+parseAfterHeader1 header1 state callbacks bs = do
+  putStrLn $ show header1
   case callbacks of
     (MkCallbacks {_cb_BAT = Just f}) -> impl' f $ callbacks{_cb_BAT = Nothing}
     (MkCallbacks {_cb_BIT = Just f}) -> impl' f $ callbacks{_cb_BIT = Nothing}

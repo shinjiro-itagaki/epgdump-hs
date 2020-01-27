@@ -3,15 +3,11 @@ module Descriptor.CountryAvailability (
   Class(..)
   ,Data
   ) where
-import Data.Word(Word64, Word32, Word16, Word8)  
-import Common(ByteString)
 import qualified Descriptor.Base as Base
 import qualified Descriptor.Header as Header
 import qualified Utils.CountryCode as CountryCode
-import Data.Vector(Vector,empty,toList,snoc)
-import Utils.FromByteString(fromByteString,fromByteStringWithRest,fromByteStringWithRestM)
-import Data.Bits((.&.))
 import qualified Parser.Result as Result
+import Utils
 
 class (Base.Class a) => Class a where
   country_available_flag :: a -> Bool
@@ -34,7 +30,7 @@ instance Base.Class Data where
     let (w8,bs1) = fromByteStringWithRest bs
         country_available_flag = (w8 .&. 0x80) /= 0 :: Bool
         reserved_future_use    = (w8 .&. 0x7F)
-        (country_codes,bs2)    = Base.gather (Header.descriptor_length h) fromByteStringWithRestM snoc bs1 empty
+        (country_codes,bs2)    = fromByteStringWithRest bs1
         d = MkData {
           _header                 = h,
           _country_available_flag = country_available_flag,

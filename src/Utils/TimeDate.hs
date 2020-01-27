@@ -118,10 +118,8 @@ instance FromNum.Class Min where
 instance FromNum.Class Sec where
   from_num = toEnum . fromInteger . toInteger
 
--- mjd' :: Data -> Rational
--- mjd' = (% 1) . toInteger . _mjd
--- mjd' :: Data -> Double
--- mjd' = fromInteger . toInteger . _mjd
+mjd' :: Data -> Double
+mjd' = fromInteger . toInteger . _mjd
 
 
 -- d365 = 1461 % 4 :: Rational

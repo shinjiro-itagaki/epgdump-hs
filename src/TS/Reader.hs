@@ -51,7 +51,7 @@ splitByFirstBlock cache =
       -- tail'   : 先頭パケットの次から次のスタート地点まで (H)xxxxxHyyy... => (H)xxxxx
       -- others' : 次の先頭以降  (H)xxxxxHyyy... => Hyyy...
       (tail',others') = V.span (not . Header.payload_unit_start_indicator) $ rest'
-      oneset' = V.fromList $ Packet.continuityChecked $ toList $ case mfst' of
+      oneset' = V.fromList $ Packet.continuityChecked $ Utils.toList $ case mfst' of
                   Nothing   -> V.empty
                   Just fst' -> fst' `V.cons` tail'
       packet_losted = V.null oneset' && isJust mfst' -- 先頭パケットがあるのに連続チェック済みのパケット一覧が空 => パケット欠損があったことを示す
@@ -67,6 +67,9 @@ _fireCallback callbacks state pid cache =
       bytes = foldl (\res p -> BS.append res (Packet.payload p)) BS.empty block'
       restall = rest' V.++ pid_unmatched'
   in do
+    putStrLn "-------"
+    putStrLn $ ("pid=" ++) $ show $ pid
+--    putStrLn $ show $ BS.unpack $ bytes
     (res,state2) <- SITables.parse state callbacks bytes
     case res of
       Result.Parsed b -> if b
