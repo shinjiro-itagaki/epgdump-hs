@@ -4,7 +4,7 @@ module SITables.BIT (
   pids,
   table_ids
   ) where
-import qualified Schedule
+import qualified Utils.Schedule
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
@@ -76,16 +76,16 @@ instance EmptyExist.Class Data where
 
 instance Base.Class Data where
   parseAfterHeader1 h bs =
-    let (original_network_id,bs0)    = fromByteStringWithRest bs
-        (header2,bs1)                = fromByteStringWithRest bs0
-        (w16,bs2)                    = fromByteStringWithRest bs2
+    let (footer,bs0)               = fromByteStringWithRest bs
+        ((original_network_id,
+           header2,
+           w16),bs1)               = fromByteStringWithRest bs0
         reserved_future_use          = toWord8 $ (`shiftR` 13) $ w16 .&. 0xE000
         broadcast_view_propriety     = (/= 0)  $ (`shiftR` 12) $ w16 .&. 0x1000
         first_descriptors_length     = w16 .&. 0x0FFF
-        (bs3,bs4)                    = BS.splitAt (fromInteger $ toInteger first_descriptors_length) bs2
+        (bs3,bs4)                    = BS.splitAt (fromInteger $ toInteger first_descriptors_length) bs1
         descriptors                  = fromByteString bs3
         items                        = fromByteString bs4
-        (footer,rest)                = fromByteStringWithRest bs4
         d = MkData {
           _header1                      = h,
           _original_network_id          = original_network_id,
@@ -98,5 +98,3 @@ instance Base.Class Data where
           _footer                       = footer
           }
     in Result.Parsed d
-
-instance FromByteString.Class Data where

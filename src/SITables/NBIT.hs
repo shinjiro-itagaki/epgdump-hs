@@ -52,25 +52,20 @@ instance EmptyExist.Class Data where
   _footer              = mkEmpty
   }
   
--- _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow2 fh init =
---   getBitsIO_M fh [
---   (16, (\(v,d) -> d { _original_network_id = fromWord64 v}))
---   ] init
-
--- _parseIOFlow4_items :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow4_items bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
---   where
---     addItem' :: Data -> Item.Data -> Data
---     addItem' x item = x {_items = (snoc (_items x) item)  }
-  
 instance Base.Class Data where
   footer = Just . _footer
---   parseIOFlowAfterHeader1 =
---     flowStart
---     |>>= _parseIOFlow2
---     |>>= Header2.parseFlow
---     |>>= _parseIOFlow4_items
---     |>>= Footer.parseFlow
+  parseAfterHeader1 h bs =
+    let (footer,bs0) = fromByteStringWithRest bs
+        (original_network_id,
+         header2,
+         items) = fromByteString bs0
+        d = MkData {
+          _header1             = h,
+          _original_network_id = original_network_id,
+          _header2             = header2,
+          _items               = items,
+          _footer              = footer
+          }
+    in Result.Parsed d
 
 instance FromByteString.Class Data where

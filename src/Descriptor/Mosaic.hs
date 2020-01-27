@@ -42,7 +42,7 @@ instance Base.Class Data where
         number_of_horizontal_elementary_cells =  w8 .&. 0x70
         reserved_future_use                   = (w8 .&. 0x08) /= 0
         number_of_vertical_elementary_cells   =  w8 .&. 0x07
-        items                                 = gatherFromByteString bs1 snoc
+        items                                 = fromByteString bs1
         d = MkData {
           _header                                = h,
           _mosaic_entry_point                    = mosaic_entry_point,

@@ -28,15 +28,3 @@ type BitsLen  = Word64
 type PID = Word64
 type TableID = Word32
 data PIDs = MkPIDs [PID] | MkExcludePIDs [PID] deriving (Eq,Show)
-
--- class PID_And_TableID a where
---   pid      :: a -> PID
---   table_id :: a -> TableID
-
--- instance PID_And_TableID (PID,TableID) where
---   pid = fst
---   table_id = snd
-
--- instance PID_And_TableID (TableID,PID) where
---   pid = snd
---   table_id = fst

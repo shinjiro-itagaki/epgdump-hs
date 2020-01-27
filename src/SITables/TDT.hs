@@ -12,16 +12,16 @@ import qualified Parser.Result as Result
 import qualified Utils.FromByteString as FromByteString
 import qualified Utils.EmptyExist as EmptyExist
 import qualified Utils.SITableIDs as SITableIDs
+import qualified Utils.TimeDate as TimeDate
 
 import Utils
 
 class (Header1.Class a) => Class a where
-  jst_time :: a -> Word64
+  jst_time :: a -> TimeDate.Data
 
 data Data = MkData {
-  -- CommonHeader 
   _header1 :: Header1.Data,
-  _jst_time :: Word64
+  _jst_time :: TimeDate.Data -- 40
   } deriving (Show)
 
 instance Header1.Class Data where
@@ -32,22 +32,17 @@ instance Class Data where
 
 instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty
-
-
--- _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow fh init = do
---   getBitsIO_M fh [
---     (40, (\(v,d) -> d { _jst_time = fromWord64 v}))
---     ] init
-  
+ 
 instance Base.Class Data where
   footer _ = Nothing
-  -- parseIOFlowAfterHeader1 =
-  --   flowStart
-  --   |>>= _parseIOFlow
- 
+  parseAfterHeader1 h bs =
+    let jst_time = fromByteString bs
+        d = MkData {
+          _header1  = h,
+          _jst_time = jst_time
+          }
+    in Result.Parsed d
+          
 instance SITableIDs.Class Data where
   pids      _ = MkPIDs [0x0014]
   table_ids _ = [0x70]
-
-instance FromByteString.Class Data where

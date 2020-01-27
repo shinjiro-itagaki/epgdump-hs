@@ -1,6 +1,7 @@
 module Descriptor.Link.ContentInfo (
   Class(..)
   ,Data
+  ,mk
   ) where
 
 import Utils
@@ -17,6 +18,9 @@ data Data = MkData {
   _service_info :: ServiceInfo.Data,
   _content_id :: Word32
   } deriving (Show,Eq) -- 0x04
+
+mk :: ServiceInfo.Data -> Word32 -> Data
+mk = MkData
 
 instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty

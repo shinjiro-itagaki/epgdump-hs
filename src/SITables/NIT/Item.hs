@@ -11,12 +11,15 @@ import Utils
 import qualified Descriptor
 import Data.Vector(Vector,toList,empty)
 import qualified Utils.EmptyExist as EmptyExist
+import qualified Data.ByteString.Lazy as BS
+import qualified Utils.FromByteString as FromByteString
 
 class Class a where
   transport_stream_id          :: a -> Word16
   original_network_id          :: a -> Word16
   reserved_future_use          :: a -> Word8
   transport_descriptors_length :: a -> Word16
+  descriptors                  :: a -> [Descriptor.Data]
   
 data Data = MkData {
   _transport_stream_id          :: Word16,
@@ -31,20 +34,23 @@ instance Class Data where
   original_network_id          = _original_network_id
   reserved_future_use          = _reserved_future_use
   transport_descriptors_length = _transport_descriptors_length
+  descriptors                  = toList . _descriptors
 
 instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty
 
--- _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow fh init = do
---   getBitsIO_M fh [
---     (16, (\(v,d) -> d { _transport_stream_id = fromWord64 v})),
---     (16, (\(v,d) -> d { _original_network_id = fromWord64 v})),
---     ( 4, (\(v,d) -> d { _reserved_future_use = fromWord64 v})),
---     (12, (\(v,d) -> d { _transport_descriptors_length = fromWord64 v}))
---     ] init
-
--- instance Parser.Class Data where
---   parseIOFlow = 
---     flowStart |>>= _parseIOFlow
-    
+instance FromByteString.Class Data where
+  fromByteStringWithRest bs =
+    let ((transport_stream_id, original_network_id, w16),bs0) = fromByteStringWithRest bs
+        reserved_future_use          = toWord8 $ (w16 .&. 0xF000) `shiftR` 12 -- 4
+        transport_descriptors_length =           (w16 .&. 0x0FFF) -- 12
+        (bs1,rest)                   = BS.splitAt (fromInteger $ toInteger transport_descriptors_length) bs0
+        descriptors                  = fromByteString bs1
+        d = MkData {
+          _transport_stream_id          = transport_stream_id,
+          _original_network_id          = original_network_id,
+          _reserved_future_use          = reserved_future_use,
+          _transport_descriptors_length = transport_descriptors_length,
+          _descriptors                  = descriptors
+          }
+    in (d, rest)

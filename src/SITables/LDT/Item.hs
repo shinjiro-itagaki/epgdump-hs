@@ -11,6 +11,8 @@ import Utils
 import qualified Descriptor
 import qualified Utils.EmptyExist as EmptyExist
 import Data.Vector(Vector,toList,empty)
+import qualified Utils.FromByteString as FromByteString
+import qualified Data.ByteString.Lazy as BS
 
 class Class a where
   description_id          :: a -> Word16
@@ -32,10 +34,17 @@ instance Class Data where
 instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty Data.Vector.empty
 
--- _parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow1 fh init = do
---   getBitsIO_M fh [
---     (16, (\(v,d) -> d { _description_id          = fromWord64 v})),
---     (12, (\(v,d) -> d { _reserved_future_use     = fromWord64 v})),
---     (12, (\(v,d) -> d { _descriptors_loop_length = fromWord64 v}))
---     ] init
+instance FromByteString.Class Data where
+  fromByteStringWithRest bs =
+    let ((description_id,
+          reserved_future_use,
+          descriptors_loop_length),bs0) = fromByteStringWithRest bs
+        (bs1,rest) = BS.splitAt (fromInteger $ toInteger descriptors_loop_length) bs0
+        descriptors = fromByteString bs1
+        d = MkData {
+          _description_id          = description_id,
+          _reserved_future_use     = reserved_future_use,
+          _descriptors_loop_length = descriptors_loop_length,
+          _descriptors             = descriptors
+          }
+    in (d,rest)

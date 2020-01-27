@@ -10,6 +10,8 @@ import qualified Parser.Result as Result
 import qualified Descriptor
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified Utils.EmptyExist as EmptyExist
+import qualified Utils.FromByteString as FromByteString
+import qualified Data.ByteString.Lazy as BS
 import Utils
 
 class Class a where
@@ -52,34 +54,33 @@ instance Class Data where
 instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty mkEmpty mkEmpty Data.Vector.empty
 
--- _parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow1 fh init = do
---   getBitsIO_M fh [
---     (16, (\(v,d) -> d { _information_id            = fromWord64 v})),
---     ( 4, (\(v,d) -> d { _information_type          = fromWord64 v})),
---     ( 2, (\(v,d) -> d { _description_body_location = fromWord64 v})),
---     ( 2, (\(v,d) -> d { _reserved_future_use1      = fromWord64 v})),
---     ( 8, (\(v,d) -> d { _user_defined              = fromWord64 v})),
---     ( 8, (\(v,d) -> d { _number_of_keys            = fromWord64 v}))
---     ] init
-    
--- _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow2 fh init =
---   let n = number_of_keys init
---       list = map (\_ -> (16, (\(v,d) -> d { _keys = snoc (_keys d) $ fromWord64 v})) ) [1 .. n]
---   in getBitsIO_M fh list init
-
--- _parseIOFlow3 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow3 fh init = do
---   getBitsIO_M fh [  
---     ( 4, (\(v,d) -> d { _reserved_future_use2      = fromWord64 v})),
---     (12, (\(v,d) -> d { _descriptors_loop_length   = fromWord64 v}))
---     ] init
-
--- instance Parser.Class Data where
---   parseIOFlow = 
---     flowStart
---     |>>= _parseIOFlow1
---     |>>= _parseIOFlow2
---     |>>= _parseIOFlow3
-    
+instance FromByteString.Class Data where
+  fromByteStringWithRest bs = 
+    let ((information_id,
+          w8,
+          user_defined,
+          number_of_keys
+         ),bs0) = fromByteStringWithRest bs
+        information_type          =             (w8 .&. 0xF0) `shiftR` 4
+        description_body_location = fromWord8 $ (w8 .&. 0x0C) `shiftR` 2
+        reserved_future_use1      =             (w8 .&. 0x03)
+        (bs1,bs2) = BS.splitAt ((* 2) $ fromInteger $ toInteger number_of_keys) bs0
+        keys = fromByteString bs1
+        (w16,bs3) = fromByteStringWithRest bs2
+        reserved_future_use2    = toWord8 $ (w16 .&. 0xF000) `shiftR` 12
+        descriptors_loop_length =           (w16 .&. 0x0FFF) `shiftR` 0
+        (bs4,rest) = BS.splitAt (fromInteger $ toInteger descriptors_loop_length) bs3
+        descriptors = fromByteString bs4
+        d = MkData {
+          _information_id            = information_id,
+          _information_type          = information_type,
+          _description_body_location = description_body_location,
+          _reserved_future_use1      = reserved_future_use1,
+          _user_defined              = user_defined,
+          _number_of_keys            = number_of_keys,
+          _keys                      = keys,
+          _reserved_future_use2      = reserved_future_use2,
+          _descriptors_loop_length   = descriptors_loop_length,
+          _descriptors               = descriptors
+          }
+    in (d,rest)

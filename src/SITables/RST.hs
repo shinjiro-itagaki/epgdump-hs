@@ -35,20 +35,11 @@ instance Header1.Class Data where
 instance Class Data where
   items = toList . _items
 
--- _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
---   where
---     addItem' :: Data -> Item.Data -> Data
---     addItem' x item = x {_items = (snoc (_items x) item)  }
-
-
 instance Base.Class Data where
   footer  _ = Nothing
-  -- parseIOFlowAfterHeader1 =
-  --   flowStart
-  --   |>>= _parseIOFlow    
+  parseAfterHeader1 h bs =
+    let (items,bs0) = fromByteStringWithRest bs
+    in Result.Parsed $ MkData h items
 
 instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty Data.Vector.empty
-
-instance FromByteString.Class Data where

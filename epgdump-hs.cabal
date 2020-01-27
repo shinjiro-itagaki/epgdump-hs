@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 88e22c852ea6f4fedae08138a7a2f6b53d838c7d3b568029e61884e80121c63f
+-- hash: 0e1a490773e9f613ba6a3e47aeaa9ee639dc20d86c45b88620b6616c1ed63e3f
 
 name:           epgdump-hs
 version:        0.1.0.0
@@ -124,7 +124,6 @@ library
       Descriptor.VideoDecodeControl
       Lib
       Parser.Result
-      Schedule
       SITables
       SITables.Base
       SITables.BAT
@@ -164,11 +163,17 @@ library
       Utils.CountryCode
       Utils.EmptyExist
       Utils.FromByteString
+      Utils.FromNum
+      Utils.FromWord16
       Utils.FromWord32
       Utils.FromWord64
+      Utils.FromWord8
       Utils.LangCode
       Utils.Matcher
+      Utils.Schedule
       Utils.SITableIDs
+      Utils.TimeDate
+      Utils.ToNum
       Utils.ToString
       Utils.ToWord16
       Utils.ToWord32

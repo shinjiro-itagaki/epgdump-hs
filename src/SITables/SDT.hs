@@ -53,31 +53,19 @@ instance Class Data where
   transport_stream_id = _transport_stream_id
   reserved_future_use = _reserved_future_use
 
--- _parseIOFlow2 fh init =
---   getBitsIO_M fh [
---   (16, (\(v,d) -> d { _transport_stream_id = fromWord64 v}))
---   ] init
-
--- _parseIOFlow3 fh init =
---   getBitsIO_M fh [
---   (16, (\(v,d) -> d { _original_network_id = fromWord64 v})),
---   ( 8, (\(v,d) -> d { _reserved_future_use = fromWord64 v}))
---   ] init  
-
--- _parseIOFlow4_items :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow4_items bh init = Items.gather addItem' (Base.section_length_without_crc init) bh init
---   where
---     addItem' :: Data -> Item.Data -> Data
---     addItem' x item = x {_items = (snoc (_items x) item)  }
   
 instance Base.Class Data where
   footer = Just . _footer
---   parseIOFlowAfterHeader1 =
---     flowStart
---     |>>= _parseIOFlow2
---     |>>= Header2.parseFlow
---     |>>= _parseIOFlow3
---     |>>= _parseIOFlow4_items
---     |>>= Footer.parseFlow
-
-instance FromByteString.Class Data where
+  parseAfterHeader1 h bs =
+    let (footer,bs0) = fromByteStringWithRest bs
+        (transport_stream_id, header2, original_network_id, reserved_future_use, items) = fromByteString bs0
+        d = MkData {
+          _header1             = h,
+          _transport_stream_id = transport_stream_id,
+          _header2             = header2,
+          _original_network_id = original_network_id,
+          _reserved_future_use = reserved_future_use,
+          _items               = items,
+          _footer              = footer
+          }
+    in Result.Parsed d

@@ -39,6 +39,3 @@ instance EmptyExist.Class Data where
   _header1    = mkEmpty,
   _data_bytes = mkEmpty
   }
-  
-
-instance FromByteString.Class Data where

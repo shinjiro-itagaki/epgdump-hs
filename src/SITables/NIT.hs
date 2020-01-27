@@ -13,6 +13,8 @@ import qualified SITables.NIT.Item as Item
 import Data.Vector(Vector,toList,empty,snoc)
 import qualified Utils.SITableIDs as SITableIDs
 import qualified Utils.EmptyExist as EmptyExist
+import qualified Data.ByteString.Lazy as BS
+import qualified Utils.FromByteString as FromByteString
 import Utils
 
 import qualified Utils.FromByteString as FromByteString
@@ -73,42 +75,32 @@ instance SITableIDs.Class Data where
   pids      _ = MkPIDs [0x0010]
   table_ids _ = [0x40,0x41]
 
--- _parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow1 fh init =
---   getBitsIO_M fh [
---   (16, (\(v,d) -> d { _network_id = fromWord64 v}))
---   ] init
-
--- _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow2 fh init =
---   getBitsIO_M fh [
---   ( 4, (\(v,d) -> d { _reserved_future_use1       = fromWord64 v})),
---   (12, (\(v,d) -> d { _network_descriptors_length = fromWord64 v}))
---   ] init
-
--- _parseIOFlow3 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow3 fh init = return (Result.Parsed init, fh) -- todo descriptors
-
--- _parseIOFlow4 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow4 fh init = 
---   getBitsIO_M fh [
---   ( 4, (\(v,d) -> d { _reserved_future_use2         = fromWord64 v})),
---   (12, (\(v,d) -> d { _transport_stream_loop_length = fromWord64 v}))
---   ] init
-
--- _parseIOFlow5 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow5 fh init = return (Result.Parsed init, fh) -- todo items
-
 instance Base.Class Data where
   footer = Just . _footer
---   parseIOFlowAfterHeader1 =
---     flowStart
---     |>>= _parseIOFlow1
---     |>>= Header2.parseFlow
---     |>>= _parseIOFlow2
---     |>>= _parseIOFlow3
---     |>>= _parseIOFlow4
---     |>>= _parseIOFlow5    
---     |>>= Footer.parseFlow    
-
-instance FromByteString.Class Data where
+  parseAfterHeader1 h bs =
+    let ((footer,
+          network_id,
+          header2,
+          w16),bs0) = fromByteStringWithRest bs
+        reserved_future_use1       = toWord8 $ (w16 .&. 0xF000) `shiftR` 12
+        network_descriptors_length =           (w16 .&. 0x0FFF)
+        (bs1,bs2) = BS.splitAt (fromInteger $ toInteger network_descriptors_length) bs0
+        descriptors = fromByteString bs1
+        (w16_2,bs3) = fromByteStringWithRest bs2
+        reserved_future_use2         = toWord8 $ (w16_2 .&. 0xF000) `shiftR` 12
+        transport_stream_loop_length =           (w16_2 .&. 0x0FFF)
+        (bs4,_) = BS.splitAt (fromInteger $ toInteger transport_stream_loop_length) bs3
+        items = fromByteString bs4
+        d = MkData {
+          _header1                      = h,
+          _network_id                   = network_id,
+          _header2                      = header2,
+          _reserved_future_use1         = reserved_future_use1,
+          _network_descriptors_length   = network_descriptors_length,
+          _descriptors                  = descriptors,
+          _reserved_future_use2         = reserved_future_use2,
+          _transport_stream_loop_length = transport_stream_loop_length,
+          _items                        = items,
+          _footer                       = footer
+          }
+    in Result.Parsed d

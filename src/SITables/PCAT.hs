@@ -2,7 +2,7 @@ module SITables.PCAT (
   Data,
   Class(..)
   ) where
-import qualified Schedule
+import qualified Utils.Schedule as Schedule
 import qualified SITables.Header1 as Header1
 import qualified SITables.Header2 as Header2
 import qualified SITables.Footer as Footer
@@ -11,7 +11,7 @@ import qualified Descriptor
 import qualified SITables.Base as Base
 import qualified Parser.Result as Result
 import Utils
-import Data.Vector(Vector,toList,empty,snoc)
+import Data.Vector(Vector,toList,empty,snoc,fromList)
 import qualified SITables.PCAT.Item as Item
 import qualified Descriptor.Link.ServiceInfo as ServiceInfo
 import qualified Descriptor.Link.ContentInfo as ContentInfo
@@ -24,11 +24,8 @@ class (Header1.Class a, Header2.Class a, ContentInfo.Class a) => Class a where
 
 data Data = MkData {
   _header1    :: Header1.Data,
-  _service_id :: Word16,
   _header2    :: Header2.Data,
-  _transport_stream_id    :: Word16,
-  _original_network_id    :: Word16,
-  _content_id             :: Word32,
+  _content_info :: ContentInfo.Data,
   _num_of_content_version :: Word8,
   _items                  :: Vector Item.Data,
   _footer                 :: Footer.Data
@@ -44,12 +41,10 @@ instance Footer.Class Data where
   footer = _footer
 
 instance ServiceInfo.Class Data where
-  original_network_id = _original_network_id
-  service_id          = _service_id
-  transport_stream_id = _transport_stream_id
+  service_info = ServiceInfo.service_info . _content_info
 
-instance ContentInfo.Class Data where  
-  content_id          = _content_id
+instance ContentInfo.Class Data where
+  content_info = _content_info
   
 instance Class Data where
   num_of_content_version = _num_of_content_version
@@ -59,30 +54,27 @@ instance SITableIDs.Class Data where
   table_ids _ = [0xC2]
 
 instance EmptyExist.Class Data where
-  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty mkEmpty
-
--- _parseIOFlow1 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow1 fh init = do
---   getBitsIO_M fh [
---     (16, (\(v,d) -> d { _service_id = fromWord64 v}))
---     ] init
-
--- _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow2 fh init = do
---   getBitsIO_M fh [
---     (16, (\(v,d) -> d { _transport_stream_id    = fromWord64 v})),
---     (16, (\(v,d) -> d { _original_network_id    = fromWord64 v})),
---     (32, (\(v,d) -> d { _content_id             = fromWord64 v})),
---     ( 8, (\(v,d) -> d { _num_of_content_version = fromWord64 v}))
---     ] init
+  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty mkEmpty
   
 instance Base.Class Data where
-  footer = Just . _footer
---   parseIOFlowAfterHeader1 =
---     flowStart
---     |>>= _parseIOFlow1
---     |>>= Header2.parseFlow
---     |>>= _parseIOFlow2
---     |>>= Footer.parseFlow    
-
-instance FromByteString.Class Data where
+  footer = Just . _footer  
+  parseAfterHeader1 h bs =
+    let (footer,bs0) = fromByteStringWithRest bs
+        ((service_id,
+          header2,
+          transport_stream_id,
+          original_network_id,
+          content_id,
+          num_of_content_version),bs1) = fromByteStringWithRest bs0
+        items = fromList $ fromByteString_n num_of_content_version bs1
+        service_info = ServiceInfo.mk original_network_id transport_stream_id service_id
+        content_info = ContentInfo.mk service_info content_id
+        d = MkData {
+          _header1    = h,
+          _content_info = content_info,
+          _header2    = header2,
+          _num_of_content_version = num_of_content_version,
+          _items                  = items,
+          _footer                 = footer
+          }
+    in Result.Parsed d

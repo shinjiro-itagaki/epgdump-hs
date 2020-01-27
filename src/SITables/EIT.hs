@@ -81,30 +81,3 @@ instance Base.Class Data where
           _footer                      = footer
           }
     in Result.Parsed d
-    
--- _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow2 fh init = do
---   putStrLn "_parseIOFlow2"
---   getBitsIO_M fh [
---     (16, (\(v,d) -> d { _service_id = fromWord64 v}))
---     ] init
-
--- _parseIOFlow4 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow4 fh init = do
---   putStrLn "_parseIOFlow4"  
---   getBitsIO_M fh [
---     (16, (\(v,d) -> d { _transport_stream_id         = fromWord64 v})),
---     (16, (\(v,d) -> d { _original_network_id         = fromWord64 v})),
---     ( 8, (\(v,d) -> d { _segment_last_section_number = fromWord64 v})),
---     ( 8, (\(v,d) -> d { _last_table_id               = fromWord64 v}))
---     ] init
-
--- _parseIOFlow5_items :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow5_items bh init = do
---   putStrLn "_parseIOFlow5"
---   Items.gather addItem' (Base.section_length_without_crc init) bh init
---   where
---     addItem' :: Data -> Item.Data -> Data
---     addItem' x item = x {_items = (snoc (_items x) item)  }
-
-instance FromByteString.Class Data where

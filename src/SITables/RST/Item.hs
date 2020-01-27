@@ -21,47 +21,38 @@ class (EventInfo.Class a) => Class a where
   running_status      :: a -> Word8 -- 3
 
 data Data = MkData {
-  _service_info        :: ServiceInfo.Data,
-  _event_id            :: Word16,
+  _event_info          :: EventInfo.Data,
   _reserved_future_use :: Word8, -- 5
   _running_status      :: Word8 -- 3
   } deriving (Show)
 
 instance ServiceInfo.Class Data where
-  service_info = _service_info
+  service_info = ServiceInfo.service_info . _event_info
   transport_stream_id = ServiceInfo.id0 -- 通常とは逆なので書き換え
   original_network_id = ServiceInfo.id1 -- 通常とは逆なので書き換え
 
 instance Info.Class Data where
-  service_id = ServiceInfo.service_id . _service_info 
-  event_id   = _event_id
-
-instance FromByteString.Class Data where
-  
+  service_id = ServiceInfo.service_id . _event_info
+  event_id   = EventInfo.event_id    . _event_info
+ 
 instance EventInfo.Class Data where
+  event_info = _event_info
   
 instance Class Data where
   reserved_future_use = _reserved_future_use
   running_status      = _running_status
   
 instance EmptyExist.Class Data where
-  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty
+  mkEmpty = MkData mkEmpty mkEmpty mkEmpty
 
--- _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow fh init = do
---   getBitsIO_M fh [
---     -- (16, (\(v,d) -> d { _transport_stream_id = fromWord64 v})),
---     -- (16, (\(v,d) -> d { _original_network_id = fromWord64 v})),
---     -- (16, (\(v,d) -> d { _service_id          = fromWord64 v})),
---     (16, (\(v,d) -> d )),
---     (16, (\(v,d) -> d )),
---     (16, (\(v,d) -> d )),
---     (16, (\(v,d) -> d { _event_id            = fromWord64 v})),    
---     ( 5, (\(v,d) -> d { _reserved_future_use = fromWord64 v})),
---     ( 3, (\(v,d) -> d { _running_status      = fromWord64 v}))
---     ] init
-
--- instance Parser.Class Data where
---   parseIOFlow = 
---     flowStart |>>= _parseIOFlow
-    
+instance FromByteString.Class Data where
+  fromByteStringWithRest bs =
+    let ((event_info,w8),rest) = fromByteStringWithRest bs
+        reserved_future_use    = (w8 .&. 0xF8) `shiftR` 3 -- 5
+        running_status         = (w8 .&. 0x07)            -- 3
+        d = MkData {
+          _event_info          = event_info,
+          _reserved_future_use = reserved_future_use,
+          _running_status      = running_status
+          }
+    in (d,rest)

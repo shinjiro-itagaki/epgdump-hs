@@ -5,14 +5,15 @@ module SITables.PCAT.Item(
   Class(..),
   ) where
 
-import qualified Schedule
+import qualified Utils.Schedule as Schedule
 import qualified BytesReader.Base as BytesReaderBase
 import qualified Parser.Result as Result
 import Utils
 import qualified Descriptor
-import Data.ByteString(ByteString)
 import Data.Vector(Vector,toList,empty)
 import qualified Utils.EmptyExist as EmptyExist
+import qualified Utils.FromByteString as FromByteString
+import qualified Data.ByteString.Lazy as BS
 
 class Class a where
   content_version             :: a -> Word16
@@ -47,24 +48,33 @@ instance Class Data where
   reserved_future_use2        = _reserved_future_use2
   schedule_description_length = _schedule_description_length
   schedules                   = toList . _schedules
+  descriptors                 = toList . _descriptors
 
 instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty Data.Vector.empty Data.Vector.empty
 
--- _parseIOFlow :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
--- _parseIOFlow fh init = do
---   getBitsIO_M fh [
---     (16, (\(v,d) -> d { _content_version                = fromWord64 v})),
---     (16, (\(v,d) -> d { _content_minor_version          = fromWord64 v})),
---     ( 2, (\(v,d) -> d { _version_indicator              = fromWord64 v})),
---     ( 2, (\(v,d) -> d { _reserved_future_use1           = fromWord64 v})),
---     (12, (\(v,d) -> d { _content_descriptor_length      = fromWord64 v})),
---     ( 4, (\(v,d) -> d { _reserved_future_use2           = fromWord64 v})),
---     (12, (\(v,d) -> d { _schedule_description_length    = fromWord64 v}))
---     ] init
-
--- instance Parser.Class Data where
---   parseIOFlow = 
---     flowStart |>>= _parseIOFlow
-    
+instance FromByteString.Class Data where
+  fromByteStringWithRest bs =
+    let ((content_version, content_minor_version, w16_0, w16_1),bs0) = fromByteStringWithRest bs
+        version_indicator           = fromWord16 $ (w16_0 .&. 0xC000) `shiftR` 14 -- 2
+        reserved_future_use1        = fromWord16 $ (w16_0 .&. 0x3000) `shiftR` 12 -- 2
+        content_descriptor_length   =              (w16_0 .&. 0x0FFF) -- 12
+        reserved_future_use2        = fromWord16 $ (w16_1 .&. 0xF000) `shiftR` 12 -- 4
+        schedule_description_length =              (w16_1 .&. 0x0FFF) -- 12
+        (bs1,bs2) = BS.splitAt (fromInteger $ toInteger schedule_description_length) bs0
+        schedules = fromByteString bs1
+        (bs3,rest) = BS.splitAt (fromInteger $ toInteger content_descriptor_length) bs2
+        descriptors = fromByteString bs3
+        d = MkData {
+          _content_version             = content_version,
+          _content_minor_version       = content_minor_version,
+          _version_indicator           = version_indicator, 
+          _reserved_future_use1        = reserved_future_use1, 
+          _content_descriptor_length   = content_descriptor_length,
+          _reserved_future_use2        = reserved_future_use2,
+          _schedule_description_length = schedule_description_length,
+          _schedules                   = schedules,
+          _descriptors                 = descriptors
+          }
+    in (d,rest)
 
