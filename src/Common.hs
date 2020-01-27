@@ -16,7 +16,7 @@ module Common(
 import Data.Word(Word64, Word32, Word16, Word8)
 import qualified Data.ByteString.Lazy as BS
 import Data.Word(Word64, Word32, Word16, Word8)
-import Data.Bits(Bits,shiftR,shiftL,(.&.),(.|.))
+import Data.Bits(Bits,shiftR,shiftL,(.&.),(.|.),bitSizeMaybe)
 import Data.Int(Int64)
 import Data.Vector(Vector,snoc)
 import Data.Maybe(fromMaybe)

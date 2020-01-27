@@ -24,13 +24,12 @@ import qualified Utils.SITableIDs as SITableIDs
 class (Base.Class a, ServiceInfo.Class a) => Class a where
   segment_last_section_number :: a -> Word8
   last_table_id               :: a -> Word8
+  items                       :: a -> [Item.Data]
 
 data Data = MkData {
   _header1                     :: Header1.Data,
-  _service_id                  :: Word16,
+  _service_info                :: ServiceInfo.Data,
   _header2                     :: Header2.Data,
-  _transport_stream_id         :: Word16,
-  _original_network_id         :: Word16,
   _segment_last_section_number :: Word8,
   _last_table_id               :: Word8,
   _items                       :: Vector Item.Data, 
@@ -38,36 +37,51 @@ data Data = MkData {
   } deriving (Show)
 
 instance ServiceInfo.Class Data where
-  original_network_id = _original_network_id
-  service_id          = _service_id
-  transport_stream_id = _transport_stream_id
-
+  service_info = _service_info
+  
 instance EmptyExist.Class Data where
-  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty empty mkEmpty
+  mkEmpty = MkData mkEmpty mkEmpty mkEmpty mkEmpty mkEmpty empty mkEmpty
 
 instance Header1.Class Data where
   header1 = _header1
-  setHeader1 x h = x {_header1 = h}  
   
 instance Header2.Class Data where
   header2 = _header2
-  setHeader2 x h = x {_header2 = h}
 
 instance Footer.Class Data where
   footer = _footer
-  setFooter x y = x {_footer = y}
 
 instance SITableIDs.Class Data where
   pids      _ = MkPIDs [0x0012,0x0026,0x0027]
   table_ids _ = [0x4E,0x4F] ++ [0x50..0x5F] ++ [0x60..0x6F]
 
-instance Base.Class Data where
-  footer  = Just . _footer
-  
 instance Class Data where
   segment_last_section_number = _segment_last_section_number
   last_table_id               = _last_table_id
 
+instance Base.Class Data where
+  footer  = Just . _footer
+  parseAfterHeader1 h bs =
+    let (footer,bs0) = fromByteStringWithRest bs
+        ((service_id,
+          header2,
+          transport_stream_id,
+          original_network_id,
+          segment_last_section_number,
+          last_table_id,
+          items
+         ),rest) = fromByteStringWithRest bs0
+        d = MkData {
+          _header1                     = h,
+          _service_info                = ServiceInfo.mk original_network_id transport_stream_id service_id,
+          _header2                     = header2,
+          _segment_last_section_number = segment_last_section_number,
+          _last_table_id               = last_table_id,
+          _items                       = items,
+          _footer                      = footer
+          }
+    in Result.Parsed d
+    
 -- _parseIOFlow2 :: (BytesReaderBase.Class bh) => bh -> Data -> IO (Result.Data Data, bh)
 -- _parseIOFlow2 fh init = do
 --   putStrLn "_parseIOFlow2"

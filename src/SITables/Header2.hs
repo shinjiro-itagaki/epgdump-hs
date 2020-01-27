@@ -10,7 +10,6 @@ import Utils
 
 class (Show a) => Class a where
   header2                :: a -> Data
-  setHeader2             :: a -> Data -> a
   
   reserved2              :: a -> Word8
   reserved2              = reserved2              . header2
@@ -37,7 +36,6 @@ data Data = MkData {
 
 instance Class Data where
   header2              x = x
-  setHeader2         x y = y
   reserved2              = _reserved2
   version_number         = _version_number 
   current_next_indicator = _current_next_indicator

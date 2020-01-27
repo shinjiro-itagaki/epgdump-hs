@@ -2,14 +2,21 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Utils.CountryCode where
-
-import Data.Word(Word64, Word32, Word16, Word8)
+import qualified Data.ByteString.Lazy as BS
+import qualified Data.ByteString.Lazy.Char8 as BChar8
+import qualified Utils.FromByteString as FromByteString
 import qualified Utils.ToString as ToString
 
-type Data = (Char,Char,Char)
 
-class Class a where
-  country_code :: a -> Data
+data Data = MkData Char Char Char deriving (Eq,Show)
 
---instance ToString.Class Data where
---  toString (x,y,z) = [x,y,z]
+instance FromByteString.Class Data where
+  fromByteStringWithRest x = (\(y,z) -> (impl' $ BChar8.unpack y,z)) $ BS.splitAt 3 x
+    where
+      impl' []                = MkData '\0' '\0' '\0'
+      impl' (x1:[])           = MkData '\0' '\0' x1
+      impl' (x1:(x2:[]))      = MkData '\0' x1   x2
+      impl' (x1:(x2:(x3:xs))) = MkData x1   x2   x3
+
+instance ToString.Class Data where
+  toString (MkData a b c) =  [a,b,c]

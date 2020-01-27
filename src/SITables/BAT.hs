@@ -39,15 +39,12 @@ data Data = MkData {
 
 instance Header1.Class Data where
   header1 = _header1
-  setHeader1 x h = x {_header1 = h}  
   
 instance Header2.Class Data where
   header2 = _header2
-  setHeader2 x h = x {_header2 = h}
 
 instance Footer.Class Data where
   footer = _footer
-  setFooter x y = x {_footer = y}
   
 instance Class Data where
   bouquet_id                   = _bouquet_id

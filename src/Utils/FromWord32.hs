@@ -12,9 +12,9 @@ class Class a where
 
 instance Class Char where
   fromWord32 x = chr $ fromInteger $ toInteger ((fromWord32 x) :: Word8)
-  
+
 instance Class Bool where
-  fromWord32 = (> 0) . (.&. 0x01)
+  fromWord32 = (/= 0)
 
 instance Class (Bool,Bool) where
   fromWord32 x = ((x .&. 0x02 ) > 0,(x .&. 0x01) > 0)

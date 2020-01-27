@@ -33,16 +33,13 @@ data Data = MkData {
   } deriving (Show)
   
 instance Header1.Class Data where
-  setHeader1 x h = x {_header1 = h}
   header1 = _header1
   
 instance Header2.Class Data where
-  setHeader2 x h = x {_header2 = h}  
   header2 = _header2
 
 instance Footer.Class Data where
   footer = _footer
-  setFooter x y = x {_footer = y}
 
 instance ServiceInfo.Class Data where
   original_network_id = _original_network_id  

@@ -31,7 +31,6 @@ instance SITableIDs.Class Data where
 
 instance Header1.Class Data where
   header1 = _header1
-  setHeader1 x h = x {_header1 = h}    
 
 instance Class Data where
   items = toList . _items

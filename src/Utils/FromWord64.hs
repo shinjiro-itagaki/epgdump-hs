@@ -14,7 +14,7 @@ instance Class Char where
   fromWord64 x = chr $ fromInteger $ toInteger ((fromWord64 x) :: Word8)
   
 instance Class Bool where
-  fromWord64 = (> 0) . (.&. 0x01)
+  fromWord64 = (/= 0)
 
 instance Class (Bool,Bool) where
   fromWord64 x = ((x .&. 0x02 ) > 0,(x .&. 0x01) > 0)

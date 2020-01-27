@@ -39,15 +39,12 @@ data Data = MkData {
   } deriving (Show)
 
 instance Header1.Class Data where
-  setHeader1 d h = d { _header1 = h }
   header1 = _header1
   
 instance Header2.Class Data where
-  setHeader2 d h = d { _header2 = h }
   header2 = _header2
 
 instance Footer.Class Data where
-  setFooter d x = d { _footer = x }  
   footer = _footer
   
 instance Class Data where

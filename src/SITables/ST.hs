@@ -32,7 +32,6 @@ instance Class Data where
   data_bytes = _data_bytes
 
 instance Header1.Class Data where
-  setHeader1 x header = x {_header1 = header}
   header1 = _header1
 
 instance EmptyExist.Class Data where

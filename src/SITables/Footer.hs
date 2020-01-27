@@ -11,8 +11,6 @@ import Utils
 class (Show a) => Class a where
   footer :: a -> Data
   
-  setFooter :: a -> Data -> a
-  
   crc_32_bitslen :: a -> BitsLen
   crc_32_bitslen _ = 32
 
@@ -27,7 +25,6 @@ data Data = MkData {
   } deriving (Show)
 
 instance Class Data where
-  setFooter x footer' = footer'
   footer  x = x
   crc_32    = _crc_32
 

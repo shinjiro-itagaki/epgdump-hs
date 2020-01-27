@@ -11,7 +11,6 @@ import Utils
 
 class Class a where
   header1                     :: a -> Data
-  setHeader1                  :: a -> Data -> a
 
   table_id                 = table_id                 . header1  
   table_id                    :: a -> TableID
@@ -38,7 +37,6 @@ data Data = MkData {
 
 instance Class Data where
   header1                x = x
-  setHeader1  self header1 = header1
   table_id                 = _table_id 
   section_syntax_indicator = _section_syntax_indicator
   reserved_future_use      = _reserved_future_use

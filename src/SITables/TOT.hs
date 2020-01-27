@@ -31,7 +31,6 @@ data Data = MkData {
 
 instance Header1.Class Data where
   header1 = _header1
-  setHeader1 x h = x {_header1 = h}  
   
 instance SITables.TDT.Class Data where
   jst_time  = _jst_time 

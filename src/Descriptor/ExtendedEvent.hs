@@ -10,13 +10,8 @@ import qualified Descriptor.Header as Header
 import Data.Vector(Vector,empty,toList,snoc)
 import qualified Descriptor.ExtendedEvent.Item as Item
 import qualified Utils.LangCode as LangCode
-import Utils.ToString(toString)
-import Utils.ToWord8(toWord8)
-import Utils.ToWord64(toWord64)
-import Utils.FromByteString(fromByteStringWithRest,fromByteStringWithRestM)
-import Utils.FromWord32(fromWord32)
+import Utils
 import qualified Data.ByteString.Lazy as BS
-import Data.Bits((.&.),shiftR)
 import qualified Parser.Result as Result
 
 class (Base.Class a) => Class a where
@@ -44,22 +39,18 @@ instance Header.Class Data where
 
 instance Base.Class Data where
   fromByteStringAfterHeader h bs0 =
-    let (w8 ,bs1) = fromByteStringWithRest bs0
-        (c0 ,bs2) = fromByteStringWithRest bs1
-        (c1 ,bs3) = fromByteStringWithRest bs2
-        (c2 ,bs4) = fromByteStringWithRest bs3
-        (length_of_items, bs5) = fromByteStringWithRest bs4
-        
-        descriptor_number      = (w8 .&. 0xF0) `shiftR` 4
-        last_descriptor_number = (w8 .&. 0x0F)
-        iso_639_language_code  = (c0,c1,c2)
-        
-        (items,bs6)            = Base.gather (toWord64 length_of_items) fromByteStringWithRestM snoc bs5 empty
-        (text_length,bs7)      = fromByteStringWithRest bs6
-        (text,rest)            = BS.splitAt (fromInteger $ toInteger text_length) bs7
+    let ((w8
+         ,iso_639_language_code
+         ,length_of_items),bs6) = fromByteStringWithRest bs0
+        descriptor_number       = (w8 .&. 0xF0) `shiftR` 4
+        last_descriptor_number  = (w8 .&. 0x0F)
+        (bs7,bs8)               = BS.splitAt (fromInteger $ toInteger length_of_items) bs6
+        items                   = fromByteString bs7
+        (text_length,rest)      = fromByteStringWithRest bs8
+        text                    = BS.take (fromInteger $ toInteger text_length) rest
         d = MkData {
-          _header            = h,
-          _descriptor_number = descriptor_number,
+          _header                 = h,
+          _descriptor_number      = descriptor_number,
           _last_descriptor_number = last_descriptor_number,
           _iso_639_language_code  = iso_639_language_code,
           _length_of_items        = length_of_items,

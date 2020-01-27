@@ -1,6 +1,7 @@
 module Descriptor.Link.ServiceInfo (
   Class(..)
   ,Data
+  ,mk
   ) where
 
 import qualified Utils.FromByteString as FromByteString
@@ -33,6 +34,8 @@ data Data = MkData {
   _id1 {- _transport_stream_id -} :: Word16,  
   _id2 {- _service_id -}          :: Word16
   } deriving (Show,Eq) -- 0x01
+
+mk = MkData
 
 instance EmptyExist.Class Data where
   mkEmpty = MkData mkEmpty mkEmpty mkEmpty
