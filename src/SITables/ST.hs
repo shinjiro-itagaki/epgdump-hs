@@ -12,6 +12,7 @@ import qualified SITables.Base as Base
 import qualified Utils.EmptyExist as EmptyExist
 import qualified Utils.SITableIDs as SITableIDs
 import qualified Utils.FromByteString as FromByteString
+import qualified Data.ByteString.Lazy as BS
 
 class (Base.Class a) => Class a where
   data_bytes :: a -> ByteString
@@ -27,6 +28,8 @@ instance SITableIDs.Class Data where
 
 instance Base.Class Data where
   footer  _ = Nothing
+  parseAfterHeader1 h bs =
+    Result.Parsed (MkData h bs)
 
 instance Class Data where
   data_bytes = _data_bytes
